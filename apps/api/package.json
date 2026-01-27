@@ -1,0 +1,25 @@
+{
+  "name": "api",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:studio": "npx drizzle-kit studio",
+    "db:generate": "npx drizzle-kit generate",
+    "db:push:local": "npx wrangler d1 migrations apply sigcc-manoa-db --local",
+    "db:push:remote": "wrangler d1 migrations apply sigcc-manoa-db --remote",
+    "secret:push": "wrangler secret put"
+  },
+  "dependencies": {
+    "better-auth": "^1.4.17",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260124.0",
+    "drizzle-kit": "^0.31.8",
+    "wrangler": "^4.4.0"
+  }
+}
