@@ -8,6 +8,13 @@
       "when": 1769473984585,
       "tag": "0000_large_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1769519681878,
+      "tag": "0001_new_marauders",
+      "breakpoints": true
     }
   ]
 }
