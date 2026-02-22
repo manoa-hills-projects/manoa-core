@@ -13,6 +13,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "turbo": "^2.7.6"
   }

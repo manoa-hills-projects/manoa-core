@@ -3,6 +3,9 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import * as schema from "./shared/database/schemas"
 import { getAuth } from './shared/utils/auth.util'
+import housesRouter from './modules/house/house.router'
+import { logger } from 'hono/logger'
+import { etag } from 'hono/etag'
 
 type Bindings = {
   sigcc_manoa_db: D1Database 
@@ -14,7 +17,9 @@ type Variables = {
   db: DrizzleD1Database<typeof schema>
 }
 
-const app = new Hono<{ Bindings: Bindings, Variables: Variables }>().basePath("/api")
+export type HonoConfig = { Bindings: Bindings, Variables: Variables };
+
+const app = new Hono<HonoConfig>().basePath("/api")
   .use('*', cors())
   .use('*', async (c, next) => {
     const db = drizzle(c.env.sigcc_manoa_db, { schema });
@@ -35,6 +40,8 @@ const app = new Hono<{ Bindings: Bindings, Variables: Variables }>().basePath("/
       message: 'Hello Hono!'
     })
   })
+  .use(etag(), logger())
+  .route('/houses', housesRouter)
 
 export default app
 

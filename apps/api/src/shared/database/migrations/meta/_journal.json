@@ -15,6 +15,13 @@
       "when": 1769519681878,
       "tag": "0001_new_marauders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771638474493,
+      "tag": "0002_lowly_jack_power",
+      "breakpoints": true
     }
   ]
 }

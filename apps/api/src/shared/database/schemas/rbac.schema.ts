@@ -7,12 +7,12 @@ export const roles = sqliteTable('roles', {
 
 export const modules = sqliteTable('modules', {
   id: text('id').primaryKey(),
-  name: text('name').notNull().unique(), // censo, inventario, etc.
+  name: text('name').notNull().unique()
 });
 
 export const permissions = sqliteTable('permissions', {
   id: text('id').primaryKey(),
-  name: text('name').notNull().unique(), // create, read, update, delete
+  name: text('name').notNull().unique()
 });
 
 export const rolePermissions = sqliteTable('role_permissions', {

@@ -12,15 +12,18 @@
     "secret:push": "wrangler secret put"
   },
   "dependencies": {
-    "better-auth": "^1.4.17",
+    "@hono/zod-validator": "^0.7.6",
+    "better-auth": "^1.4.5",
     "better-sqlite3": "^12.6.2",
+    "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.11.6"
+    "hono": "^4.12.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260124.0",
     "drizzle-kit": "^0.31.8",
     "vite-tsconfig-paths": "^6.0.5",
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.67.0"
   }
 }
