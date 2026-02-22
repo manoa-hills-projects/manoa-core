@@ -10,7 +10,9 @@ const housesRouter = new Hono<HonoConfig>();
 housesRouter.post("/", zValidator("json", createHouseDto), async (c) => {
   const data = c.req.valid("json");
   const db = c.get('db');
+  
   const result = await houseHandler.create(db, data);
+  
   return c.json(result, 201);
 });
 
