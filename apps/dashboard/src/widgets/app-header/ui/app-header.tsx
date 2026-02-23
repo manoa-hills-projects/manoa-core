@@ -1,6 +1,7 @@
 import { Button } from "@/shared/ui/button"
 import { Separator } from "@/shared/ui/separator"
 import { SidebarTrigger } from "@/shared/ui/sidebar"
+import { AppBreadcrumbs } from "./app-breadcrumbs"
 
 export const AppHeader = () => {
 	return (
@@ -11,8 +12,8 @@ export const AppHeader = () => {
 					orientation="vertical"
 					className="mx-2 data-[orientation=vertical]:h-4"
 				/>
-				{/* TODO: Handle this router dinamyc */}
-				<h1 className="text-base font-medium">Documents</h1>
+				<AppBreadcrumbs />
+
 				<div className="ml-auto flex items-center gap-2">
 					<Button variant="ghost" asChild size="sm" className="hidden sm:flex">
 						<a
