@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
 import { createHouse, findAllHouses } from "./house.handler";
+import { houseQueryDto } from "./dto/find-all-houses.dto";
 
 const housesRouter = new Hono<HonoConfig>()
 
@@ -14,10 +15,11 @@ const housesRouter = new Hono<HonoConfig>()
   
   return c.json(result, 201);
 })
-.get("/", async (c) => {
+.get("/", zValidator("query", houseQueryDto), async (c) => {
   const db = c.get('db');
+  const query = c.req.valid("query");
 
-  const result = await findAllHouses(db);
+  const result = await findAllHouses(db, query);
 
   return c.json(result, 200);
 });

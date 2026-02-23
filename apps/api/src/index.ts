@@ -19,6 +19,7 @@ type Variables = {
 export type HonoConfig = { Bindings: Bindings, Variables: Variables };
 
 const app = new Hono<HonoConfig>()
+  .basePath("/api")
   .use(etag(), logger())
   .use('*', cors())
   .use('*', async (c, next) => {

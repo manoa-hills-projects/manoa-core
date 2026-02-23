@@ -1,43 +1,45 @@
-import { useHouses } from "@/entities/houses";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from "@/shared/ui/table";
+import { useState } from 'react'
+import { useDebouncedValue } from '@tanstack/react-pacer'
+import { useHouses, houseColumns } from "@/entities/houses"
+import { DataTable } from "@/shared/ui/data-table"
 
-export const HouseTable = () => {
-	const { data: houses} = useHouses();
+export function HouseTable() {
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+	const [search, setSearch] = useState("")
+
+	const [debouncedSearch] = useDebouncedValue(search, {
+		wait: 500,
+	})
+
+	const { data: response, isLoading } = useHouses({
+		pageIndex: pagination.pageIndex + 1,
+		pageSize: pagination.pageSize,
+	}, {
+		search: debouncedSearch,
+	})
 
 	return (
-		<div className="rounded-md border bg-card">
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>Sector</TableHead>
-						<TableHead>Dirección</TableHead>
-						<TableHead className="text-right">Número</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{houses?.map((house) => (
-						<TableRow key={house.id}>
-							<TableCell className="font-medium">{house.sector}</TableCell>
-							<TableCell>{house.address}</TableCell>
-							<TableCell className="text-right">{house.number}</TableCell>
-						</TableRow>
-					))}
-					{houses?.length === 0 && (
-						<TableRow>
-							<TableCell colSpan={3} className="h-24 text-center">
-								No hay casas registradas aún.
-							</TableCell>
-						</TableRow>
-					)}
-				</TableBody>
-			</Table>
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<input
+					placeholder="Buscar casa o sector..."
+					className="border rounded px-3 py-2 w-full max-w-sm"
+					value={search}
+					onChange={(e) => {
+						setSearch(e.target.value)
+						setPagination(prev => ({ ...prev, pageIndex: 0 }))
+					}}
+				/>
+				{isLoading && <span className="text-sm animate-pulse">Buscando...</span>}
+			</div>
+
+			<DataTable
+				columns={houseColumns}
+				data={response?.data ?? []}
+				rowCount={response?.metadata?.total ?? 0}
+				pagination={pagination}
+				onPaginationChange={setPagination}
+			/>
 		</div>
 	)
 }

@@ -12,8 +12,6 @@ export function SidebarItemsList(props: SidebarItemsList) {
   return (
     <SidebarMenu>
       {items.map((item) => {
-        // if (item.permission && !mockUserPermissions.includes(item.permission)) return null;
-
         return (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild tooltip={item.title}>
