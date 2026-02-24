@@ -2,12 +2,28 @@ import { useState } from 'react'
 import { useDebouncedValue } from '@tanstack/react-pacer'
 import { useHouses, houseColumns } from "@/entities/houses"
 import { DataTable } from "@/shared/ui/data-table"
+import { z } from 'zod'
+import { useForm, useStore } from '@tanstack/react-form'
+
+const formSchema = z.object({
+  search: z.string().trim()
+})
 
 export function HouseTable() {
 	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 	const [search, setSearch] = useState("")
+	const form = useForm({
+		defaultValues: {
+			search: ""
+		},
+		validators: {
+			onSubmit: formSchema,
+		},
+	})
 
-	const [debouncedSearch] = useDebouncedValue(search, {
+	const searchValue = useStore(form.store, (state) => state.values.search)
+	
+	const [debouncedSearch] = useDebouncedValue(searchValue, {
 		wait: 500,
 	})
 
