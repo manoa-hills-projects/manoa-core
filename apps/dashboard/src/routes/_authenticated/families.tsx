@@ -1,0 +1,26 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { FamilyTable } from "@/widgets/family-table";
+
+export const Route = createFileRoute("/_authenticated/families")({
+	component: RouteComponent,
+	staticData: {
+		breadcrumb: "Familias",
+	},
+});
+
+function RouteComponent() {
+	return (
+		<>
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight">Familias</h1>
+					<p className="text-muted-foreground">
+						Administración de las familias registradas y hogares.
+					</p>
+				</div>
+			</div>
+
+			<FamilyTable />
+		</>
+	);
+}

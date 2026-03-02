@@ -1,7 +1,7 @@
-import { Button } from "@/shared/ui/button"
-import { Separator } from "@/shared/ui/separator"
-import { SidebarTrigger } from "@/shared/ui/sidebar"
-import { AppBreadcrumbs } from "./app-breadcrumbs"
+import { Button } from "@/shared/ui/button";
+import { Separator } from "@/shared/ui/separator";
+import { SidebarTrigger } from "@/shared/ui/sidebar";
+import { AppBreadcrumbs } from "./app-breadcrumbs";
 
 export const AppHeader = () => {
 	return (
@@ -28,5 +28,5 @@ export const AppHeader = () => {
 				</div>
 			</div>
 		</header>
-	)
-}
+	);
+};

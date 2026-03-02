@@ -36,3 +36,12 @@ export const findAllHouses = async (
 
   return buildPaginatedData(rows, total, page, limit);
 };
+
+export const updateHouse = async (
+  db: DrizzleD1Database<typeof schema>,
+  id: string,
+  data: Partial<typeof schema.houses.$inferInsert>
+) => {
+  const [result] = await db.update(schema.houses).set(data).where(eq(schema.houses.id, id)).returning();
+  return buildSingleData(result ?? null);
+};

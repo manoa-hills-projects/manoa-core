@@ -1,6 +1,6 @@
-import { SidebarInset, SidebarProvider } from '@/shared/ui/sidebar'
-import { AppHeader } from '@/widgets/app-header/ui/app-header'
-import { AppSidebar } from '@/widgets/app-sidebar/ui/app-sidebar'
+import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar";
+import { AppHeader } from "@/widgets/app-header/ui/app-header";
+import { AppSidebar } from "@/widgets/app-sidebar/ui/app-sidebar";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
 	return (
@@ -13,5 +13,5 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 				</main>
 			</SidebarInset>
 		</SidebarProvider>
-	)
+	);
 }

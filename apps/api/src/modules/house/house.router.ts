@@ -1,8 +1,9 @@
 import { createHouseDto } from "./dto/create-house.dto";
+import { updateHouseDto } from "./dto/update-house.dto";
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
-import { createHouse, findAllHouses } from "./house.handler";
+import { createHouse, findAllHouses, updateHouse } from "./house.handler";
 import { houseQueryDto } from "./dto/find-all-houses.dto";
 
 const housesRouter = new Hono<HonoConfig>()
@@ -20,6 +21,15 @@ const housesRouter = new Hono<HonoConfig>()
   const query = c.req.valid("query");
 
   const result = await findAllHouses(db, query);
+
+  return c.json(result, 200);
+})
+.patch("/:id", zValidator("json", updateHouseDto), async (c) => {
+  const data = c.req.valid("json");
+  const db = c.get('db');
+  const id = c.req.param("id");
+
+  const result = await updateHouse(db, id, data);
 
   return c.json(result, 200);
 });

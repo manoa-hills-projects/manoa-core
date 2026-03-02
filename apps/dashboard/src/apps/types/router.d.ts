@@ -1,7 +1,7 @@
-import { Register } from '@tanstack/react-router'
+import { Register } from "@tanstack/react-router";
 
-declare module '@tanstack/react-router' {
-  interface StaticDataRouteOption {
-    breadcrumb?: string
-  }
+declare module "@tanstack/react-router" {
+	interface StaticDataRouteOption {
+		breadcrumb?: string;
+	}
 }

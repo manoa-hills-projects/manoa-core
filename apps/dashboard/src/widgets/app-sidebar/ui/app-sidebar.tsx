@@ -1,6 +1,6 @@
-import { Sidebar, SidebarContent } from "@/shared/ui/sidebar"
-import { SidebarItemsList } from "./components/sidebar-content"
-import { NAV_ITEMS } from "@/entities/navigation/config/menu"
+import { NAV_ITEMS } from "@/entities/navigation/config/menu";
+import { Sidebar, SidebarContent } from "@/shared/ui/sidebar";
+import { SidebarItemsList } from "./components/sidebar-content";
 
 export const AppSidebar = () => {
 	return (
@@ -28,5 +28,5 @@ export const AppSidebar = () => {
 			{/* <NavUser user={data.user} /> */}
 			{/* </SidebarFooter> */}
 		</Sidebar>
-	)
-}
+	);
+};

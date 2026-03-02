@@ -13,6 +13,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedHousesRouteImport } from './routes/_authenticated/houses'
+import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticated/families'
+import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -33,13 +35,27 @@ const AuthenticatedHousesRoute = AuthenticatedHousesRouteImport.update({
   path: '/houses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFamiliesRoute = AuthenticatedFamiliesRouteImport.update({
+  id: '/families',
+  path: '/families',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCitizensRoute = AuthenticatedCitizensRouteImport.update({
+  id: '/citizens',
+  path: '/citizens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/citizens': typeof AuthenticatedCitizensRoute
+  '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRoutesByTo {
+  '/citizens': typeof AuthenticatedCitizensRoute
+  '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthIndexRoute
@@ -47,18 +63,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/citizens': typeof AuthenticatedCitizensRoute
+  '/_authenticated/families': typeof AuthenticatedFamiliesRoute
   '/_authenticated/houses': typeof AuthenticatedHousesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/houses' | '/auth/'
+  fullPaths: '/' | '/citizens' | '/families' | '/houses' | '/auth/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/houses' | '/' | '/auth'
+  to: '/citizens' | '/families' | '/houses' | '/' | '/auth'
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_authenticated/citizens'
+    | '/_authenticated/families'
     | '/_authenticated/houses'
     | '/_authenticated/'
     | '/auth/'
@@ -99,15 +119,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHousesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/families': {
+      id: '/_authenticated/families'
+      path: '/families'
+      fullPath: '/families'
+      preLoaderRoute: typeof AuthenticatedFamiliesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/citizens': {
+      id: '/_authenticated/citizens'
+      path: '/citizens'
+      fullPath: '/citizens'
+      preLoaderRoute: typeof AuthenticatedCitizensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
+  AuthenticatedFamiliesRoute: typeof AuthenticatedFamiliesRoute
   AuthenticatedHousesRoute: typeof AuthenticatedHousesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCitizensRoute: AuthenticatedCitizensRoute,
+  AuthenticatedFamiliesRoute: AuthenticatedFamiliesRoute,
   AuthenticatedHousesRoute: AuthenticatedHousesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }

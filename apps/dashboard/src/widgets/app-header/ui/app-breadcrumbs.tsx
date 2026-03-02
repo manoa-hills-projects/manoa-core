@@ -1,4 +1,5 @@
-import { useMatches, Link } from '@tanstack/react-router'
+import { Link, useMatches } from "@tanstack/react-router";
+import React from "react";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -6,18 +7,19 @@ import {
 	BreadcrumbList,
 	BreadcrumbPage,
 	BreadcrumbSeparator,
-} from "@/shared/ui/breadcrumb"
-import React from 'react'
+} from "@/shared/ui/breadcrumb";
 
 export function AppBreadcrumbs() {
-	const matches = useMatches()
-	const breadcrumbMatches = matches.filter((match) => match.staticData.breadcrumb)
+	const matches = useMatches();
+	const breadcrumbMatches = matches.filter(
+		(match) => match.staticData.breadcrumb,
+	);
 
 	return (
 		<Breadcrumb>
 			<BreadcrumbList>
 				{breadcrumbMatches.map((match, index) => {
-					const isLast = index === breadcrumbMatches.length - 1
+					const isLast = index === breadcrumbMatches.length - 1;
 
 					return (
 						<React.Fragment key={match.id}>
@@ -34,9 +36,9 @@ export function AppBreadcrumbs() {
 							</BreadcrumbItem>
 							{!isLast && <BreadcrumbSeparator />}
 						</React.Fragment>
-					)
+					);
 				})}
 			</BreadcrumbList>
 		</Breadcrumb>
-	)
+	);
 }

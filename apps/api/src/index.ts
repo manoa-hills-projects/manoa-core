@@ -3,6 +3,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import * as schema from "./shared/database/schemas"
 import housesRouter from './modules/house/house.router'
+import familiesRouter from './modules/family/family.router'
+import citizensRouter from './modules/citizen/citizen.router'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 
@@ -29,7 +31,9 @@ const app = new Hono<HonoConfig>()
 
     await next();
   })
-  .route('/houses', housesRouter);
+  .route('/houses', housesRouter)
+  .route('/families', familiesRouter)
+  .route('/citizens', citizensRouter);
 
 export default app
 
