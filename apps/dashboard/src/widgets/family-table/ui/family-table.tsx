@@ -1,6 +1,6 @@
 import { useDebounce } from "@uidotdev/usehooks";
 import { useState } from "react";
-import { useFamilies } from "@/entities/families/api/use-families";
+import { useFamilies } from "@/entities/families";
 import { familyColumns } from "@/entities/families/model/columns";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/ui/data-table";
@@ -11,7 +11,7 @@ export function FamilyTable() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const debouncedSearch = useDebounce(searchTerm, 500);
 
-	const [pagination, setPagination] = useState({ pageIndex: 1, pageSize: 10 });
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
 	const { data } = useFamilies(pagination, {

@@ -29,7 +29,7 @@ export function DataSheet({
 					<SheetTitle>{title}</SheetTitle>
 					{description && <SheetDescription>{description}</SheetDescription>}
 				</SheetHeader>
-				<div className="py-4">{children}</div>
+				<div className="py-4 px-4">{children}</div>
 			</SheetContent>
 		</Sheet>
 	);

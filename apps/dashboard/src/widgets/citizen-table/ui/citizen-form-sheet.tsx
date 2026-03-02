@@ -1,17 +1,23 @@
-import { useForm } from "@tanstack/react-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useCreateCitizen, useUpdateCitizen } from "@/entities/citizens";
-import type { Citizen } from "@/entities/citizens/model/types";
+import { z } from "zod";
+
+import { type Citizen, useCreateCitizen, useUpdateCitizen } from "@/entities/citizens";
+import {
+	familyOptionAdapter,
+	fetchFamiliesOptions,
+} from "@/entities/families";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
+import { Form } from "@/shared/ui/form";
 import {
-	FormControl,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/shared/ui/form";
-import { Input } from "@/shared/ui/input";
-import { Switch } from "@/shared/ui/switch";
+	FormCommandComboboxField,
+	FormInputField,
+	FormSelectField,
+	FormSwitchField,
+} from "@/shared/ui/form-fields";
 
 interface CitizenFormSheetProps {
 	open: boolean;
@@ -19,234 +25,151 @@ interface CitizenFormSheetProps {
 	citizen?: Citizen | null;
 }
 
+const formSchema = z.object({
+	cedula: z.string().min(1, { message: "Requerido" }),
+	names: z.string().min(1, { message: "Requerido" }),
+	surnames: z.string().min(1, { message: "Requerido" }),
+	gender: z.string().min(1, { message: "Requerido" }),
+	birth_date: z.string().min(1, { message: "Requerido" }),
+	is_head_of_household: z.boolean(),
+	family_id: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 export function CitizenFormSheet({
-open,
-onOpenChange,
-citizen,
+	open,
+	onOpenChange,
+	citizen,
 }: CitizenFormSheetProps) {
 	const createMutation = useCreateCitizen();
 	const updateMutation = useUpdateCitizen();
 
 	const isEditing = !!citizen;
 
-	const form = useForm({
-defaultValues: {
-cedula: citizen?.cedula || "",
-names: citizen?.names || "",
-surnames: citizen?.surnames || "",
-gender: citizen?.gender || "",
-birth_date: citizen?.birth_date || "",
-is_head_of_household: citizen?.is_head_of_household || false,
-family_id: citizen?.family_id || "",
-},
-onSubmit: async ({ value }) => {
-			try {
-				if (isEditing) {
-					await updateMutation.mutateAsync({ id: citizen.id, data: value });
-					toast.success("Ciudadano actualizado exitosamente");
-				} else {
-					await createMutation.mutateAsync(value);
-					toast.success("Ciudadano creado exitosamente");
-				}
-				onOpenChange(false);
-			} catch (_error) {
-				toast.error("Error al guardar el ciudadano");
-			}
+	const form = useForm<FormValues>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			cedula: citizen?.cedula || "",
+			names: citizen?.names || "",
+			surnames: citizen?.surnames || "",
+			gender: citizen?.gender || "",
+			birth_date: citizen?.birth_date || "",
+			is_head_of_household: citizen?.is_head_of_household || false,
+			family_id: citizen?.family_id || "",
 		},
 	});
 
+	useEffect(() => {
+		if (open) {
+			form.reset({
+				cedula: citizen?.cedula || "",
+				names: citizen?.names || "",
+				surnames: citizen?.surnames || "",
+				gender: citizen?.gender || "",
+				birth_date: citizen?.birth_date || "",
+				is_head_of_household: citizen?.is_head_of_household || false,
+				family_id: citizen?.family_id || "",
+			});
+		}
+	}, [citizen, open, form]);
+
+	const onSubmit = async (values: FormValues) => {
+		const payload = {
+			...values,
+			family_id: values.family_id || undefined,
+		};
+
+		try {
+			if (isEditing && citizen) {
+				await updateMutation.mutateAsync({ id: citizen.id, data: payload });
+				toast.success("Ciudadano actualizado exitosamente");
+			} else {
+				await createMutation.mutateAsync(payload);
+				toast.success("Ciudadano creado exitosamente");
+			}
+			onOpenChange(false);
+		} catch (_error) {
+			toast.error("Error al guardar el ciudadano");
+		}
+	};
+
 	return (
-<DataSheet
+		<DataSheet
 			open={open}
 			onOpenChange={onOpenChange}
 			title={isEditing ? "Editar Ciudadano" : "Registrar Ciudadano"}
 			description="Ingrese los datos del Ciudadano."
 		>
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					form.handleSubmit();
-				}}
-				className="flex flex-col gap-4 py-4 max-h-[80vh] overflow-y-auto pr-4"
-			>
-				<form.Field
-					name="cedula"
-					validators={{
-						onChange: ({ value }) => (!value ? "Requerido" : undefined),
-					}}
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>Cédula</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="names"
-					validators={{
-						onChange: ({ value }) => (!value ? "Requerido" : undefined),
-					}}
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>Nombres</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="surnames"
-					validators={{
-						onChange: ({ value }) => (!value ? "Requerido" : undefined),
-					}}
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>Apellidos</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="gender"
-					validators={{
-						onChange: ({ value }) => (!value ? "Requerido" : undefined),
-					}}
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>Género</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="birth_date"
-					validators={{
-						onChange: ({ value }) => (!value ? "Requerido" : undefined),
-					}}
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>Fecha Nacimiento</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									type="date"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="family_id"
-					children={(field) => (
-<FormItem>
-							<FormLabel htmlFor={field.name}>ID Familia</FormLabel>
-							<FormControl>
-								<Input
-									id={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-									placeholder="UUID familia (Opcional)"
-								/>
-							</FormControl>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
-				<form.Field
-					name="is_head_of_household"
-					children={(field) => (
-<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-							<FormControl>
-								<Switch
-									id={field.name}
-									checked={field.state.value}
-									onCheckedChange={(checked) => field.handleChange(checked)}
-								/>
-							</FormControl>
-							<FormLabel htmlFor={field.name}>Es jefe de hogar</FormLabel>
-							<FormMessage>
-								{field.state.meta.errors
-									? field.state.meta.errors.join(", ")
-									: null}
-							</FormMessage>
-						</FormItem>
-					)}
-				/>
+			<Form {...form}>
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto px-1"
+				>
+					<FormInputField
+						control={form.control}
+						name="cedula"
+						label="Cédula"
+					/>
+					<div className="grid grid-cols-2 gap-4">
+						<FormInputField
+							control={form.control}
+							name="names"
+							label="Nombres"
+						/>
+						<FormInputField
+							control={form.control}
+							name="surnames"
+							label="Apellidos"
+						/>
+					</div>
+					<div className="grid grid-cols-2 gap-4">
+						<FormSelectField
+							control={form.control}
+							name="gender"
+							label="Género"
+							placeholder="Seleccione"
+							options={[
+								{ label: "Masculino", value: "M" },
+								{ label: "Femenino", value: "F" },
+							]}
+						/>
+						<FormInputField
+							control={form.control}
+							name="birth_date"
+							label="Fecha de Nacimiento"
+							type="date"
+						/>
+					</div>
 
-				<form.Subscribe
-					selector={(state) => [state.canSubmit, state.isSubmitting]}
-					children={([canSubmit, isSubmitting]) => (
-<Button
-							type="submit"
-							disabled={!canSubmit || isSubmitting}
-							className="mt-4"
-						>
-							{isSubmitting ? "Guardando..." : "Guardar"}
-						</Button>
-					)}
-				/>
-			</form>
+					<FormCommandComboboxField
+						control={form.control}
+						name="family_id"
+						label="Familia"
+						placeholder="Buscar familia..."
+						fetcher={fetchFamiliesOptions}
+						getLabel={familyOptionAdapter.getLabel}
+						getValue={familyOptionAdapter.getValue}
+						renderOption={(item) => (
+							<div>{familyOptionAdapter.renderOption(item)}</div>
+						)}
+					/>
+
+					<FormSwitchField
+						control={form.control}
+						name="is_head_of_household"
+						label="Jefe de Hogar"
+					/>
+
+					<Button
+						type="submit"
+						disabled={form.formState.isSubmitting}
+						className="mt-4"
+					>
+						{form.formState.isSubmitting ? "Guardando..." : "Guardar"}
+					</Button>
+				</form>
+			</Form>
 		</DataSheet>
 	);
 }
