@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
-import { createCitizen, findAllCitizens, updateCitizen, findOneCitizen } from "./citizen.handler";
+import { createCitizen, findAllCitizens, updateCitizen, findOneCitizen, deleteCitizen } from "./citizen.handler";
 import { createCitizenDto, updateCitizenDto, citizenQueryDto } from "./dto";
 
 const citizensRouter = new Hono<HonoConfig>()
@@ -36,6 +36,14 @@ const citizensRouter = new Hono<HonoConfig>()
   const id = c.req.param("id");
 
   const result = await updateCitizen(db, id, data);
+
+  return c.json(result, 200);
+})
+.delete("/:id", async (c) => {
+  const db = c.get('db');
+  const id = c.req.param("id");
+
+  const result = await deleteCitizen(db, id);
 
   return c.json(result, 200);
 });

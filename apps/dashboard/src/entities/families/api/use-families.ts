@@ -5,17 +5,17 @@ import { type ApiResponse, api } from "@/shared/api/api-client";
 import type { Family } from "../model/types";
 
 export const fetchFamiliesOptions = async ({
-	search,
-	limit,
+search,
+limit,
 }: { search: string; limit: number }) => {
 	const response = await api
 		.get("families", {
-			searchParams: {
-				page: 1,
-				limit,
-				search,
-			},
-		})
+searchParams: {
+page: 1,
+limit,
+search,
+},
+})
 		.json<ApiResponse<Family>>();
 
 	return response.data;
@@ -24,20 +24,20 @@ export const fetchFamiliesOptions = async ({
 export const fetchFamiliesList = fetchFamiliesOptions;
 
 export const useFamilies = (
-	pagination: PaginationState,
-	filters?: { search?: string },
+pagination: PaginationState,
+filters?: { search?: string },
 ) => {
 	return useQuery({
-		queryKey: ["families", pagination, filters],
-		queryFn: async () => {
+queryKey: ["families", pagination, filters],
+queryFn: async () => {
 			const response = await api
 				.get("families", {
-					searchParams: {
-						page: pagination.pageIndex + 1,
-						limit: pagination.pageSize,
-						search: filters?.search,
-					},
-				})
+searchParams: {
+page: pagination.pageIndex + 1,
+limit: pagination.pageSize,
+search: filters?.search,
+},
+})
 				.json<ApiResponse<Family>>();
 
 			return response;
@@ -50,7 +50,7 @@ export const useCreateFamily = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (newFamily: Partial<Family>) => {
+mutationFn: async (newFamily: Partial<Family>) => {
 			return await api
 				.post("families", { json: newFamily })
 				.json<{ data: Family }>();
@@ -65,10 +65,23 @@ export const useUpdateFamily = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({ id, data }: { id: string; data: Partial<Family> }) => {
+mutationFn: async ({ id, data }: { id: string; data: Partial<Family> }) => {
 			return await api
 				.patch(`families/${id}`, { json: data })
 				.json<{ data: Family }>();
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["families"] });
+		},
+	});
+};
+
+export const useDeleteFamily = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+mutationFn: async (id: string) => {
+			return await api.delete(`families/${id}`).json<{ message: string }>();
 		},
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["families"] });

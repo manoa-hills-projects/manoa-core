@@ -84,3 +84,10 @@ export const updateCitizen = async (
 
   return buildSingleData(result ? toCitizenResponse(result) : null);
 };
+export const deleteCitizen = async (
+  db: DrizzleD1Database<typeof schema>,
+  id: string,
+) => {
+  await db.delete(schema.citizens).where(eq(schema.citizens.id, id)).run();
+  return { message: "Ciudadano eliminado correctamente" };
+};

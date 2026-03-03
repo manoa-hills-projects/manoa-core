@@ -11,7 +11,7 @@ export const houses = sqliteTable('houses', {
 export const families = sqliteTable('families', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull().unique(),
-  houseId: text('house_id').references(() => houses.id),
+  houseId: text('house_id').references(() => houses.id, { onDelete: 'set null' }),
   headId: text('head_id') // Se llena cuando asignas un jefe
 });
 
@@ -23,7 +23,7 @@ export const citizens = sqliteTable('citizens', {
   birthDate: text('birth_date').notNull(),
   gender: text('gender').notNull(),
   isHeadOfHousehold: integer('is_head_of_household', { mode: 'boolean' }).default(false),
-  familyId: text('family_id').references(() => families.id)
+  familyId: text('family_id').references(() => families.id, { onDelete: 'set null' })
 });
 
 export const familiesRelations = relations(families, ({ one, many }) => ({

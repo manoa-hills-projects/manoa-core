@@ -45,3 +45,10 @@ export const updateHouse = async (
   const [result] = await db.update(schema.houses).set(data).where(eq(schema.houses.id, id)).returning();
   return buildSingleData(result ?? null);
 };
+export const deleteHouse = async (
+  db: DrizzleD1Database<typeof schema>,
+  id: string,
+) => {
+  await db.delete(schema.houses).where(eq(schema.houses.id, id)).run();
+  return { message: "Casa eliminada correctamente" };
+};

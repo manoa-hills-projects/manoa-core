@@ -8,12 +8,17 @@ import * as schema from "./shared/database/schemas"
 import housesRouter from './modules/house/house.router'
 import familiesRouter from './modules/family/family.router'
 import citizensRouter from './modules/citizen/citizen.router'
+import aiRouter from './modules/ai/ai.router'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
 
 type Bindings = {
   sigcc_manoa_db: D1Database
+  AI?: {
+    run: (model: string, input: any) => Promise<any>
+  }
+  AI_MODEL?: string
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL?: string;
   DASHBOARD_ORIGIN?: string;
@@ -182,9 +187,11 @@ const app = new Hono<HonoConfig>()
   .use('/houses/*', requireAuth)
   .use('/families/*', requireAuth)
   .use('/citizens/*', requireAuth)
+  .use('/ai/*', requireAuth)
   .route('/houses', housesRouter)
   .route('/families', familiesRouter)
-  .route('/citizens', citizensRouter);
+  .route('/citizens', citizensRouter)
+  .route('/ai', aiRouter);
 
 export default app
 

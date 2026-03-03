@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
-import { createFamily, findAllFamilies, updateFamily, findOneFamily } from "./family.handler";
+import { createFamily, findAllFamilies, updateFamily, findOneFamily, deleteFamily } from "./family.handler";
 import { createFamilyDto, updateFamilyDto, familyQueryDto } from "./dto";
 
 const familiesRouter = new Hono<HonoConfig>()
@@ -36,6 +36,14 @@ const familiesRouter = new Hono<HonoConfig>()
   const id = c.req.param("id");
 
   const result = await updateFamily(db, id, data);
+
+  return c.json(result, 200);
+})
+.delete("/:id", async (c) => {
+  const db = c.get('db');
+  const id = c.req.param("id");
+
+  const result = await deleteFamily(db, id);
 
   return c.json(result, 200);
 });

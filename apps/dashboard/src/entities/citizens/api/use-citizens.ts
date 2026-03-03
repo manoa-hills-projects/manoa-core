@@ -4,20 +4,20 @@ import { type ApiResponse, api } from "@/shared/api/api-client";
 import type { Citizen } from "../model/types";
 
 export const useCitizens = (
-	pagination: PaginationState,
-	filters?: { search?: string },
+pagination: PaginationState,
+filters?: { search?: string },
 ) => {
 	return useQuery({
-		queryKey: ["citizens", pagination, filters],
-		queryFn: async () => {
+queryKey: ["citizens", pagination, filters],
+queryFn: async () => {
 			const response = await api
 				.get("citizens", {
-					searchParams: {
-						page: pagination.pageIndex + 1,
-						limit: pagination.pageSize,
-						search: filters?.search,
-					},
-				})
+searchParams: {
+page: pagination.pageIndex + 1,
+limit: pagination.pageSize,
+search: filters?.search,
+},
+})
 				.json<ApiResponse<Citizen>>();
 
 			return response;
@@ -30,7 +30,7 @@ export const useCreateCitizen = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (newCitizen: Partial<Citizen>) => {
+mutationFn: async (newCitizen: Partial<Citizen>) => {
 			return await api
 				.post("citizens", { json: newCitizen })
 				.json<{ data: Citizen }>();
@@ -45,16 +45,29 @@ export const useUpdateCitizen = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({
-			id,
-			data,
-		}: {
-			id: string;
+mutationFn: async ({
+id,
+data,
+}: {
+id: string;
 			data: Partial<Citizen>;
 		}) => {
 			return await api
 				.patch(`citizens/${id}`, { json: data })
 				.json<{ data: Citizen }>();
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["citizens"] });
+		},
+	});
+};
+
+export const useDeleteCitizen = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+mutationFn: async (id: string) => {
+			return await api.delete(`citizens/${id}`).json<{ message: string }>();
 		},
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["citizens"] });

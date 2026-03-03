@@ -1,25 +1,34 @@
 import { NAV_ITEMS } from "@/entities/navigation/config/menu";
-import { Sidebar, SidebarContent } from "@/shared/ui/sidebar";
+import { Link } from "@tanstack/react-router";
+import { IconInnerShadowTop } from "@tabler/icons-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/shared/ui/sidebar";
 import { SidebarItemsList } from "./components/sidebar-content";
 
 export const AppSidebar = () => {
 	return (
 		<Sidebar collapsible="offcanvas">
-			{/* <SidebarHeader>
+			<SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a>
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+              <Link to="/">
+                <IconInnerShadowTop className="size-5!" />
+                <span className="text-base font-semibold">Manoa</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader> */}
+      </SidebarHeader>
 			<SidebarContent>
 				<SidebarItemsList items={NAV_ITEMS} />
 				{/* <NavSecondsary items={data.navSecondary} className="mt-auto" /> */}

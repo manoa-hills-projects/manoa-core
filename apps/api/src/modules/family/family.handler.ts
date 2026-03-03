@@ -127,3 +127,10 @@ export const updateFamily = async (
 
   return buildSingleData(result ? toFamilyResponse(result) : null);
 };
+export const deleteFamily = async (
+  db: DrizzleD1Database<typeof schema>,
+  id: string,
+) => {
+  await db.delete(schema.families).where(eq(schema.families.id, id)).run();
+  return { message: "Familia eliminada correctamente" };
+};

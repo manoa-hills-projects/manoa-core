@@ -5,37 +5,37 @@ import { type ApiResponse, api } from "@/shared/api/api-client";
 import type { House } from "../model/types";
 
 export const fetchHousesOptions = async ({
-	search,
-	limit,
+search,
+limit,
 }: { search: string; limit: number }) => {
 	const response = await api
 		.get("houses", {
-			searchParams: {
-				page: 1,
-				limit,
-				search,
-			},
-		})
+searchParams: {
+page: 1,
+limit,
+search,
+},
+})
 		.json<ApiResponse<House>>();
 
 	return response.data;
 };
 
 export const useHouses = (
-	pagination: PaginationState,
-	filters?: { search?: string },
+pagination: PaginationState,
+filters?: { search?: string },
 ) => {
 	return useQuery({
-		queryKey: ["houses", pagination, filters],
-		queryFn: async () => {
+queryKey: ["houses", pagination, filters],
+queryFn: async () => {
 			const response = await api
 				.get("houses", {
-					searchParams: {
-						page: pagination.pageIndex + 1,
-						limit: pagination.pageSize,
-						search: filters?.search,
-					},
-				})
+searchParams: {
+page: pagination.pageIndex + 1,
+limit: pagination.pageSize,
+search: filters?.search,
+},
+})
 				.json<ApiResponse<House>>();
 
 			return response;
@@ -48,7 +48,7 @@ export const useCreateHouse = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (newHouse: Partial<House>) => {
+mutationFn: async (newHouse: Partial<House>) => {
 			return await api
 				.post("houses", { json: newHouse })
 				.json<{ data: House }>();
@@ -63,10 +63,23 @@ export const useUpdateHouse = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({ id, data }: { id: string; data: Partial<House> }) => {
+mutationFn: async ({ id, data }: { id: string; data: Partial<House> }) => {
 			return await api
 				.patch(`houses/${id}`, { json: data })
 				.json<{ data: House }>();
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["houses"] });
+		},
+	});
+};
+
+export const useDeleteHouse = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+mutationFn: async (id: string) => {
+			return await api.delete(`houses/${id}`).json<{ message: string }>();
 		},
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["houses"] });

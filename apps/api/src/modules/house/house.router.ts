@@ -3,7 +3,7 @@ import { updateHouseDto } from "./dto/update-house.dto";
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
-import { createHouse, findAllHouses, updateHouse } from "./house.handler";
+import { createHouse, findAllHouses, updateHouse, deleteHouse } from "./house.handler";
 import { houseQueryDto } from "./dto/find-all-houses.dto";
 
 const housesRouter = new Hono<HonoConfig>()
@@ -30,6 +30,14 @@ const housesRouter = new Hono<HonoConfig>()
   const id = c.req.param("id");
 
   const result = await updateHouse(db, id, data);
+
+  return c.json(result, 200);
+})
+.delete("/:id", async (c) => {
+  const db = c.get('db');
+  const id = c.req.param("id");
+
+  const result = await deleteHouse(db, id);
 
   return c.json(result, 200);
 });
