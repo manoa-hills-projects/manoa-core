@@ -24,6 +24,8 @@
 	// 	"binding": "AI"
 	// }
 	"vars": {
-	  "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev"
+	  "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
+	  "DASHBOARD_ORIGIN": "http://localhost:3000",
+	  "RESEND_FROM_EMAIL": "onboarding@resend.dev"
 	}
 }

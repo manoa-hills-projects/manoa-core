@@ -1,4 +1,5 @@
 import ky from "ky";
+import { env } from "@/env";
 
 export interface ApiResponse<T> {
 	data: T[];
@@ -11,7 +12,8 @@ export interface ApiResponse<T> {
 }
 
 export const api = ky.create({
-	prefixUrl: import.meta.env.VITE_API_URL || "http://localhost:8787/api",
+	prefixUrl: env.VITE_API_URL || "http://localhost:8787/api",
+	credentials: "include",
 	//   hooks: {
 	//     beforeRequest: [
 	//       request => {

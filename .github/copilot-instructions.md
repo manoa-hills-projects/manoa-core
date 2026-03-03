@@ -15,6 +15,9 @@ This is a Turborepo-managed monorepo containing a full-stack application using *
 * **Field Mapping**: If API contracts use domain-specific or snake_case names (e.g. `cedula`, `family_id`) but Drizzle models use camelCase/internal names (e.g. `dni`, `familyId`), map explicitly in handlers (`to<Entity>Response`, create/update adapters). Never pass client payloads directly to Drizzle when names differ.
 * **Responses**: Avoid returning raw objects. Use utility functions from `src/shared/utils/api-reponse.ts` such as `buildSingleData(result)` or `buildPaginatedData(rows, total, page, limit)`.
 * **Database**: All Drizzle schemas are centralized under `src/shared/database/schemas/`. When modifying schemas, generate migrations via `npm run db:generate`.
+* **Auth Integration**: Mount Better Auth under `/api/auth/*` directly from `src/index.ts` using `getAuth(...)` from `src/shared/utils/auth.util.ts`. Keep protected business routes behind a session middleware (`auth.api.getSession(...)`) before mounting domain routers.
+* **Auth Security**: Keep CORS explicit (`DASHBOARD_ORIGIN`) with credentials enabled. For login hardening, validate `X-Turnstile-Token` server-side on `POST /api/auth/sign-in/email` when `TURNSTILE_SECRET_KEY` is configured.
+* **Sign-up Policy**: Public sign-up must stay disabled in UI. For initial setup, allow `POST /api/auth/sign-up/email` only when no users exist and only with `X-Bootstrap-Key` matching `BOOTSTRAP_ADMIN_KEY`.
 
 ## 🖥 Frontend Patterns (`apps/dashboard/`)
 * **Feature-Sliced Design (FSD)**: The application structure adheres to FSD principles:
@@ -23,6 +26,7 @@ This is a Turborepo-managed monorepo containing a full-stack application using *
   * `widgets/`: Composed standalone components (e.g., `app-sidebar`, `house-table`).
   * `routes/`: File-based routes for TanStack Router (`__root.tsx` for layout mappings).
 * **Data Fetching**: Use `ky` from `src/shared/api/api-client.ts`, combined with `@tanstack/react-query`. Anticipate backend responses wrapped in `ApiResponse<T>` with `metadata` for paginated queries.
+* **Session Cookies**: Keep `credentials: "include"` in `shared/api/api-client.ts` and configure Better Auth client base URL in `lib/auth-client.ts` from env-derived API origin.
 * **Pagination Contract**: In dashboard tables, TanStack `PaginationState` is **0-based** (`pageIndex` starts at `0`). Convert to backend 1-based pages only at API hook level (`page: pagination.pageIndex + 1`).
 * **Shared Table Pagination UI**: Reuse `shared/ui/table-pagination.tsx` for all entity tables. Keep Spanish copy, numeric page buttons visible, and compact behavior on mobile (hide non-active page numbers on small screens).
 * **Search Combobox Pattern**: For relationship fields (e.g. `family_id`, `house_id`), use the generic `CommandCombobox` in `shared/ui/async-select.tsx` and the RHF wrapper `FormCommandComboboxField` in `shared/ui/form-fields.tsx`. Do not use raw UUID text inputs for foreign keys.
