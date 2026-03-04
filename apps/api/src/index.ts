@@ -104,7 +104,12 @@ const app = new Hono<HonoConfig>()
     const allowedOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
 
     return cors({
-      origin: allowedOrigin,
+      origin: (origin) => {
+        if (allowedOrigin === '*' && origin) {
+          return origin;
+        }
+        return allowedOrigin;
+      },
       credentials: true,
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
