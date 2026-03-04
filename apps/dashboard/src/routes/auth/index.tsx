@@ -1,5 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
-import { Navigate, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import {
+	type FormEvent,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/shared/ui/button";
@@ -57,7 +64,10 @@ function RouteComponent() {
 			const turnstile = (
 				window as Window & {
 					turnstile?: {
-						render: (element: HTMLElement, options: Record<string, unknown>) => string;
+						render: (
+							element: HTMLElement,
+							options: Record<string, unknown>,
+						) => string;
 						remove: (id: string) => void;
 						reset: (id: string) => void;
 					};
@@ -73,27 +83,33 @@ function RouteComponent() {
 				turnstileWidgetIdRef.current = null;
 			}
 
-			turnstileWidgetIdRef.current = turnstile.render(turnstileContainerRef.current, {
-				sitekey: turnstileSiteKey,
-				callback: (token: string) => {
-					setTurnstileToken(token);
+			turnstileWidgetIdRef.current = turnstile.render(
+				turnstileContainerRef.current,
+				{
+					sitekey: turnstileSiteKey,
+					callback: (token: string) => {
+						setTurnstileToken(token);
+					},
+					"expired-callback": () => {
+						setTurnstileToken(null);
+					},
+					"error-callback": () => {
+						setTurnstileToken(null);
+					},
 				},
-				"expired-callback": () => {
-					setTurnstileToken(null);
-				},
-				"error-callback": () => {
-					setTurnstileToken(null);
-				},
-			});
+			);
 		};
 
-		const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null;
+		const existingScript = document.getElementById(
+			scriptId,
+		) as HTMLScriptElement | null;
 		let onLoadHandler: (() => void) | null = null;
 
 		if (!existingScript) {
 			const script = document.createElement("script");
 			script.id = scriptId;
-			script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+			script.src =
+				"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 			script.async = true;
 			script.defer = true;
 			script.onload = renderWidget;
@@ -165,7 +181,9 @@ function RouteComponent() {
 			await refetch();
 			navigate({ to: "/" });
 		} catch (error) {
-			setErrorMessage(error instanceof Error ? error.message : "No se pudo iniciar sesión");
+			setErrorMessage(
+				error instanceof Error ? error.message : "No se pudo iniciar sesión",
+			);
 		} finally {
 			setIsSubmitting(false);
 			const turnstile = (
@@ -248,7 +266,10 @@ function RouteComponent() {
 							</div>
 
 							<div className="space-y-2">
-								<label htmlFor={passwordInputId} className="text-sm font-medium">
+								<label
+									htmlFor={passwordInputId}
+									className="text-sm font-medium"
+								>
 									Contraseña
 								</label>
 								<Input
@@ -263,7 +284,8 @@ function RouteComponent() {
 
 							{!turnstileSiteKey ? (
 								<p className="text-xs text-amber-600">
-									Captcha no configurado: define VITE_TURNSTILE_SITE_KEY en .env.local
+									Captcha no configurado: define VITE_TURNSTILE_SITE_KEY en
+									.env.local
 								</p>
 							) : null}
 
@@ -276,7 +298,10 @@ function RouteComponent() {
 					) : (
 						<form className="space-y-4" onSubmit={handleForgotPassword}>
 							<div className="space-y-2">
-								<label htmlFor={forgotEmailInputId} className="text-sm font-medium">
+								<label
+									htmlFor={forgotEmailInputId}
+									className="text-sm font-medium"
+								>
 									Correo
 								</label>
 								<Input

@@ -6,8 +6,6 @@ import {
 	type PaginationState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { Button } from "@/shared/ui/button";
-import { TablePagination } from "@/shared/ui/table-pagination";
 import {
 	Table,
 	TableBody,
@@ -16,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/ui/table";
+import { TablePagination } from "@/shared/ui/table-pagination";
 
 interface DataTableProps<TData> {
 	columns: ColumnDef<TData>[];

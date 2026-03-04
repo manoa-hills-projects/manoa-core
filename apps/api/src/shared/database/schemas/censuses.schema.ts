@@ -23,7 +23,8 @@ export const citizens = sqliteTable('citizens', {
   birthDate: text('birth_date').notNull(),
   gender: text('gender').notNull(),
   isHeadOfHousehold: integer('is_head_of_household', { mode: 'boolean' }).default(false),
-  familyId: text('family_id').references(() => families.id, { onDelete: 'set null' })
+  familyId: text('family_id').references(() => families.id, { onDelete: 'set null' }),
+  userId: text('user_id'), // Relaciona el ciudadano con un usuario del sistema (better-auth)
 });
 
 export const familiesRelations = relations(families, ({ one, many }) => ({

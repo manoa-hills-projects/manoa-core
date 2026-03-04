@@ -16,6 +16,7 @@ export const createCitizenDto = z.object({
     .optional()
     .transform((v) => (v ? v : null))
     .pipe(z.string().uuid().nullable()),
+  user_id: z.string().optional().nullable(),
 });
 
 export type createCitizenInput = z.infer<typeof createCitizenDto>;

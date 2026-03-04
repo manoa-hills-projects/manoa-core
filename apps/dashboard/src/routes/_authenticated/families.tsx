@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { FamilyTable } from "@/widgets/family-table";
 
 export const Route = createFileRoute("/_authenticated/families")({
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/families")({
 
 function RouteComponent() {
 	return (
-		<>
+		<ProtectedRoute permissions={{ census: ["read"] }}>
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">Familias</h1>
@@ -21,6 +22,6 @@ function RouteComponent() {
 			</div>
 
 			<FamilyTable />
-		</>
+		</ProtectedRoute>
 	);
 }

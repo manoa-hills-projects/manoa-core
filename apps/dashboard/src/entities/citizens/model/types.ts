@@ -7,4 +7,6 @@ export interface Citizen {
 	birth_date: string;
 	is_head_of_household: boolean;
 	family_id: string | null;
+	family_label?: string | null;
+	user_id?: string | null;
 }

@@ -2,8 +2,10 @@ import {
 	IconDashboard,
 	IconHome,
 	IconSettings,
+	IconSpeakerphone,
 	IconUser,
 	IconUsers,
+	IconVideo,
 } from "@tabler/icons-react";
 import type { NavigationItems } from "../model/types";
 
@@ -12,30 +14,50 @@ export const NAV_ITEMS: NavigationItems[] = [
 		title: "Dashboard",
 		url: "/",
 		icon: IconDashboard,
-		permission: "DASHBOARD:READ",
 	},
 	{
-		title: "Casas",
+		title: "Viviendas",
 		url: "/houses",
 		icon: IconHome,
-		permission: "HOUSES:READ",
+		permission: { census: ["read"] },
 	},
 	{
 		title: "Familias",
 		url: "/families",
 		icon: IconUsers,
-		permission: "FAMILIES:READ",
+		permission: { census: ["read"] },
 	},
 	{
 		title: "Ciudadanos",
 		url: "/citizens",
 		icon: IconUser,
-		permission: "INHABITANTS:READ",
+		permission: { census: ["read"] },
 	},
+	{
+		title: "Proyectos",
+		url: "/polls",
+		icon: IconSpeakerphone,
+		permission: { project: ["read"] },
+	},
+	{
+		title: "Asambleas",
+		url: "/meetings",
+		icon: IconVideo,
+		permission: { project: ["read"] },
+	},
+	{
+		title: "Usuarios",
+		url: "/users",
+		icon: IconUsers,
+		permission: { user: ["list"] },
+	},
+];
+
+export const NAV_SECONDARY: NavigationItems[] = [
 	{
 		title: "Configuración",
 		url: "/settings",
 		icon: IconSettings,
-		permission: "SETTINGS:MANAGE",
+		permission: { user: ["list"] },
 	},
 ];

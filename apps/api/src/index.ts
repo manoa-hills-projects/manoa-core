@@ -9,6 +9,7 @@ import housesRouter from './modules/house/house.router'
 import familiesRouter from './modules/family/family.router'
 import citizensRouter from './modules/citizen/citizen.router'
 import aiRouter from './modules/ai/ai.router'
+import { pollsRouter } from './modules/polls/polls.router'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
@@ -31,6 +32,7 @@ type Bindings = {
 type Variables = {
   db: DrizzleD1Database<typeof schema>
   auth: ReturnType<typeof getAuth>
+  session?: any
 }
 
 export type HonoConfig = { Bindings: Bindings, Variables: Variables };
@@ -83,12 +85,14 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
   const auth = c.get("auth");
   const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
   const session = "data" in (sessionData as Record<string, unknown>)
-    ? (sessionData as { data?: { session?: unknown } | null }).data
-    : (sessionData as { session?: unknown } | null);
+    ? (sessionData as { data?: { session?: unknown, user?: unknown } | null }).data
+    : (sessionData as { session?: unknown, user?: unknown } | null);
 
   if (!session?.session) {
     return c.json({ message: "No autorizado" }, 401);
   }
+
+  c.set("session", session);
 
   await next();
 };
@@ -188,10 +192,12 @@ const app = new Hono<HonoConfig>()
   .use('/families/*', requireAuth)
   .use('/citizens/*', requireAuth)
   .use('/ai/*', requireAuth)
+  .use('/polls/*', requireAuth)
   .route('/houses', housesRouter)
   .route('/families', familiesRouter)
   .route('/citizens', citizensRouter)
-  .route('/ai', aiRouter);
+  .route('/ai', aiRouter)
+  .route('/polls', pollsRouter);
 
 export default app
 

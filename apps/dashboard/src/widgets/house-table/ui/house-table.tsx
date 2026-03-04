@@ -1,14 +1,14 @@
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useMemo, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { houseColumns, useHouses, useDeleteHouse } from "@/entities/houses";
+import { houseColumns, useDeleteHouse, useHouses } from "@/entities/houses";
 import type { House } from "@/entities/houses/model/types";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { DataTable } from "@/shared/ui/data-table";
-import { Input } from "@/shared/ui/input";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Input } from "@/shared/ui/input";
 
 import { HouseFormSheet } from "./house-form-sheet";
 
@@ -62,12 +62,12 @@ export function HouseTable() {
 		if (!selectedHouse) return;
 		deleteHouse(selectedHouse.id, {
 			onSuccess: () => {
-				toast.success("Casa eliminada exitosamente");
+				toast.success("Vivienda eliminada exitosamente");
 				setIsDeleteDialogOpen(false);
 				setSelectedHouse(null);
 			},
 			onError: () => {
-				toast.error("Error al eliminar casa");
+				toast.error("Error al eliminar vivienda");
 			},
 		});
 	};
@@ -77,6 +77,7 @@ export function HouseTable() {
 			...houseColumns,
 			{
 				id: "actions",
+				header: "Acciones",
 				cell: ({ row }) => {
 					const house = row.original;
 					return (
@@ -93,6 +94,7 @@ export function HouseTable() {
 									<Pencil className="mr-2 h-4 w-4" />
 									Editar
 								</DropdownMenuItem>
+
 								<DropdownMenuItem
 									onClick={() => handleDeletePrompt(house)}
 									className="text-red-600 focus:bg-red-50 focus:text-red-600"
@@ -106,16 +108,15 @@ export function HouseTable() {
 				},
 			},
 		],
-		[]
+		[],
 	);
-
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex items-center gap-2 w-full max-w-sm">
 					<Input
-						placeholder="Buscar casa o sector..."
+						placeholder="Buscar vivienda o sector..."
 						value={search}
 						onChange={(e) => {
 							setSearch(e.target.value);
@@ -123,10 +124,12 @@ export function HouseTable() {
 						}}
 					/>
 					{isLoading && (
-						<span className="text-sm animate-pulse whitespace-nowrap">Buscando...</span>
+						<span className="text-sm animate-pulse whitespace-nowrap">
+							Buscando...
+						</span>
 					)}
 				</div>
-				<Button onClick={handleCreate}>Registrar Casa</Button>
+				<Button onClick={handleCreate}>Registrar Vivienda</Button>
 			</div>
 
 			<DataTable
@@ -137,17 +140,17 @@ export function HouseTable() {
 				onPaginationChange={setPagination}
 			/>
 
-			<HouseFormSheet 
-				open={isSheetOpen} 
-				onOpenChange={setIsSheetOpen} 
-				house={selectedHouse} 
+			<HouseFormSheet
+				open={isSheetOpen}
+				onOpenChange={setIsSheetOpen}
+				house={selectedHouse}
 			/>
-			
+
 			<ConfirmDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
-				title="Eliminar casa"
-				description={`¿Está seguro que desea eliminar la casa ${selectedHouse?.number}, sector ${selectedHouse?.sector}? Esta acción no se puede deshacer.`}
+				title="Eliminar vivienda"
+				description={`¿Está seguro que desea eliminar la vivienda ${selectedHouse?.number}, sector ${selectedHouse?.sector}? Esta acción no se puede deshacer.`}
 				onConfirm={handleDeleteConfirm}
 				isLoading={isDeleting}
 			/>

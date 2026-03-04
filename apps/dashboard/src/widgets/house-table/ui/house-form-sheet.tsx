@@ -58,14 +58,14 @@ export function HouseFormSheet({
 		try {
 			if (isEditing && house) {
 				await updateMutation.mutateAsync({ id: house.id, data: values });
-				toast.success("Casa actualizada exitosamente");
+				toast.success("Vivienda actualizada exitosamente");
 			} else {
 				await createMutation.mutateAsync(values);
-				toast.success("Casa creada exitosamente");
+				toast.success("Vivienda creada exitosamente");
 			}
 			onOpenChange(false);
 		} catch (_error) {
-			toast.error("Error al guardar la casa");
+			toast.error("Error al guardar la vivienda");
 		}
 	};
 
@@ -73,7 +73,7 @@ export function HouseFormSheet({
 		<DataSheet
 			open={open}
 			onOpenChange={onOpenChange}
-			title={isEditing ? "Editar Casa" : "Registrar Casa"}
+			title={isEditing ? "Editar Vivienda" : "Registrar Vivienda"}
 			description="Ingrese los datos de la vivienda."
 		>
 			<Form {...form}>
@@ -86,16 +86,8 @@ export function HouseFormSheet({
 						name="address"
 						label="Dirección"
 					/>
-					<FormInputField
-						control={form.control}
-						name="sector"
-						label="Sector"
-					/>
-					<FormInputField
-						control={form.control}
-						name="number"
-						label="Número"
-					/>
+					<FormInputField control={form.control} name="sector" label="Sector" />
+					<FormInputField control={form.control} name="number" label="Número" />
 					<Button
 						type="submit"
 						disabled={form.formState.isSubmitting}

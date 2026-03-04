@@ -1,16 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type AppModule =
-	| "HOUSES"
-	| "FAMILIES"
-	| "INHABITANTS"
-	| "DASHBOARD"
-	| "USERS"
-	| "SETTINGS";
-
-export type AppAction = "READ" | "CREATE" | "UPDATE" | "DELETE" | "MANAGE";
-
-export type AppPermission = `${AppModule}:${AppAction}`;
+export type AppPermission = Record<string, string[]>;
 
 export interface NavigationItems {
 	title: string;

@@ -1,4 +1,4 @@
-import { Navigate, createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { MainLayout } from "@/widgets/main-layout";
 

@@ -13,6 +13,7 @@ const toCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
   gender: citizen.gender,
   is_head_of_household: citizen.isHeadOfHousehold,
   family_id: citizen.familyId,
+  user_id: citizen.userId,
 });
 
 export const createCitizen = async (
@@ -29,6 +30,7 @@ export const createCitizen = async (
       gender: data.gender,
       isHeadOfHousehold: data.is_head_of_household,
       familyId: data.family_id,
+      userId: data.user_id,
     })
     .returning();
 
@@ -43,7 +45,21 @@ export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: s
 export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, queryParams: CitizenQueryParams) => {
   const { limit, page, search } = queryParams;
 
-  const query = db.select().from(schema.citizens);
+  const query = db
+    .select({
+      id: schema.citizens.id,
+      dni: schema.citizens.dni,
+      firstName: schema.citizens.firstName,
+      lastName: schema.citizens.lastName,
+      birthDate: schema.citizens.birthDate,
+      gender: schema.citizens.gender,
+      isHeadOfHousehold: schema.citizens.isHeadOfHousehold,
+      familyId: schema.citizens.familyId,
+      userId: schema.citizens.userId,
+      familyName: schema.families.name,
+    })
+    .from(schema.citizens)
+    .leftJoin(schema.families, eq(schema.families.id, schema.citizens.familyId));
 
   if (search) {
     query.where(
@@ -56,7 +72,20 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     db.select({ total: count() }).from(schema.citizens),
   ]);
 
-  return buildPaginatedData(rows.map(toCitizenResponse), total, page, limit);
+  const data = rows.map((row) => ({
+    id: row.id,
+    cedula: row.dni,
+    names: row.firstName,
+    surnames: row.lastName,
+    birth_date: row.birthDate,
+    gender: row.gender,
+    is_head_of_household: row.isHeadOfHousehold,
+    family_id: row.familyId,
+    user_id: row.userId,
+    family_label: row.familyName,
+  }));
+
+  return buildPaginatedData(data, total, page, limit);
 };
 
 export const updateCitizen = async (
@@ -75,6 +104,7 @@ export const updateCitizen = async (
     updateData.isHeadOfHousehold = data.is_head_of_household;
   }
   if (data.family_id !== undefined) updateData.familyId = data.family_id;
+  if (data.user_id !== undefined) updateData.userId = data.user_id;
 
   const [result] = await db
     .update(schema.citizens)

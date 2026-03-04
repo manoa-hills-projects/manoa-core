@@ -4,12 +4,19 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { type Family, useCreateFamily, useUpdateFamily } from "@/entities/families";
+import {
+	type Family,
+	useCreateFamily,
+	useUpdateFamily,
+} from "@/entities/families";
 import { fetchHousesOptions, houseOptionAdapter } from "@/entities/houses";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
-import { FormCommandComboboxField, FormInputField } from "@/shared/ui/form-fields";
+import {
+	FormCommandComboboxField,
+	FormInputField,
+} from "@/shared/ui/form-fields";
 
 interface FamilyFormSheetProps {
 	open: boolean;
@@ -91,8 +98,9 @@ export function FamilyFormSheet({
 					<FormCommandComboboxField
 						control={form.control}
 						name="house_id"
-						label="Casa"
-						placeholder="Buscar casa..."
+						label="Vivienda"
+						placeholder="Buscar vivienda..."
+						initialLabel={family?.house_label}
 						fetcher={fetchHousesOptions}
 						getLabel={houseOptionAdapter.getLabel}
 						getValue={houseOptionAdapter.getValue}

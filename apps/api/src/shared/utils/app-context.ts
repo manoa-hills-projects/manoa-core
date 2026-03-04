@@ -1,0 +1,33 @@
+import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type * as schema from "../database/schemas";
+import type { getAuth } from "./auth.util";
+import type { Session, User } from "better-auth";
+
+export type Bindings = {
+  sigcc_manoa_db: D1Database;
+  AI?: {
+    run: (model: string, input: any) => Promise<any>;
+  };
+  AI_MODEL?: string;
+  BETTER_AUTH_SECRET: string;
+  BETTER_AUTH_URL?: string;
+  DASHBOARD_ORIGIN?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM_EMAIL?: string;
+  BOOTSTRAP_ADMIN_KEY?: string;
+};
+
+export type Variables = {
+  db: DrizzleD1Database<typeof schema>;
+  auth: ReturnType<typeof getAuth>;
+  session?: {
+    session: Session;
+    user: User;
+  } | null;
+};
+
+export type AppContext = {
+  Bindings: Bindings;
+  Variables: Variables;
+};

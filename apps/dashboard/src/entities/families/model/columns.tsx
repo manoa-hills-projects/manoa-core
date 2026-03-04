@@ -33,7 +33,7 @@ export const familyColumns: ColumnDef<Family>[] = [
 	},
 	{
 		accessorKey: "house_label",
-		header: "Casa",
+		header: "Vivienda",
 		cell: ({ row }) => {
 			const label = row.original.house_label || row.original.house_id;
 

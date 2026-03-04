@@ -1,21 +1,14 @@
+import type { Table } from "@tanstack/react-table";
 import {
 	ChevronFirst,
 	ChevronLast,
 	ChevronLeft,
 	ChevronRight,
 } from "lucide-react";
-import type { Table } from "@tanstack/react-table";
 import { useId } from "react";
 
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/ui/select";
 import {
 	Pagination,
 	PaginationContent,
@@ -23,6 +16,13 @@ import {
 	PaginationItem,
 	PaginationLink,
 } from "@/shared/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/shared/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 
 interface TablePaginationProps<TData> {
@@ -78,7 +78,10 @@ export function TablePagination<TData>({
 					value={`${pageSize}`}
 					onValueChange={(value) => table.setPageSize(Number(value))}
 				>
-					<SelectTrigger id={pageSizeSelectId} className="h-8 w-fit whitespace-nowrap">
+					<SelectTrigger
+						id={pageSizeSelectId}
+						className="h-8 w-fit whitespace-nowrap"
+					>
 						<SelectValue placeholder="Selecciona cantidad" />
 					</SelectTrigger>
 					<SelectContent className="[&_*[role=option]]:pr-8 [&_*[role=option]]:pl-2 [&_*[role=option]>span]:right-2 [&_*[role=option]>span]:left-auto">
@@ -91,7 +94,10 @@ export function TablePagination<TData>({
 				</Select>
 			</div>
 			<div className="text-muted-foreground flex grow items-center justify-end whitespace-nowrap max-sm:justify-center">
-				<p className="text-muted-foreground text-sm whitespace-nowrap" aria-live="polite">
+				<p
+					className="text-muted-foreground text-sm whitespace-nowrap"
+					aria-live="polite"
+				>
 					Mostrando <span className="text-foreground">{start}</span> a{" "}
 					<span className="text-foreground">{end}</span> de{" "}
 					<span className="text-foreground">{rowCount}</span> resultados
@@ -127,10 +133,7 @@ export function TablePagination<TData>({
 					{pageLinks.map((page) => {
 						if (page === "ellipsis-left" || page === "ellipsis-right") {
 							return (
-								<PaginationItem
-									key={page}
-									className="max-sm:hidden"
-								>
+								<PaginationItem key={page} className="max-sm:hidden">
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<PaginationEllipsis />
@@ -148,11 +151,7 @@ export function TablePagination<TData>({
 						return (
 							<PaginationItem
 								key={`page-${page}`}
-								className={
-									isCurrentPage
-										? ""
-										: "max-sm:hidden"
-								}
+								className={isCurrentPage ? "" : "max-sm:hidden"}
 							>
 								<PaginationLink
 									href="#"

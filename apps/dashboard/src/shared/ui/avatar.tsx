@@ -53,7 +53,7 @@ function AvatarFallback({
 		/>
 	);
 }
-
+//i will make you pop like that pum pum pum
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
 	return (
 		<span

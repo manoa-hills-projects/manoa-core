@@ -4,11 +4,12 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { type Citizen, useCreateCitizen, useUpdateCitizen } from "@/entities/citizens";
 import {
-	familyOptionAdapter,
-	fetchFamiliesOptions,
-} from "@/entities/families";
+	type Citizen,
+	useCreateCitizen,
+	useUpdateCitizen,
+} from "@/entities/citizens";
+import { familyOptionAdapter, fetchFamiliesOptions } from "@/entities/families";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
@@ -106,11 +107,7 @@ export function CitizenFormSheet({
 					onSubmit={form.handleSubmit(onSubmit)}
 					className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto px-1"
 				>
-					<FormInputField
-						control={form.control}
-						name="cedula"
-						label="Cédula"
-					/>
+					<FormInputField control={form.control} name="cedula" label="Cédula" />
 					<div className="grid grid-cols-2 gap-4">
 						<FormInputField
 							control={form.control}
@@ -147,6 +144,7 @@ export function CitizenFormSheet({
 						name="family_id"
 						label="Familia"
 						placeholder="Buscar familia..."
+						initialLabel={citizen?.family_label}
 						fetcher={fetchFamiliesOptions}
 						getLabel={familyOptionAdapter.getLabel}
 						getValue={familyOptionAdapter.getValue}

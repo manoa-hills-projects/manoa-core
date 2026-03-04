@@ -19,10 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 export interface CommandComboboxProps<T> {
 	value?: string | null;
 	onChange: (value: string | null) => void;
-	fetcher: (params: {
-		search: string;
-		limit: number;
-	}) => Promise<T[]>;
+	fetcher: (params: { search: string; limit: number }) => Promise<T[]>;
 	renderOption: (item: T) => React.ReactNode;
 	getLabel: (item: T) => string;
 	getValue: (item: T) => string;
@@ -32,6 +29,7 @@ export interface CommandComboboxProps<T> {
 	emptyMessage?: string;
 	limit?: number;
 	className?: string;
+	initialLabel?: string | null;
 }
 
 export function CommandCombobox<T>({
@@ -47,9 +45,12 @@ export function CommandCombobox<T>({
 	emptyMessage = "No se encontraron resultados.",
 	limit = 10,
 	className,
+	initialLabel,
 }: CommandComboboxProps<T>) {
 	const [open, setOpen] = React.useState(false);
-	const [selectedLabel, setSelectedLabel] = React.useState<string>("");
+	const [selectedLabel, setSelectedLabel] = React.useState<string>(
+		initialLabel || "",
+	);
 	const [selectedItem, setSelectedItem] = React.useState<T | null>(null);
 	const [items, setItems] = React.useState<T[]>([]);
 	const [loading, setLoading] = React.useState(false);
@@ -92,6 +93,14 @@ export function CommandCombobox<T>({
 			isMounted = false;
 		};
 	}, [fetcher, debouncedSearch, open, limit]);
+
+	// Initialize cache with initialLabel if provided
+	React.useEffect(() => {
+		if (value && initialLabel && !labelsCacheRef.current.has(value)) {
+			labelsCacheRef.current.set(value, initialLabel);
+			setSelectedLabel(initialLabel);
+		}
+	}, [value, initialLabel]);
 
 	// Find label for selected value
 	React.useEffect(() => {

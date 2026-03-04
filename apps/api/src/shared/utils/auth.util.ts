@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../database/schemas";
+import { ac, admin as adminRole, superadmin, user as userRole } from "./permissions";
 
 interface authConfig {
   d1: D1Database;
@@ -53,5 +55,15 @@ export const getAuth = (config: authConfig) => {
     secret: secret,
     baseURL: baseURL,
     trustedOrigins,
+    plugins: [
+      admin({
+        ac,
+        roles: {
+          admin: adminRole,
+          user: userRole,
+          superadmin,
+        },
+      }),
+    ],
   });
 };

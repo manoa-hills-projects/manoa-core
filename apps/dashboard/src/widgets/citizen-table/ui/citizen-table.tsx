@@ -1,14 +1,18 @@
+import type { ColumnDef } from "@tanstack/react-table";
 import { useDebounce } from "@uidotdev/usehooks";
-import { type ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { useCitizens, useDeleteCitizen, type Citizen } from "@/entities/citizens";
+import {
+	type Citizen,
+	useCitizens,
+	useDeleteCitizen,
+} from "@/entities/citizens";
 import { citizenColumns } from "@/entities/citizens/model/columns";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { DataTable } from "@/shared/ui/data-table";
-import { Input } from "@/shared/ui/input";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -16,7 +20,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Input } from "@/shared/ui/input";
 
 import { CitizenFormSheet } from "./citizen-form-sheet";
 
@@ -25,7 +29,7 @@ export function CitizenTable() {
 	const debouncedSearch = useDebounce(searchTerm, 500);
 
 	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-	
+
 	const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -75,6 +79,7 @@ export function CitizenTable() {
 			...citizenColumns,
 			{
 				id: "actions",
+				header: "Acciones",
 				cell: ({ row }) => {
 					const citizen = row.original;
 					return (
@@ -104,7 +109,7 @@ export function CitizenTable() {
 				},
 			},
 		],
-		[]
+		[],
 	);
 
 	return (
@@ -116,9 +121,7 @@ export function CitizenTable() {
 					onChange={(e) => handleSearchChange(e.target.value)}
 					className="max-w-sm"
 				/>
-				<Button onClick={handleCreate}>
-					Registrar Ciudadano
-				</Button>
+				<Button onClick={handleCreate}>Registrar Ciudadano</Button>
 			</div>
 
 			<DataTable

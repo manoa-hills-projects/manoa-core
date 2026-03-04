@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
+import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticated/meetings'
 import { Route as AuthenticatedHousesRouteImport } from './routes/_authenticated/houses'
 import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticated/families'
 import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
@@ -28,6 +31,21 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPollsRoute = AuthenticatedPollsRouteImport.update({
+  id: '/polls',
+  path: '/polls',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMeetingsRoute = AuthenticatedMeetingsRouteImport.update({
+  id: '/meetings',
+  path: '/meetings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHousesRoute = AuthenticatedHousesRouteImport.update({
@@ -51,12 +69,18 @@ export interface FileRoutesByFullPath {
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
+  '/meetings': typeof AuthenticatedMeetingsRoute
+  '/polls': typeof AuthenticatedPollsRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRoutesByTo {
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
+  '/meetings': typeof AuthenticatedMeetingsRoute
+  '/polls': typeof AuthenticatedPollsRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthIndexRoute
 }
@@ -66,20 +90,42 @@ export interface FileRoutesById {
   '/_authenticated/citizens': typeof AuthenticatedCitizensRoute
   '/_authenticated/families': typeof AuthenticatedFamiliesRoute
   '/_authenticated/houses': typeof AuthenticatedHousesRoute
+  '/_authenticated/meetings': typeof AuthenticatedMeetingsRoute
+  '/_authenticated/polls': typeof AuthenticatedPollsRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/citizens' | '/families' | '/houses' | '/auth/'
+  fullPaths:
+    | '/'
+    | '/citizens'
+    | '/families'
+    | '/houses'
+    | '/meetings'
+    | '/polls'
+    | '/users'
+    | '/auth/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/citizens' | '/families' | '/houses' | '/' | '/auth'
+  to:
+    | '/citizens'
+    | '/families'
+    | '/houses'
+    | '/meetings'
+    | '/polls'
+    | '/users'
+    | '/'
+    | '/auth'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_authenticated/citizens'
     | '/_authenticated/families'
     | '/_authenticated/houses'
+    | '/_authenticated/meetings'
+    | '/_authenticated/polls'
+    | '/_authenticated/users'
     | '/_authenticated/'
     | '/auth/'
   fileRoutesById: FileRoutesById
@@ -112,6 +158,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/polls': {
+      id: '/_authenticated/polls'
+      path: '/polls'
+      fullPath: '/polls'
+      preLoaderRoute: typeof AuthenticatedPollsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meetings': {
+      id: '/_authenticated/meetings'
+      path: '/meetings'
+      fullPath: '/meetings'
+      preLoaderRoute: typeof AuthenticatedMeetingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/houses': {
       id: '/_authenticated/houses'
       path: '/houses'
@@ -140,6 +207,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
   AuthenticatedFamiliesRoute: typeof AuthenticatedFamiliesRoute
   AuthenticatedHousesRoute: typeof AuthenticatedHousesRoute
+  AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
+  AuthenticatedPollsRoute: typeof AuthenticatedPollsRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -147,6 +217,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCitizensRoute: AuthenticatedCitizensRoute,
   AuthenticatedFamiliesRoute: AuthenticatedFamiliesRoute,
   AuthenticatedHousesRoute: AuthenticatedHousesRoute,
+  AuthenticatedMeetingsRoute: AuthenticatedMeetingsRoute,
+  AuthenticatedPollsRoute: AuthenticatedPollsRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

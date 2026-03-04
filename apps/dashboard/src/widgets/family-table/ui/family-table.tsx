@@ -1,14 +1,14 @@
+import type { ColumnDef } from "@tanstack/react-table";
 import { useDebounce } from "@uidotdev/usehooks";
-import { type ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { useFamilies, useDeleteFamily, type Family } from "@/entities/families";
+import { type Family, useDeleteFamily, useFamilies } from "@/entities/families";
 import { familyColumns } from "@/entities/families/model/columns";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { DataTable } from "@/shared/ui/data-table";
-import { Input } from "@/shared/ui/input";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Input } from "@/shared/ui/input";
 
 import { FamilyFormSheet } from "./family-form-sheet";
 
@@ -25,7 +25,7 @@ export function FamilyTable() {
 	const debouncedSearch = useDebounce(searchTerm, 500);
 
 	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-	
+
 	const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -75,6 +75,7 @@ export function FamilyTable() {
 			...familyColumns,
 			{
 				id: "actions",
+				header: "Acciones",
 				cell: ({ row }) => {
 					const family = row.original;
 					return (
@@ -104,9 +105,8 @@ export function FamilyTable() {
 				},
 			},
 		],
-		[]
+		[],
 	);
-
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -128,12 +128,12 @@ export function FamilyTable() {
 				onPaginationChange={setPagination}
 			/>
 
-			<FamilyFormSheet 
-				open={isSheetOpen} 
-				onOpenChange={setIsSheetOpen} 
+			<FamilyFormSheet
+				open={isSheetOpen}
+				onOpenChange={setIsSheetOpen}
 				family={selectedFamily}
 			/>
-			
+
 			<ConfirmDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}

@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
+import { Textarea } from "@/shared/ui/textarea";
 import { CommandCombobox, type CommandComboboxProps } from "./async-select";
 
 interface BaseFieldProps<T extends FieldValues> {
@@ -58,7 +59,39 @@ export function FormInputField<T extends FieldValues>({
 	);
 }
 
-interface FormSelectFieldProps<T extends FieldValues> extends BaseFieldProps<T> {
+interface FormTextareaFieldProps<T extends FieldValues>
+	extends BaseFieldProps<T> {
+	placeholder?: string;
+	rows?: number;
+}
+
+export function FormTextareaField<T extends FieldValues>({
+	control,
+	name,
+	label,
+	placeholder,
+	rows = 3,
+	className,
+}: FormTextareaFieldProps<T>) {
+	return (
+		<FormField
+			control={control}
+			name={name}
+			render={({ field }) => (
+				<FormItem className={className}>
+					{label && <FormLabel>{label}</FormLabel>}
+					<FormControl>
+						<Textarea {...field} placeholder={placeholder} rows={rows} />
+					</FormControl>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	);
+}
+
+interface FormSelectFieldProps<T extends FieldValues>
+	extends BaseFieldProps<T> {
 	placeholder?: string;
 	options: { label: string; value: string }[];
 }
@@ -99,7 +132,8 @@ export function FormSelectField<T extends FieldValues>({
 	);
 }
 
-interface FormSwitchFieldProps<T extends FieldValues> extends BaseFieldProps<T> {}
+interface FormSwitchFieldProps<T extends FieldValues>
+	extends BaseFieldProps<T> {}
 
 export function FormSwitchField<T extends FieldValues>({
 	control,
@@ -118,7 +152,9 @@ export function FormSwitchField<T extends FieldValues>({
 						className
 					}
 				>
-					<div className="space-y-0.5">{label && <FormLabel>{label}</FormLabel>}</div>
+					<div className="space-y-0.5">
+						{label && <FormLabel>{label}</FormLabel>}
+					</div>
 					<FormControl>
 						<Switch checked={field.value} onCheckedChange={field.onChange} />
 					</FormControl>
@@ -130,13 +166,16 @@ export function FormSwitchField<T extends FieldValues>({
 
 interface FormCommandComboboxFieldProps<TField extends FieldValues, TData>
 	extends BaseFieldProps<TField>,
-		Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {}
+		Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {
+	initialLabel?: string | null;
+}
 
 export function FormCommandComboboxField<TField extends FieldValues, TData>({
 	control,
 	name,
 	label,
 	className,
+	initialLabel,
 	...props
 }: FormCommandComboboxFieldProps<TField, TData>) {
 	return (
@@ -150,6 +189,7 @@ export function FormCommandComboboxField<TField extends FieldValues, TData>({
 						<CommandCombobox
 							value={field.value ?? ""}
 							onChange={(value) => field.onChange(value ?? "")}
+							initialLabel={initialLabel}
 							{...props}
 						/>
 					</FormControl>

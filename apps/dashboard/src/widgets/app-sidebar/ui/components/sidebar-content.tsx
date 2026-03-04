@@ -14,11 +14,11 @@ export function SidebarItemsList(props: SidebarItemsList) {
 	const { items } = props;
 
 	return (
-		<SidebarMenu>
+		<SidebarMenu className="space-y-1">
 			{items.map((item) => {
 				return (
-					<SidebarMenuItem key={item.title}>
-						<SidebarMenuButton asChild tooltip={item.title}>
+					<SidebarMenuItem className="px-4" key={item.title}>
+						<SidebarMenuButton className="py-5" asChild tooltip={item.title}>
 							<Link
 								to={item.url}
 								activeProps={{
@@ -26,7 +26,7 @@ export function SidebarItemsList(props: SidebarItemsList) {
 										"bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
 								}}
 							>
-								<item.icon className="size-5" />
+								<item.icon />
 								<span>{item.title}</span>
 							</Link>
 						</SidebarMenuButton>
