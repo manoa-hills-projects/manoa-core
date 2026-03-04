@@ -52,6 +52,17 @@ export const getAuth = (config: authConfig) => {
       },
       revokeSessionsOnPasswordReset: true,
     },
+    advanced: {
+      useSecureCookies: true,
+      cookiePrefix: "manoa_auth",
+      crossSubDomainCookies: {
+        enabled: true,
+      },
+      defaultCookieAttributes: {
+        sameSite: "none",
+        secure: true,
+      },
+    },
     secret: secret,
     baseURL: baseURL,
     trustedOrigins,

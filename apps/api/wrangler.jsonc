@@ -6,6 +6,12 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  },
 	// "r2_buckets": [
 	// 	{
 	// 		"binding": "BUCKET",
@@ -25,7 +31,7 @@
 	},
 	"vars": {
 	  "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
-	  "DASHBOARD_ORIGIN": "http://localhost:3000",
+	  "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
 	  "RESEND_FROM_EMAIL": "onboarding@resend.dev"
 	}
 }
