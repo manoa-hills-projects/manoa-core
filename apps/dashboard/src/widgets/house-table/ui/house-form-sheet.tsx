@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { useCreateHouse, useUpdateHouse } from "@/entities/houses";
 import type { House } from "@/entities/houses/model/types";
+import { LocationPicker } from "@/shared/ui/location-picker";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
@@ -21,6 +22,8 @@ const formSchema = z.object({
 	address: z.string().min(1, { message: "Requerido" }),
 	sector: z.string().min(1, { message: "Requerido" }),
 	number: z.string().min(1, { message: "Requerido" }),
+	latitude: z.number().optional().nullable(),
+	longitude: z.number().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,6 +44,8 @@ export function HouseFormSheet({
 			address: house?.address || "",
 			sector: house?.sector || "",
 			number: house?.number || "",
+			latitude: house?.latitude ?? null,
+			longitude: house?.longitude ?? null,
 		},
 	});
 
@@ -50,17 +55,28 @@ export function HouseFormSheet({
 				address: house?.address || "",
 				sector: house?.sector || "",
 				number: house?.number || "",
+				latitude: house?.latitude ?? null,
+				longitude: house?.longitude ?? null,
 			});
 		}
 	}, [house, open, form]);
 
 	const onSubmit = async (values: FormValues) => {
 		try {
+			// Si no hay lat/lng, no los envíes
+			const dataToSend = {
+				address: values.address,
+				sector: values.sector,
+				number: values.number,
+				...(values.latitude && values.longitude
+					? { latitude: values.latitude, longitude: values.longitude }
+					: {}),
+			};
 			if (isEditing && house) {
-				await updateMutation.mutateAsync({ id: house.id, data: values });
+				await updateMutation.mutateAsync({ id: house.id, data: dataToSend });
 				toast.success("Vivienda actualizada exitosamente");
 			} else {
-				await createMutation.mutateAsync(values);
+				await createMutation.mutateAsync(dataToSend);
 				toast.success("Vivienda creada exitosamente");
 			}
 			onOpenChange(false);
@@ -88,6 +104,20 @@ export function HouseFormSheet({
 					/>
 					<FormInputField control={form.control} name="sector" label="Sector" />
 					<FormInputField control={form.control} name="number" label="Número" />
+					<div>
+						<label className="block text-sm font-medium mb-1">Ubicación (opcional)</label>
+						<LocationPicker
+							value={
+								form.watch("latitude") && form.watch("longitude")
+									? { latitude: form.watch("latitude")!, longitude: form.watch("longitude")! }
+									: null
+							}
+							onChange={(coords) => {
+								form.setValue("latitude", coords?.latitude ?? null);
+								form.setValue("longitude", coords?.longitude ?? null);
+							}}
+						/>
+					</div>
 					<Button
 						type="submit"
 						disabled={form.formState.isSubmitting}

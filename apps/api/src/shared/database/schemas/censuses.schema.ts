@@ -1,18 +1,21 @@
+
 import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const houses = sqliteTable('houses', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   address: text('address').notNull(),
   sector: text('sector').notNull(),
   number: text('number').notNull(),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
 });
 
 export const families = sqliteTable('families', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull().unique(),
   houseId: text('house_id').references(() => houses.id, { onDelete: 'set null' }),
-  headId: text('head_id') // Se llena cuando asignas un jefe
+  headId: text('head_id')
 });
 
 export const citizens = sqliteTable('citizens', {
@@ -24,7 +27,7 @@ export const citizens = sqliteTable('citizens', {
   gender: text('gender').notNull(),
   isHeadOfHousehold: integer('is_head_of_household', { mode: 'boolean' }).default(false),
   familyId: text('family_id').references(() => families.id, { onDelete: 'set null' }),
-  userId: text('user_id'), // Relaciona el ciudadano con un usuario del sistema (better-auth)
+  userId: text('user_id'),
 });
 
 export const familiesRelations = relations(families, ({ one, many }) => ({

@@ -19,6 +19,7 @@ import {
 import { Input } from "@/shared/ui/input";
 
 import { HouseFormSheet } from "./house-form-sheet";
+import { HouseDetailDrawer } from "./house-detail-drawer";
 
 export function HouseTable() {
 	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -51,6 +52,12 @@ export function HouseTable() {
 	const handleEdit = (house: House) => {
 		setSelectedHouse(house);
 		setIsSheetOpen(true);
+	};
+
+	const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+	const handleViewDetails = (house: House) => {
+		setSelectedHouse(house);
+		setIsDetailDrawerOpen(true);
 	};
 
 	const handleDeletePrompt = (house: House) => {
@@ -90,6 +97,11 @@ export function HouseTable() {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
 								<DropdownMenuLabel>Acciones</DropdownMenuLabel>
+
+								<DropdownMenuItem onClick={() => handleViewDetails(house)}>
+									<span className="mr-2">👁️</span>
+									Ver detalles
+								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleEdit(house)}>
 									<Pencil className="mr-2 h-4 w-4" />
 									Editar
@@ -128,7 +140,12 @@ export function HouseTable() {
 							Buscando...
 						</span>
 					)}
-				</div>
+				<HouseDetailDrawer
+					open={isDetailDrawerOpen}
+					onOpenChange={setIsDetailDrawerOpen}
+					house={selectedHouse}
+				/>
+			</div>
 				<Button onClick={handleCreate}>Registrar Vivienda</Button>
 			</div>
 
