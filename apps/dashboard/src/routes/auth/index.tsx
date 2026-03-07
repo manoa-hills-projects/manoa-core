@@ -41,6 +41,9 @@ function RouteComponent() {
 	const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
 	const turnstileWidgetIdRef = useRef<string | null>(null);
 	const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+	const [turnstileStatus, setTurnstileStatus] = useState<
+		"idle" | "loading" | "ready" | "error"
+	>("idle");
 
 	const turnstileEnabled = useMemo(
 		() => Boolean(turnstileSiteKey && mode === "login"),
@@ -50,11 +53,15 @@ function RouteComponent() {
 	useEffect(() => {
 		if (!turnstileEnabled) {
 			setTurnstileToken(null);
+			setTurnstileStatus("idle");
 			return;
 		}
 
+		setTurnstileStatus("loading");
+
 		const scriptId = "cf-turnstile-script";
 		let cancelled = false;
+		let timeoutId: number | null = null;
 
 		const renderWidget = () => {
 			if (cancelled || !turnstileContainerRef.current || !turnstileSiteKey) {
@@ -89,12 +96,15 @@ function RouteComponent() {
 					sitekey: turnstileSiteKey,
 					callback: (token: string) => {
 						setTurnstileToken(token);
+						setTurnstileStatus("ready");
 					},
 					"expired-callback": () => {
 						setTurnstileToken(null);
+						setTurnstileStatus("loading");
 					},
 					"error-callback": () => {
 						setTurnstileToken(null);
+						setTurnstileStatus("error");
 					},
 				},
 			);
@@ -113,6 +123,11 @@ function RouteComponent() {
 			script.async = true;
 			script.defer = true;
 			script.onload = renderWidget;
+			script.onerror = () => {
+				if (!cancelled) {
+					setTurnstileStatus("error");
+				}
+			};
 			document.head.appendChild(script);
 		} else {
 			const turnstile = (
@@ -132,14 +147,24 @@ function RouteComponent() {
 			}
 		}
 
+		timeoutId = window.setTimeout(() => {
+			if (!cancelled && turnstileEnabled && turnstileStatus === "loading") {
+				setTurnstileStatus("error");
+			}
+		}, 8000);
+
 		return () => {
 			cancelled = true;
 
 			if (existingScript && onLoadHandler) {
 				existingScript.removeEventListener("load", onLoadHandler);
 			}
+
+			if (timeoutId !== null) {
+				window.clearTimeout(timeoutId);
+			}
 		};
-	}, [turnstileEnabled, turnstileSiteKey]);
+	}, [turnstileEnabled, turnstileSiteKey, turnstileStatus]);
 
 	if (isPending) {
 		return (
@@ -159,7 +184,11 @@ function RouteComponent() {
 		setSuccessMessage(null);
 
 		if (turnstileEnabled && !turnstileToken) {
-			setErrorMessage("Completa el captcha antes de iniciar sesión.");
+			setErrorMessage(
+				turnstileStatus === "error"
+					? "No se pudo cargar el captcha. Revisa tu conexión o bloqueadores de anuncios y vuelve a intentarlo."
+					: "Completa el captcha antes de iniciar sesión.",
+			);
 			return;
 		}
 
@@ -291,7 +320,20 @@ function RouteComponent() {
 
 							{turnstileEnabled ? <div ref={turnstileContainerRef} /> : null}
 
-							<Button type="submit" className="w-full" disabled={isSubmitting}>
+							{turnstileEnabled && turnstileStatus === "error" ? (
+								<p className="text-xs text-amber-600">
+									No se pudo cargar el captcha. Revisa tu conexión o
+										bloqueadores y vuelve a intentarlo.
+								</p>
+							) : null}
+
+							<Button
+								type="submit"
+								className="w-full"
+								disabled={
+									isSubmitting || (turnstileEnabled && !turnstileToken)
+								}
+							>
 								{isSubmitting ? "Ingresando..." : "Entrar"}
 							</Button>
 						</form>

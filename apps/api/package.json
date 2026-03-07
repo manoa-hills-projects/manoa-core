@@ -10,7 +10,8 @@
     "db:push:local": "npx wrangler d1 migrations apply sigcc-manoa-db --local",
     "db:push:remote": "wrangler d1 migrations apply sigcc-manoa-db --remote",
     "secret:push": "wrangler secret put",
-    "auth:bootstrap": "node ./scripts/bootstrap-user.mjs"
+    "auth:bootstrap": "node ./scripts/bootstrap-user.mjs",
+    "seed": "node ./scripts/seed-super-admin.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
