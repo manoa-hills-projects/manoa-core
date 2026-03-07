@@ -25,6 +25,7 @@ CREATE TABLE `session` (
 	`ip_address` text,
 	`user_agent` text,
 	`user_id` text NOT NULL,
+	`impersonated_by` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -36,6 +37,10 @@ CREATE TABLE `user` (
 	`email` text NOT NULL,
 	`email_verified` integer DEFAULT false NOT NULL,
 	`image` text,
+	`role` text,
+	`banned` integer,
+	`ban_reason` text,
+	`ban_expires` integer,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
 );
@@ -53,6 +58,8 @@ CREATE TABLE `verification` (
 CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);--> statement-breakpoint
 CREATE TABLE `citizens` (
 	`id` text PRIMARY KEY NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()),
 	`dni` text NOT NULL,
 	`first_name` text NOT NULL,
 	`last_name` text NOT NULL,
@@ -60,24 +67,31 @@ CREATE TABLE `citizens` (
 	`gender` text NOT NULL,
 	`is_head_of_household` integer DEFAULT false,
 	`family_id` text,
-	FOREIGN KEY (`family_id`) REFERENCES `families`(`id`) ON UPDATE no action ON DELETE no action
+	`user_id` text,
+	FOREIGN KEY (`family_id`) REFERENCES `families`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `citizens_dni_unique` ON `citizens` (`dni`);--> statement-breakpoint
 CREATE TABLE `families` (
 	`id` text PRIMARY KEY NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()),
 	`name` text NOT NULL,
 	`house_id` text,
 	`head_id` text,
-	FOREIGN KEY (`house_id`) REFERENCES `houses`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`house_id`) REFERENCES `houses`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `families_name_unique` ON `families` (`name`);--> statement-breakpoint
 CREATE TABLE `houses` (
 	`id` text PRIMARY KEY NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()),
 	`address` text NOT NULL,
 	`sector` text NOT NULL,
-	`number` text NOT NULL
+	`number` text NOT NULL,
+	`latitude` real,
+	`longitude` real
 );
 --> statement-breakpoint
 CREATE TABLE `modules` (
@@ -106,3 +120,31 @@ CREATE TABLE `roles` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL
 );
+--> statement-breakpoint
+CREATE TABLE `poll_options` (
+	`id` text PRIMARY KEY NOT NULL,
+	`poll_id` text NOT NULL,
+	`text` text NOT NULL,
+	FOREIGN KEY (`poll_id`) REFERENCES `polls`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `polls` (
+	`id` text PRIMARY KEY NOT NULL,
+	`title` text NOT NULL,
+	`description` text,
+	`status` text DEFAULT 'open' NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `votes` (
+	`id` text PRIMARY KEY NOT NULL,
+	`poll_id` text NOT NULL,
+	`option_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`poll_id`) REFERENCES `polls`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`option_id`) REFERENCES `poll_options`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `vote_poll_user_idx` ON `votes` (`poll_id`,`user_id`);

@@ -8,7 +8,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 			<AppSidebar />
 			<SidebarInset>
 				<AppHeader />
-				<main className="flex flex-1 flex-col gap-6  px-10 pt-8">
+				<main className="flex flex-1 flex-col gap-6 px-10 pt-8">
 					{children}
 				</main>
 			</SidebarInset>

@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1771804855904,
-      "tag": "0000_fine_anita_blake",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1772581009063,
-      "tag": "0001_strange_hammerhead",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1772589786108,
-      "tag": "0002_jazzy_the_stranger",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1772590657644,
-      "tag": "0003_closed_psynapse",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1772592772720,
-      "tag": "0004_colossal_mister_fear",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1772906301560,
-      "tag": "0005_flimsy_galactus",
+      "when": 1772922792004,
+      "tag": "0000_sleepy_may_parker",
       "breakpoints": true
     }
   ]

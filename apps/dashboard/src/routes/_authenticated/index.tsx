@@ -8,8 +8,6 @@ import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 
-// ----------------------------------------------------------------------
-
 export const Route = createFileRoute("/_authenticated/")({
 	component: RouteComponent,
 });

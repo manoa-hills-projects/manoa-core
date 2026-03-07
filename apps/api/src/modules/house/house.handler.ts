@@ -1,6 +1,6 @@
 import * as schema from "@/shared/database/schemas"
 import { DrizzleD1Database } from "drizzle-orm/d1";
-import { count, eq, ilike, } from "drizzle-orm";
+import { count, countDistinct, desc, eq, ilike, } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import { HouseQueryParams } from "./dto";
 import { sql } from "drizzle-orm";
@@ -52,3 +52,26 @@ export const deleteHouse = async (
   await db.delete(schema.houses).where(eq(schema.houses.id, id)).run();
   return { message: "Casa eliminada correctamente" };
 };
+
+export const houseStats = async (db: DrizzleD1Database<typeof schema>) => {
+  const totalHouses = await db.select({ total: count() }).from(schema.houses).get();
+  
+
+  const uniqueSectorsCount = await db
+    .select({ count: countDistinct(schema.houses.sector) })
+    .from(schema.houses)
+    .get();
+
+  const latestHouse = await db
+    .select()
+    .from(schema.houses)
+    .orderBy(desc(schema.houses.createdAt))
+    .limit(1)
+    .get();
+  
+  return { 
+    total: totalHouses?.total ?? 0, 
+    uniqueSectors: uniqueSectorsCount?.count ?? 0, 
+    latestHouse 
+  };
+}

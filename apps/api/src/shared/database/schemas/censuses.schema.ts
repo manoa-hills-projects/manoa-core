@@ -1,9 +1,10 @@
 
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { baseColumns } from "./base.schema";
 
 export const houses = sqliteTable('houses', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ...baseColumns,
   address: text('address').notNull(),
   sector: text('sector').notNull(),
   number: text('number').notNull(),
@@ -12,14 +13,14 @@ export const houses = sqliteTable('houses', {
 });
 
 export const families = sqliteTable('families', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ...baseColumns,
   name: text('name').notNull().unique(),
   houseId: text('house_id').references(() => houses.id, { onDelete: 'set null' }),
   headId: text('head_id')
 });
 
 export const citizens = sqliteTable('citizens', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ...baseColumns,
   dni: text('dni').notNull().unique(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),

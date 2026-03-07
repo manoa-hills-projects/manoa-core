@@ -1,1 +1,0 @@
-ALTER TABLE `citizens` ADD `user_id` text;

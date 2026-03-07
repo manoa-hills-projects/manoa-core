@@ -1,26 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
-import { HouseTable } from "@/widgets/house-table/ui/house-table";
+import { SectionHeader } from "@/widgets/section-header/ui/section-header";
+import { housesConfig } from "@/entities/houses/model/config";
+import { HouseTable } from "@/features/house-managment/ui/house-table";
 
 export const Route = createFileRoute("/_authenticated/houses")({
 	component: RouteComponent,
 	staticData: {
-		breadcrumb: "Viviendas",
+		breadcrumb: housesConfig.entityName,
 	},
 });
 
 function RouteComponent() {
 	return (
 		<ProtectedRoute permissions={{ census: ["read"] }}>
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Viviendas</h1>
-					<p className="text-muted-foreground">
-						Gestión de ubicación y sectores del censo.
-					</p>
-				</div>
-			</div>
-
+			<SectionHeader name={housesConfig.entityName} description={housesConfig.description} />
 			<HouseTable />
 		</ProtectedRoute>
 	);

@@ -18,7 +18,7 @@ export function ProtectedRoute({
 	if (isPending) {
 		return (
 			<div className="flex min-h-[50vh] w-full items-center justify-center text-sm text-muted-foreground">
-				Verificando accesos...
+				Cargando sesión...
 			</div>
 		);
 	}

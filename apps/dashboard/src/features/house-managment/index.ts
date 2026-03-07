@@ -1,0 +1,1 @@
+export { HouseTable } from "./ui/house-table";
