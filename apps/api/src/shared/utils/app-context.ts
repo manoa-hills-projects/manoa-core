@@ -4,7 +4,7 @@ import type { getAuth } from "./auth.util";
 import type { Session, User } from "better-auth";
 
 export type Bindings = {
-  sigcc_manoa_db: D1Database;
+  DB: D1Database;
   AI?: {
     run: (model: string, input: any) => Promise<any>;
   };

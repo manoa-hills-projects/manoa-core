@@ -14,7 +14,7 @@ import { eq, count, sql } from 'drizzle-orm';
 import * as schema from "../../shared/database/schemas";
 
 type AgentEnv = {
-  sigcc_manoa_db: D1Database;
+  DB: D1Database;
   AI: { run: (model: string, input: unknown) => Promise<unknown> };
 };
 
@@ -146,7 +146,7 @@ function buildTools(db: DrizzleD1Database<typeof schema>) {
 export class ChatAgent extends AIChatAgent<AgentEnv> {
 
   async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>, options?: OnChatMessageOptions) {
-    const db = drizzle(this.env.sigcc_manoa_db, { schema });
+    const db = drizzle(this.env.DB, { schema });
     const workersai = createWorkersAI({ binding: this.env.AI });
 
     const lastUserMessage = [...this.messages].reverse().find(m => m.role === "user");

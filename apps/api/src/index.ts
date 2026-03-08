@@ -18,11 +18,11 @@ import { ChatAgent } from './modules/ai/chat-agent'
 import { routeAgentRequest } from 'agents'
 
 type Bindings = {
+  DB: D1Database
   BETTER_AUTH_SECRET: string | { get: () => Promise<string> };
   TURNSTILE_SECRET_KEY?: string | { get: () => Promise<string> };
   RESEND_API_KEY?: string | { get: () => Promise<string> };
   BOOTSTRAP_ADMIN_KEY?: string | { get: () => Promise<string> };
-  sigcc_manoa_db: D1Database
   AI?: {
     run: (model: string, input: unknown) => Promise<unknown>
   }
@@ -193,7 +193,7 @@ const app = new Hono<HonoConfig>()
     })(c, next);
   })
   .use('*', async (c, next) => {
-    const db = drizzle(c.env.sigcc_manoa_db, { schema });
+    const db = drizzle(c.env.DB, { schema });
     const dashboardOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
     const requestOrigin = new URL(c.req.url).origin;
     let runtimeSecrets: RuntimeSecrets;
@@ -206,7 +206,7 @@ const app = new Hono<HonoConfig>()
     }
 
     const auth = getAuth({
-      d1: c.env.sigcc_manoa_db,
+      d1: c.env.DB,
       secret: runtimeSecrets.betterAuthSecret,
       baseURL: resolveAuthBaseUrl(c.env.BETTER_AUTH_URL, c.req.url),
       resendApiKey: runtimeSecrets.resendApiKey,
