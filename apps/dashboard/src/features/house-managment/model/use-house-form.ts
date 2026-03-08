@@ -17,22 +17,21 @@ export function useHouseForm({ house, onSuccess }: UseHouseFormProps) {
 
 	const form = useForm<HouseFormValues>({
 		resolver: zodResolver(houseSchema),
+		mode: "onChange",
+		reValidateMode: "onChange",
 		values: {
 			address: house?.address ?? "",
 			sector: house?.sector ?? "",
 			number: house?.number ?? "",
-			latitude: house?.latitude ?? null,
-			longitude: house?.longitude ?? null,
 		},
 	});
 
 	const onSubmit = useCallback(async (values: HouseFormValues) => {
 		const isEditing = !!house?.id;
-
 		const payload = {
-			...values,
-			latitude: values.latitude && values.longitude ? values.latitude : null,
-			longitude: values.latitude && values.longitude ? values.longitude : null,
+			address: values.address,
+			sector: values.sector,
+			number: values.number,
 		};
 
 		try {

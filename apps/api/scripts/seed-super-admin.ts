@@ -1,5 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { eq } from "drizzle-orm";
+import * as schema from "../src/shared/database/schemas/index";
+import drizzleConfig from "../drizzle.config";
 
 /**
  * Carga variables de entorno desde ficheros locales (.dev.vars, .env, .env.local)
@@ -76,6 +81,29 @@ const run = async () => {
 	if (!response.ok) {
 		console.error(`Error ${response.status}: ${bodyText}`);
 		process.exit(1);
+	}
+
+	try {
+		const dbPath = (drizzleConfig as { dbCredentials?: { url?: string } }).dbCredentials?.url;
+
+		if (!dbPath) {
+			console.warn(
+				"Seed: no se pudo resolver la ruta de la base de datos; el usuario se creó pero no se asignó el rol 'superadmin'.",
+			);
+		} else {
+			const sqlite = new Database(dbPath);
+			const db = drizzle(sqlite, { schema });
+
+			await db
+				.update(schema.user)
+				.set({ role: "superadmin" })
+				.where(eq(schema.user.email, SEED_ADMIN_EMAIL!));
+
+			sqlite.close();
+			console.log("Rol 'superadmin' asignado al usuario seed.");
+		}
+	} catch (error) {
+		console.error("No se pudo actualizar el rol a 'superadmin':", error);
 	}
 
 	console.log("Usuario super admin inicial creado correctamente.");

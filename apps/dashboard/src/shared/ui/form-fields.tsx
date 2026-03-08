@@ -20,6 +20,7 @@ import {
 import { Switch } from "@/shared/ui/switch";
 import { Textarea } from "@/shared/ui/textarea";
 import { CommandCombobox, type CommandComboboxProps } from "./async-select";
+import type { LucideIcon } from "lucide-react";
 
 interface BaseFieldProps<T extends FieldValues> {
 	control: Control<T>;
@@ -32,6 +33,7 @@ interface BaseFieldProps<T extends FieldValues> {
 interface FormInputFieldProps<T extends FieldValues> extends BaseFieldProps<T> {
 	placeholder?: string;
 	type?: string;
+	icon?: LucideIcon;
 }
 
 export function FormInputField<T extends FieldValues>({
@@ -41,6 +43,7 @@ export function FormInputField<T extends FieldValues>({
 	placeholder,
 	type = "text",
 	className,
+	icon: Icon,
 }: FormInputFieldProps<T>) {
 	return (
 		<FormField
@@ -50,7 +53,15 @@ export function FormInputField<T extends FieldValues>({
 				<FormItem className={className}>
 					{label && <FormLabel>{label}</FormLabel>}
 					<FormControl>
-						<Input {...field} placeholder={placeholder} type={type} />
+						<div className="relative">
+							{Icon && <Icon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
+							<Input
+								{...field}
+								placeholder={placeholder}
+								type={type}
+								className={Icon ? "pl-8" : undefined}
+							/>
+						</div>
 					</FormControl>
 					<FormMessage />
 				</FormItem>
@@ -133,7 +144,7 @@ export function FormSelectField<T extends FieldValues>({
 }
 
 interface FormSwitchFieldProps<T extends FieldValues>
-	extends BaseFieldProps<T> {}
+	extends BaseFieldProps<T> { }
 
 export function FormSwitchField<T extends FieldValues>({
 	control,
@@ -166,7 +177,7 @@ export function FormSwitchField<T extends FieldValues>({
 
 interface FormCommandComboboxFieldProps<TField extends FieldValues, TData>
 	extends BaseFieldProps<TField>,
-		Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {
+	Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {
 	initialLabel?: string | null;
 }
 

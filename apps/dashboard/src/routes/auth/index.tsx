@@ -148,8 +148,8 @@ function RouteComponent() {
 		}
 
 		timeoutId = window.setTimeout(() => {
-			if (!cancelled && turnstileEnabled && turnstileStatus === "loading") {
-				setTurnstileStatus("error");
+			if (!cancelled && turnstileEnabled) {
+				setTurnstileStatus((prev) => (prev === "loading" ? "error" : prev));
 			}
 		}, 8000);
 
@@ -164,7 +164,7 @@ function RouteComponent() {
 				window.clearTimeout(timeoutId);
 			}
 		};
-	}, [turnstileEnabled, turnstileSiteKey, turnstileStatus]);
+	}, [turnstileEnabled, turnstileSiteKey]);
 
 	if (isPending) {
 		return (
