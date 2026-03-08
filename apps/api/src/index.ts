@@ -8,6 +8,7 @@ import * as schema from "./shared/database/schemas"
 import housesRouter from './modules/house/house.router'
 import familiesRouter from './modules/family/family.router'
 import citizensRouter from './modules/citizen/citizen.router'
+import reportsRouter from './modules/reports/reports.router'
 import aiRouter from './modules/ai/ai.router'
 import { pollsRouter } from './modules/polls/polls.router'
 import { logger } from 'hono/logger'
@@ -113,6 +114,7 @@ const app = new Hono<HonoConfig>()
       credentials: true,
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
+      exposeHeaders: ["Content-Disposition", "Content-Type"],
     })(c, next);
   })
   .use('*', async (c, next) => {
@@ -198,11 +200,13 @@ const app = new Hono<HonoConfig>()
   .use('/citizens/*', requireAuth)
   .use('/ai/*', requireAuth)
   .use('/polls/*', requireAuth)
+  .use('/reports/*', requireAuth)
   .route('/houses', housesRouter)
   .route('/families', familiesRouter)
   .route('/citizens', citizensRouter)
   .route('/ai', aiRouter)
-  .route('/polls', pollsRouter);
+  .route('/polls', pollsRouter)
+  .route('/reports', reportsRouter);
 
 export default app
 

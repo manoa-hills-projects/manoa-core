@@ -6,6 +6,9 @@ export const statement = {
 	project: ["create", "update", "delete", "vote", "read"],
 	document: ["create", "read", "delete"],
 	census: ["create", "read", "update", "delete"],
+	houses: ["read"],
+	families: ["read"],
+	citizens: ["read"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -13,6 +16,9 @@ export const ac = createAccessControl(statement);
 export const user = ac.newRole({
 	project: ["read", "vote"],
 	document: ["read"],
+	houses: ["read"],
+	families: ["read"],
+	citizens: ["read"],
 });
 
 export const admin = ac.newRole({
@@ -20,6 +26,9 @@ export const admin = ac.newRole({
 	project: ["create", "update", "delete", "read", "vote"],
 	document: ["create", "read", "delete"],
 	census: ["create", "read", "update", "delete"],
+	houses: ["read"],
+	families: ["read"],
+	citizens: ["read"],
 });
 
 export const superadmin = ac.newRole({
@@ -28,4 +37,7 @@ export const superadmin = ac.newRole({
 	project: ["create", "update", "delete", "read", "vote"],
 	document: ["create", "read", "delete"],
 	census: ["create", "read", "update", "delete"],
+	houses: ["read"],
+	families: ["read"],
+	citizens: ["read"],
 });

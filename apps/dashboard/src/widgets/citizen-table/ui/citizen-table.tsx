@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { useDebounce } from "@uidotdev/usehooks";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -13,6 +13,7 @@ import { citizenColumns } from "@/entities/citizens/model/columns";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { DataTable } from "@/shared/ui/data-table";
+import { ExportMenuButton } from "@/shared/ui/export-menu-button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -50,15 +51,15 @@ export function CitizenTable() {
 		setIsSheetOpen(true);
 	};
 
-	const handleEdit = (citizen: Citizen) => {
+	const handleEdit = useCallback((citizen: Citizen) => {
 		setSelectedCitizen(citizen);
 		setIsSheetOpen(true);
-	};
+	}, []);
 
-	const handleDeletePrompt = (citizen: Citizen) => {
+	const handleDeletePrompt = useCallback((citizen: Citizen) => {
 		setSelectedCitizen(citizen);
 		setIsDeleteDialogOpen(true);
-	};
+	}, []);
 
 	const handleDeleteConfirm = () => {
 		if (!selectedCitizen) return;
@@ -109,19 +110,24 @@ export function CitizenTable() {
 				},
 			},
 		],
-		[],
+		[handleDeletePrompt, handleEdit],
 	);
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex justify-between items-center">
-				<Input
-					placeholder="Buscar por cédula..."
-					value={searchTerm}
-					onChange={(e) => handleSearchChange(e.target.value)}
-					className="max-w-sm"
-				/>
-				<Button onClick={handleCreate}>Registrar Ciudadano</Button>
+				<div className="flex items-center gap-2">
+					<Input
+						placeholder="Buscar por cédula..."
+						value={searchTerm}
+						onChange={(e) => handleSearchChange(e.target.value)}
+						className="max-w-sm"
+					/>
+				</div>
+				<div className="flex items-center gap-2">
+					<ExportMenuButton resource="citizens" search={debouncedSearch} />
+					<Button onClick={handleCreate}>Registrar Ciudadano</Button>
+				</div>
 			</div>
 
 			<DataTable

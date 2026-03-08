@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { useDebounce } from "@uidotdev/usehooks";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { type Family, useDeleteFamily, useFamilies } from "@/entities/families";
@@ -9,6 +9,7 @@ import { familyColumns } from "@/entities/families/model/columns";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { DataTable } from "@/shared/ui/data-table";
+import { ExportMenuButton } from "@/shared/ui/export-menu-button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -46,15 +47,15 @@ export function FamilyTable() {
 		setIsSheetOpen(true);
 	};
 
-	const handleEdit = (family: Family) => {
+	const handleEdit = useCallback((family: Family) => {
 		setSelectedFamily(family);
 		setIsSheetOpen(true);
-	};
+	}, []);
 
-	const handleDeletePrompt = (family: Family) => {
+	const handleDeletePrompt = useCallback((family: Family) => {
 		setSelectedFamily(family);
 		setIsDeleteDialogOpen(true);
-	};
+	}, []);
 
 	const handleDeleteConfirm = () => {
 		if (!selectedFamily) return;
@@ -105,19 +106,24 @@ export function FamilyTable() {
 				},
 			},
 		],
-		[],
+		[handleDeletePrompt, handleEdit],
 	);
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex justify-between items-center">
-				<Input
-					placeholder="Buscar por nombre de familia..."
-					value={searchTerm}
-					onChange={(e) => handleSearchChange(e.target.value)}
-					className="max-w-sm"
-				/>
-				<Button onClick={handleCreate}>Registrar Familia</Button>
+				<div className="flex items-center gap-2">
+					<Input
+						placeholder="Buscar por nombre de familia..."
+						value={searchTerm}
+						onChange={(e) => handleSearchChange(e.target.value)}
+						className="max-w-sm"
+					/>
+				</div>
+				<div className="flex items-center gap-2">
+					<ExportMenuButton resource="families" search={debouncedSearch} />
+					<Button onClick={handleCreate}>Registrar Familia</Button>
+				</div>
 			</div>
 
 			<DataTable

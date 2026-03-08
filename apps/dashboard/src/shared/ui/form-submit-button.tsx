@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/spinner";
+import { Save } from "lucide-react";
 
 interface FormSubmitButtonProps
 	extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
@@ -22,6 +23,7 @@ export function FormSubmitButton({
 			aria-busy={isSubmitting}
 			{...props}
 		>
+			<Save />
 			{isSubmitting ? <Spinner size="sm" /> : null}
 			<span>{children}</span>
 		</Button>

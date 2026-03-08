@@ -4,7 +4,7 @@ import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
 import { FormInputField } from "@/shared/ui/form-fields";
 import { FormSubmitButton } from "@/shared/ui/form-submit-button";
-import { Hash, Map, MapPin, Save } from "lucide-react";
+import { Hash, Map, MapPin } from "lucide-react";
 
 interface HouseFormSheetProps {
 	open: boolean;
@@ -14,9 +14,8 @@ interface HouseFormSheetProps {
 
 export function HouseFormSheet({ open, onOpenChange, house }: HouseFormSheetProps) {
 	const { form, onSubmit, isSubmitting } = useHouseForm({ house, onSuccess: () => onOpenChange(false) });
-
-	const title = house ? "Editar Vivienda" : "Registrar Vivienda";
-
+	const isEditing = !!house?.id;
+	const title = isEditing ? "Editar Vivienda" : "Registrar Nueva Vivienda";
 	return (
 		<DataSheet
 			open={open}
@@ -48,8 +47,7 @@ export function HouseFormSheet({ open, onOpenChange, house }: HouseFormSheetProp
 						isSubmitting={isSubmitting}
 						isDisabled={!form.formState.isValid}
 					>
-						<Save />
-						<span>{isSubmitting ? "Guardando..." : "Guardar"}</span>
+						{isEditing ? "Actualizar Vivienda" : "Registrar Vivienda"}
 					</FormSubmitButton>
 				</form>
 			</Form>
