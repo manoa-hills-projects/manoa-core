@@ -18,6 +18,7 @@ import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedHousesRouteImport } from './routes/_authenticated/houses'
 import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticated/families'
 import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
+import { Route as AuthenticatedAiAssistantRouteImport } from './routes/_authenticated/ai-assistant'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -63,9 +64,16 @@ const AuthenticatedCitizensRoute = AuthenticatedCitizensRouteImport.update({
   path: '/citizens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAiAssistantRoute =
+  AuthenticatedAiAssistantRouteImport.update({
+    id: '/ai-assistant',
+    path: '/ai-assistant',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRoutesByTo {
+  '/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
@@ -87,6 +96,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/_authenticated/citizens': typeof AuthenticatedCitizensRoute
   '/_authenticated/families': typeof AuthenticatedFamiliesRoute
   '/_authenticated/houses': typeof AuthenticatedHousesRoute
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai-assistant'
     | '/citizens'
     | '/families'
     | '/houses'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/auth/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/ai-assistant'
     | '/citizens'
     | '/families'
     | '/houses'
@@ -120,6 +132,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_authenticated/ai-assistant'
     | '/_authenticated/citizens'
     | '/_authenticated/families'
     | '/_authenticated/houses'
@@ -200,10 +213,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCitizensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai-assistant': {
+      id: '/_authenticated/ai-assistant'
+      path: '/ai-assistant'
+      fullPath: '/ai-assistant'
+      preLoaderRoute: typeof AuthenticatedAiAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAiAssistantRoute: typeof AuthenticatedAiAssistantRoute
   AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
   AuthenticatedFamiliesRoute: typeof AuthenticatedFamiliesRoute
   AuthenticatedHousesRoute: typeof AuthenticatedHousesRoute
@@ -214,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAiAssistantRoute: AuthenticatedAiAssistantRoute,
   AuthenticatedCitizensRoute: AuthenticatedCitizensRoute,
   AuthenticatedFamiliesRoute: AuthenticatedFamiliesRoute,
   AuthenticatedHousesRoute: AuthenticatedHousesRoute,

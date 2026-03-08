@@ -166,7 +166,7 @@ const AI_TOOLS: ToolDefinition[] = [
 
 /**
  * Handles AI queries using Cloudflare Workers AI with Function Calling (Tools).
- * 
+ *
  * Flow:
  * 1. User asks a question.
  * 2. LLM analyzes question and decides if it needs 'getManoaStats'.
@@ -187,7 +187,7 @@ export const queryAssistant = async (
 			role: "system" as const,
 			content: `You are Manoa Assistant, a helpful AI for the Manoa Core community dashboard.
 Current Date: ${new Date().toLocaleDateString("es-ES")}.
-You have access to real-time tools. 
+You have access to real-time tools.
 - ALWAYS use 'getManoaStats' if the user asks for numbers or statistics about citizens, families, or houses.
 - ALWAYS use 'getFamilyDetails' if the user asks about a specific family, who lives there, or their members.
 If you use a tool, summarize the data in Spanish naturally.
@@ -212,7 +212,7 @@ Do not make up data. If you don't know, say so.`,
 		if (response1.tool_calls && response1.tool_calls.length > 0) {
 			const toolCall = response1.tool_calls[0]; // Handle first tool call
 			console.log("Executing Tool:", toolCall.name);
-			
+
 			let toolResult = "";
 
 			if (toolCall.name === "getManoaStats") {
@@ -273,4 +273,124 @@ Do not make up data. If you don't know, say so.`,
 			intent: "error",
 		});
 	}
+};
+
+export const chatAssistant = async (
+	db: DrizzleD1Database<typeof schema>,
+	userId: string,
+	data: import("./dto/chat.dto").ChatInput,
+	options: { ai: any; model: string }
+) => {
+	const ai = options.ai as AiBinding;
+
+	let conversationId = data.conversationId;
+	if (!conversationId) {
+		const [newConv] = await db
+			.insert(schema.conversations)
+			.values({ userId, title: data.message.slice(0, 30) })
+			.returning();
+		conversationId = newConv.id;
+	}
+
+	await db.insert(schema.messages).values({
+		conversationId,
+		role: "user",
+		content: data.message,
+	});
+
+	const history = await db
+		.select()
+		.from(schema.messages)
+		.where(eq(schema.messages.conversationId, conversationId))
+		.orderBy(schema.messages.createdAt);
+
+	const aiMessages = history.map((m) => ({
+		role: m.role as "user" | "assistant" | "system",
+		content: m.content,
+	}));
+
+	const messages = [
+		{
+			role: "system" as const,
+			content: `You are Manoa Assistant, a helpful AI for the Manoa Core community dashboard.
+Current Date: ${new Date().toLocaleDateString("es-ES")}.
+You have access to real-time tools.
+- ALWAYS use 'getManoaStats' if the user asks for numbers or statistics about citizens, families, or houses.
+- ALWAYS use 'getFamilyDetails' if the user asks about a specific family, who lives there, or their members.
+If you use a tool, summarize the data in Spanish naturally.
+Do not make up data. If you don't know, say so.`,
+		},
+		...aiMessages,
+	];
+
+	try {
+		const response1 = await ai.run(options.model, { messages, tools: AI_TOOLS });
+		let answerContent = response1.response;
+
+		if (response1.tool_calls && response1.tool_calls.length > 0) {
+			const toolCall = response1.tool_calls[0];
+			let toolResult = "";
+
+			if (toolCall.name === "getManoaStats") {
+				toolResult = JSON.stringify(await getInsightsSnapshot(db));
+			} else if (toolCall.name === "getFamilyDetails") {
+				const args = toolCall.arguments as unknown as { familyName: string };
+				toolResult = JSON.stringify(await getFamilyMembers(db, args.familyName));
+			}
+
+			if (toolResult) {
+				const newMessages = [
+					...messages,
+					{ role: "assistant" as const, content: "", tool_calls: response1.tool_calls },
+					{ role: "tool" as const, name: toolCall.name, content: toolResult },
+				];
+
+				const response2 = await ai.run(options.model, { messages: newMessages });
+				answerContent = response2.response;
+			}
+		}
+
+		const finalAnswer = answerContent || "Lo siento, no pude procesar tu solicitud.";
+
+		await db.insert(schema.messages).values({
+			conversationId,
+			role: "assistant",
+			content: finalAnswer,
+		});
+
+		return { data: { conversationId, role: "assistant", content: finalAnswer } };
+	} catch (error) {
+		console.error("Chat Agent Error:", error);
+		const errorMsg = "Hubo un error interno al conectar con el asistente.";
+		await db.insert(schema.messages).values({
+			conversationId,
+			role: "assistant",
+			content: errorMsg,
+		});
+		return { data: { conversationId, role: "assistant", content: errorMsg } };
+	}
+};
+
+export const getConversations = async (
+	db: DrizzleD1Database<typeof schema>,
+	userId: string,
+) => {
+	const result = await db
+		.select()
+		.from(schema.conversations)
+		.where(eq(schema.conversations.userId, userId))
+		.orderBy(schema.conversations.createdAt);
+	return { data: result };
+};
+
+export const getMessages = async (
+	db: DrizzleD1Database<typeof schema>,
+	conversationId: string,
+) => {
+	const result = await db
+		.select()
+		.from(schema.messages)
+		.where(eq(schema.messages.conversationId, conversationId))
+		.orderBy(schema.messages.createdAt);
+	return { data: result };
 };
