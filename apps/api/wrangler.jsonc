@@ -1,7 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "api",
+  "name": "manoa-api",
   "main": "src/index.ts",
+  "workers_dev": true,
+  "preview_urls": false,
   "compatibility_date": "2026-01-26",
   "compatibility_flags": [
     "nodejs_compat"
@@ -119,7 +121,7 @@
         }
       ],
       "vars": {
-        "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
+        "BETTER_AUTH_URL": "https://manoa-api.manoa-it.workers.dev",
         "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
         "RESEND_FROM_EMAIL": "onboarding@resend.dev"
       }

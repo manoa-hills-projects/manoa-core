@@ -6,7 +6,7 @@ import type { Session, User } from "better-auth";
 export type Bindings = {
   DB: D1Database;
   AI?: {
-    run: (model: string, input: any) => Promise<any>;
+    run: (model: string, input: unknown) => Promise<unknown>;
   };
   AI_MODEL?: string;
   BETTER_AUTH_SECRET: string;
