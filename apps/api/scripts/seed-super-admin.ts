@@ -1,46 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { eq } from "drizzle-orm";
 import * as schema from "../src/shared/database/schemas/index";
 import drizzleConfig from "../drizzle.config";
-
-/**
- * Carga variables de entorno desde ficheros locales (.dev.vars, .env, .env.local)
- * sin sobreescribir las ya presentes en process.env.
- */
-const loadLocalEnvFromFiles = () => {
-	const cwd = process.cwd();
-	const candidates = [".dev.vars", ".env", ".env.local"];
-
-	for (const fileName of candidates) {
-		const filePath = join(cwd, fileName);
-
-		if (!existsSync(filePath)) continue;
-
-		const content = readFileSync(filePath, "utf-8");
-		const lines = content.split(/\r?\n/);
-
-		for (const line of lines) {
-			const trimmed = line.trim();
-			if (!trimmed || trimmed.startsWith("#")) continue;
-
-			const separatorIndex = trimmed.indexOf("=");
-			if (separatorIndex === -1) continue;
-
-			const key = trimmed.slice(0, separatorIndex).trim();
-			const rawValue = trimmed.slice(separatorIndex + 1).trim();
-			const value = rawValue.replace(/^['"]|['"]$/g, "");
-
-			if (!process.env[key]) {
-				process.env[key] = value;
-			}
-		}
-	}
-};
-
-loadLocalEnvFromFiles();
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8787";
 const BOOTSTRAP_ADMIN_KEY = process.env.BOOTSTRAP_ADMIN_KEY;
@@ -52,7 +14,7 @@ const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? process.env.ADMIN
 const ORIGIN = process.env.SEED_ORIGIN ?? process.env.BOOTSTRAP_ORIGIN ?? new URL(API_BASE_URL).origin;
 
 if (!BOOTSTRAP_ADMIN_KEY) {
-	console.error("Falta BOOTSTRAP_ADMIN_KEY (revisa .dev.vars)");
+	console.error("Falta BOOTSTRAP_ADMIN_KEY en variables de entorno");
 	process.exit(1);
 }
 
@@ -60,6 +22,9 @@ if (!SEED_ADMIN_EMAIL || !SEED_ADMIN_PASSWORD) {
 	console.error("Faltan SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD o ADMIN_EMAIL/ADMIN_PASSWORD");
 	process.exit(1);
 }
+
+const seedAdminEmail = SEED_ADMIN_EMAIL;
+const seedAdminPassword = SEED_ADMIN_PASSWORD;
 
 const run = async () => {
 	const response = await fetch(`${API_BASE_URL}/api/auth/sign-up/email`, {
@@ -71,8 +36,8 @@ const run = async () => {
 		},
 		body: JSON.stringify({
 			name: SEED_ADMIN_NAME,
-			email: SEED_ADMIN_EMAIL,
-			password: SEED_ADMIN_PASSWORD,
+			email: seedAdminEmail,
+			password: seedAdminPassword,
 		}),
 	});
 
@@ -97,7 +62,7 @@ const run = async () => {
 			await db
 				.update(schema.user)
 				.set({ role: "superadmin" })
-				.where(eq(schema.user.email, SEED_ADMIN_EMAIL!));
+				.where(eq(schema.user.email, seedAdminEmail));
 
 			sqlite.close();
 			console.log("Rol 'superadmin' asignado al usuario seed.");

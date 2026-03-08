@@ -18,25 +18,33 @@ import { ChatAgent } from './modules/ai/chat-agent'
 import { routeAgentRequest } from 'agents'
 
 type Bindings = {
+  BETTER_AUTH_SECRET: string | { get: () => Promise<string> };
+  TURNSTILE_SECRET_KEY?: string | { get: () => Promise<string> };
+  RESEND_API_KEY?: string | { get: () => Promise<string> };
+  BOOTSTRAP_ADMIN_KEY?: string | { get: () => Promise<string> };
   sigcc_manoa_db: D1Database
   AI?: {
-    run: (model: string, input: any) => Promise<any>
+    run: (model: string, input: unknown) => Promise<unknown>
   }
   AI_MODEL?: string
-  BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL?: string;
   DASHBOARD_ORIGIN?: string;
-  TURNSTILE_SECRET_KEY?: string;
-  RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
-  BOOTSTRAP_ADMIN_KEY?: string;
   ChatAgent: DurableObjectNamespace;
+}
+
+type RuntimeSecrets = {
+  betterAuthSecret: string
+  resendApiKey?: string
+  turnstileSecret?: string
+  bootstrapAdminKey?: string
 }
 
 type Variables = {
   db: DrizzleD1Database<typeof schema>
   auth: ReturnType<typeof getAuth>
-  session?: any
+  runtimeSecrets: RuntimeSecrets
+  session?: unknown
 }
 
 export type HonoConfig = { Bindings: Bindings, Variables: Variables };
@@ -57,6 +65,70 @@ const resolveAuthBaseUrl = (envBaseUrl: string | undefined, requestUrl: string) 
   }
 
   return `${normalized}/api/auth`;
+};
+
+const isSecretsStoreBinding = (
+  value: unknown,
+): value is { get: () => Promise<string> } => {
+  return typeof value === "object"
+    && value !== null
+    && "get" in value
+    && typeof (value as { get?: unknown }).get === "function";
+};
+
+const resolveSecret = async (
+  value: string | { get: () => Promise<string> } | undefined,
+) => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (isSecretsStoreBinding(value)) {
+    try {
+      return await value.get();
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+};
+
+const runtimeSecretsCache = new WeakMap<Bindings, Promise<RuntimeSecrets>>();
+
+const resolveRuntimeSecrets = (env: Bindings) => {
+  const cached = runtimeSecretsCache.get(env);
+
+  if (cached) {
+    return cached;
+  }
+
+  const resolver = (async () => {
+    const betterAuthSecret = await resolveSecret(env.BETTER_AUTH_SECRET);
+    const resendApiKey = await resolveSecret(env.RESEND_API_KEY);
+    const turnstileSecret = await resolveSecret(env.TURNSTILE_SECRET_KEY);
+    const bootstrapAdminKey = await resolveSecret(env.BOOTSTRAP_ADMIN_KEY);
+
+    const missingRequired: string[] = [];
+
+    if (!betterAuthSecret) {
+      missingRequired.push("BETTER_AUTH_SECRET");
+    }
+
+    if (missingRequired.length > 0) {
+      throw new Error(`Faltan secretos requeridos: ${missingRequired.join(", ")}`);
+    }
+
+    return {
+      betterAuthSecret,
+      resendApiKey,
+      turnstileSecret,
+      bootstrapAdminKey,
+    };
+  })();
+
+  runtimeSecretsCache.set(env, resolver);
+  return resolver;
 };
 
 const verifyTurnstileToken = async (
@@ -124,17 +196,27 @@ const app = new Hono<HonoConfig>()
     const db = drizzle(c.env.sigcc_manoa_db, { schema });
     const dashboardOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
     const requestOrigin = new URL(c.req.url).origin;
+    let runtimeSecrets: RuntimeSecrets;
+
+    try {
+      runtimeSecrets = await resolveRuntimeSecrets(c.env);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Configuración de secretos inválida";
+      return c.json({ message }, 503);
+    }
+
     const auth = getAuth({
       d1: c.env.sigcc_manoa_db,
-      secret: c.env.BETTER_AUTH_SECRET,
+      secret: runtimeSecrets.betterAuthSecret,
       baseURL: resolveAuthBaseUrl(c.env.BETTER_AUTH_URL, c.req.url),
-      resendApiKey: c.env.RESEND_API_KEY,
+      resendApiKey: runtimeSecrets.resendApiKey,
       resendFromEmail: c.env.RESEND_FROM_EMAIL,
       trustedOrigins: [dashboardOrigin, requestOrigin],
     });
 
     c.set('db', db);
     c.set('auth', auth);
+    c.set('runtimeSecrets', runtimeSecrets);
 
     await next();
   })
@@ -144,7 +226,9 @@ const app = new Hono<HonoConfig>()
       return;
     }
 
-    if (!c.env.TURNSTILE_SECRET_KEY) {
+    const { turnstileSecret } = c.get("runtimeSecrets");
+
+    if (!turnstileSecret) {
       await next();
       return;
     }
@@ -156,7 +240,7 @@ const app = new Hono<HonoConfig>()
     }
 
     const isValid = await verifyTurnstileToken(
-      c.env.TURNSTILE_SECRET_KEY,
+      turnstileSecret,
       turnstileToken,
       c.req.header("CF-Connecting-IP"),
     );
@@ -180,7 +264,7 @@ const app = new Hono<HonoConfig>()
       return c.json({ message: "Registro público deshabilitado" }, 403);
     }
 
-    const bootstrapKey = c.env.BOOTSTRAP_ADMIN_KEY;
+    const { bootstrapAdminKey: bootstrapKey } = c.get("runtimeSecrets");
 
     if (!bootstrapKey) {
       return c.json({ message: "Bootstrap no configurado" }, 503);
@@ -229,6 +313,18 @@ const handler = {
           },
         });
       }
+    }
+
+    try {
+      await resolveRuntimeSecrets(env);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Configuración de secretos inválida";
+      return new Response(JSON.stringify({ message }), {
+        status: 503,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     }
 
     // 2. Ruta de agentes

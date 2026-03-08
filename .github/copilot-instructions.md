@@ -18,6 +18,7 @@ This is a Turborepo-managed monorepo containing a full-stack application using *
 * **Auth Integration**: Mount Better Auth under `/api/auth/*` directly from `src/index.ts` using `getAuth(...)` from `src/shared/utils/auth.util.ts`. Keep protected business routes behind a session middleware (`auth.api.getSession(...)`) before mounting domain routers.
 * **Auth Security**: Keep CORS explicit (`DASHBOARD_ORIGIN`) with credentials enabled. For login hardening, validate `X-Turnstile-Token` server-side on `POST /api/auth/sign-in/email` when `TURNSTILE_SECRET_KEY` is configured.
 * **Sign-up Policy**: Public sign-up must stay disabled in UI. For initial setup, allow `POST /api/auth/sign-up/email` only when no users exist and only with `X-Bootstrap-Key` matching `BOOTSTRAP_ADMIN_KEY`.
+* **Secrets & Environments**: Treat all sensitive keys (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `BOOTSTRAP_ADMIN_KEY`) as Cloudflare secrets (not `vars`, never in git). Prefer account-level **Secrets Store** bindings (`secrets_store_secrets`) for reusable secrets, accessed via async `env.<BINDING>.get()` in runtime code. Do not rely on `.env` / `.dev.vars` files for backend secrets. Keep non-sensitive config in `wrangler.jsonc` per environment (`env.local.vars`, `env.production.vars`), and use `wrangler dev --env local` / `wrangler deploy --env production`.
 
 ## 🖥 Frontend Patterns (`apps/dashboard/`)
 * **Feature-Sliced Design (FSD)**: The application structure adheres to FSD principles:

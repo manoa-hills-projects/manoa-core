@@ -55,8 +55,126 @@
     }
   ],
   "vars": {
-    "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
-    "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
     "RESEND_FROM_EMAIL": "onboarding@resend.dev"
+  },
+  "secrets_store_secrets": [
+    {
+      "binding": "BETTER_AUTH_SECRET",
+      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "secret_name": "BETTER_AUTH_SECRET"
+    },
+    {
+      "binding": "RESEND_API_KEY",
+      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "secret_name": "RESEND_API_KEY"
+    },
+    {
+      "binding": "TURNSTILE_SECRET_KEY",
+      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "secret_name": "TURNSTILE_SECRET_KEY"
+    },
+    {
+      "binding": "BOOTSTRAP_ADMIN_KEY",
+      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "secret_name": "BOOTSTRAP_ADMIN_KEY"
+    }
+  ],
+  "env": {
+    "local": {
+      "d1_databases": [
+        {
+          "binding": "sigcc_manoa_db",
+          "database_name": "sigcc-manoa-db",
+          "database_id": "dbdb463f-3b0c-4ed6-baea-7f91a5ba8d75",
+          "migrations_dir": "./src/shared/database/migrations"
+        }
+      ],
+      "ai": {
+        "binding": "AI"
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "ChatAgent",
+            "class_name": "ChatAgent"
+          }
+        ]
+      },
+      "secrets_store_secrets": [
+        {
+          "binding": "BETTER_AUTH_SECRET",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "BETTER_AUTH_SECRET"
+        },
+        {
+          "binding": "RESEND_API_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "RESEND_API_KEY"
+        },
+        {
+          "binding": "TURNSTILE_SECRET_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "TURNSTILE_SECRET_KEY"
+        },
+        {
+          "binding": "BOOTSTRAP_ADMIN_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "BOOTSTRAP_ADMIN_KEY"
+        }
+      ],
+      "vars": {
+        "BETTER_AUTH_URL": "http://localhost:8787",
+        "DASHBOARD_ORIGIN": "http://localhost:3000",
+        "RESEND_FROM_EMAIL": "onboarding@resend.dev"
+      }
+    },
+    "production": {
+      "d1_databases": [
+        {
+          "binding": "sigcc_manoa_db",
+          "database_name": "sigcc-manoa-db",
+          "database_id": "dbdb463f-3b0c-4ed6-baea-7f91a5ba8d75",
+          "migrations_dir": "./src/shared/database/migrations"
+        }
+      ],
+      "ai": {
+        "binding": "AI"
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "ChatAgent",
+            "class_name": "ChatAgent"
+          }
+        ]
+      },
+      "secrets_store_secrets": [
+        {
+          "binding": "BETTER_AUTH_SECRET",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "BETTER_AUTH_SECRET"
+        },
+        {
+          "binding": "RESEND_API_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "RESEND_API_KEY"
+        },
+        {
+          "binding": "TURNSTILE_SECRET_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "TURNSTILE_SECRET_KEY"
+        },
+        {
+          "binding": "BOOTSTRAP_ADMIN_KEY",
+          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "secret_name": "BOOTSTRAP_ADMIN_KEY"
+        }
+      ],
+      "vars": {
+        "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
+        "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
+        "RESEND_FROM_EMAIL": "onboarding@resend.dev"
+      }
+    }
   }
 }
