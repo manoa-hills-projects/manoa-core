@@ -1,6 +1,6 @@
 import * as schema from "@/shared/database/schemas"
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { count, eq } from "drizzle-orm";
+import { count, eq, and } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import type { createFamilyInput, FamilyQueryParams, updateFamilyInput } from "./dto";
 import { sql } from "drizzle-orm";
@@ -58,14 +58,14 @@ export const findOneFamily = async (db: DrizzleD1Database<typeof schema>, id: st
 }
 
 export const findAllFamilies = async (db: DrizzleD1Database<typeof schema>, queryParams: FamilyQueryParams) => {
-  const { limit, page, search } = queryParams;
+  const { limit, page, search, house_id } = queryParams;
 
   const query = db
     .select({
       id: schema.families.id,
       name: schema.families.name,
       houseId: schema.families.houseId,
-      headId: schema.families.headId,
+      headId: schema.citizens.id,
       houseAddress: schema.houses.address,
       houseSector: schema.houses.sector,
       houseNumber: schema.houses.number,
@@ -75,10 +75,20 @@ export const findAllFamilies = async (db: DrizzleD1Database<typeof schema>, quer
     })
     .from(schema.families)
     .leftJoin(schema.houses, eq(schema.houses.id, schema.families.houseId))
-    .leftJoin(schema.citizens, eq(schema.citizens.id, schema.families.headId));
+    .leftJoin(schema.citizens, sql`${schema.citizens.familyId} = ${schema.families.id} AND ${schema.citizens.isHeadOfHousehold} = true`);
+
+  const conditions = [];
 
   if (search) {
-    query.where(sql`LOWER(${schema.families.name}) LIKE ${`%${search.toLowerCase()}%`}`);
+    conditions.push(sql`LOWER(${schema.families.name}) LIKE ${`%${search.toLowerCase()}%`}`);
+  }
+
+  if (house_id) {
+    conditions.push(eq(schema.families.houseId, house_id));
+  }
+
+  if (conditions.length > 0) {
+    query.where(and(...conditions));
   }
 
   const [rows, [{ total }]] = await Promise.all([

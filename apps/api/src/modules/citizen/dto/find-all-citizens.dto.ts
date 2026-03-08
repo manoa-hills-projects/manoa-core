@@ -3,6 +3,7 @@ import * as z from "zod";
 
 export const citizenQueryDto = z.object({
   search: z.string().optional(),
+  family_id: z.string().optional(),
 }).merge(paginationSchema);
 
 export type CitizenQueryParams = z.infer<typeof citizenQueryDto>;

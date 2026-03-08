@@ -28,7 +28,7 @@ export const fetchFamiliesList = fetchFamiliesOptions;
 
 export const useFamilies = (
 	pagination: PaginationState,
-	filters?: { search?: string },
+	filters?: { search?: string; house_id?: string },
 ) => {
 	return useQuery({
 		queryKey: ["families", pagination, filters],
@@ -39,6 +39,7 @@ export const useFamilies = (
 						page: pagination.pageIndex + 1,
 						limit: pagination.pageSize,
 						search: filters?.search,
+						house_id: filters?.house_id,
 					},
 				})
 				.json<ApiResponse<Family>>();

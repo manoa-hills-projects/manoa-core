@@ -1,22 +1,39 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { CreditCard, Star, User, Users } from "lucide-react";
 import type { Citizen } from "./types";
 
 export const citizenColumns: ColumnDef<Citizen>[] = [
 	{
 		accessorKey: "cedula",
-		header: "Cédula",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<CreditCard className="size-3.5" /> Cédula
+			</div>
+		),
 	},
 	{
 		accessorKey: "names",
-		header: "Nombres",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<User className="size-3.5" /> Nombres
+			</div>
+		),
 	},
 	{
 		accessorKey: "surnames",
-		header: "Apellidos",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<Users className="size-3.5" /> Apellidos
+			</div>
+		),
 	},
 	{
 		accessorKey: "is_head_of_household",
-		header: "Jefe de Hogar",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<Star className="size-3.5" /> Jefe de Hogar
+			</div>
+		),
 		cell: ({ row }) => (row.original.is_head_of_household ? "Sí" : "No"),
 	},
 ];

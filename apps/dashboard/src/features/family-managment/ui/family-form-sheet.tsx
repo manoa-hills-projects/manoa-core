@@ -1,14 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
 
-import {
-	type Family,
-	useCreateFamily,
-	useUpdateFamily,
-} from "@/entities/families";
+import { type Family } from "@/entities/families";
 import { fetchHousesOptions, houseOptionAdapter } from "@/entities/houses";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
@@ -17,6 +9,7 @@ import {
 	FormCommandComboboxField,
 	FormInputField,
 } from "@/shared/ui/form-fields";
+import { useFamilyForm } from "../model/use-family-form";
 
 interface FamilyFormSheetProps {
 	open: boolean;
@@ -24,29 +17,16 @@ interface FamilyFormSheetProps {
 	family?: Family | null;
 }
 
-const formSchema = z.object({
-	family_name: z.string().min(1, { message: "Requerido" }),
-	house_id: z.string().min(1, { message: "Requerido" }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function FamilyFormSheet({
 	open,
 	onOpenChange,
 	family,
 }: FamilyFormSheetProps) {
-	const createMutation = useCreateFamily();
-	const updateMutation = useUpdateFamily();
-
 	const isEditing = !!family;
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			family_name: family?.family_name || "",
-			house_id: family?.house_id || "",
-		},
+	const { form, onSubmit, isSubmitting } = useFamilyForm({
+		family,
+		onSuccess: () => onOpenChange(false),
 	});
 
 	useEffect(() => {
@@ -57,21 +37,6 @@ export function FamilyFormSheet({
 			});
 		}
 	}, [family, open, form]);
-
-	const onSubmit = async (values: FormValues) => {
-		try {
-			if (isEditing && family) {
-				await updateMutation.mutateAsync({ id: family.id, data: values });
-				toast.success("Familia actualizada exitosamente");
-			} else {
-				await createMutation.mutateAsync(values);
-				toast.success("Familia creada exitosamente");
-			}
-			onOpenChange(false);
-		} catch (_error) {
-			toast.error("Error al guardar la familia");
-		}
-	};
 
 	return (
 		<DataSheet
@@ -86,7 +51,7 @@ export function FamilyFormSheet({
 		>
 			<Form {...form}>
 				<form
-					onSubmit={form.handleSubmit(onSubmit)}
+					onSubmit={onSubmit}
 					className="flex flex-col gap-4"
 				>
 					<FormInputField
@@ -111,10 +76,10 @@ export function FamilyFormSheet({
 
 					<Button
 						type="submit"
-						disabled={form.formState.isSubmitting}
+						disabled={isSubmitting}
 						className="mt-4"
 					>
-						{form.formState.isSubmitting ? "Guardando..." : "Guardar"}
+						{isSubmitting ? "Guardando..." : "Guardar"}
 					</Button>
 				</form>
 			</Form>

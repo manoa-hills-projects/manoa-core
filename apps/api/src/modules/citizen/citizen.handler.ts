@@ -1,6 +1,6 @@
 import * as schema from "@/shared/database/schemas"
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { count, eq, sql } from "drizzle-orm";
+import { count, eq, sql, and } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import type { CitizenQueryParams, createCitizenInput, updateCitizenInput } from "./dto";
 
@@ -43,7 +43,7 @@ export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: s
 }
 
 export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, queryParams: CitizenQueryParams) => {
-  const { limit, page, search } = queryParams;
+  const { limit, page, search, family_id } = queryParams;
 
   const query = db
     .select({
@@ -61,10 +61,20 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     .from(schema.citizens)
     .leftJoin(schema.families, eq(schema.families.id, schema.citizens.familyId));
 
+  const conditions = [];
+
   if (search) {
-    query.where(
-      sql`LOWER(${schema.citizens.dni}) LIKE ${`%${search.toLowerCase()}%`} OR LOWER(${schema.citizens.firstName}) LIKE ${`%${search.toLowerCase()}%`} OR LOWER(${schema.citizens.lastName}) LIKE ${`%${search.toLowerCase()}%`}`,
+    conditions.push(
+      sql`LOWER(${schema.citizens.dni}) LIKE ${`%${search.toLowerCase()}%`} OR LOWER(${schema.citizens.firstName}) LIKE ${`%${search.toLowerCase()}%`} OR LOWER(${schema.citizens.lastName}) LIKE ${`%${search.toLowerCase()}%`}`
     );
+  }
+
+  if (family_id) {
+    conditions.push(eq(schema.citizens.familyId, family_id));
+  }
+
+  if (conditions.length > 0) {
+    query.where(and(...conditions));
   }
 
   const [rows, [{ total }]] = await Promise.all([

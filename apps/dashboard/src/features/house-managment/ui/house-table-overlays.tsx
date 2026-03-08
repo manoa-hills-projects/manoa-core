@@ -1,5 +1,5 @@
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
-import { HouseDetailDrawer } from "./house-detail-drawer";
+import { HouseDetailSheet } from "@/widgets/house-detail-sheet";
 import { HouseFormSheet } from "./house-form-sheet";
 import type { House } from "@/entities/houses";
 
@@ -20,7 +20,7 @@ interface HouseTableOverlaysProps {
 export function HouseTableOverlays({ ui, onDeleteConfirm, isDeleting }: HouseTableOverlaysProps) {
 	return (
 		<>
-			<HouseDetailDrawer
+			<HouseDetailSheet
 				open={ui.isDetailOpen}
 				onOpenChange={ui.setDetailOpen}
 				house={ui.selectedHouse}

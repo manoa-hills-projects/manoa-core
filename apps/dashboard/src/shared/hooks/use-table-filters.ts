@@ -9,11 +9,11 @@ interface UseTableFiltersOptions {
 export function useTableFilters(options: UseTableFiltersOptions = {}) {
   const { initialPageSize = 10, debounceWait = 500 } = options;
 
-  const [pagination, setPagination] = useState({ 
-    pageIndex: 0, 
-    pageSize: initialPageSize 
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize
   });
-  
+
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, { wait: debounceWait });
 

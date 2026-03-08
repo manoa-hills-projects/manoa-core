@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
-import { CitizenTable } from "@/widgets/citizen-table";
+import { CitizenTable } from "@/features/citizen-managment";
 
 export const Route = createFileRoute("/_authenticated/citizens")({
 	component: RouteComponent,

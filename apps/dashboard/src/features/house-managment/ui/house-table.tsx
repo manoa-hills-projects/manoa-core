@@ -46,12 +46,14 @@ export const HouseTable = () => {
 						value={filters.search}
 						onChange={(value) => filters.setSearch(value)}
 					/>
-				</div>
+        </div>
+        <div className="flex flex-row gap-2">
 				<ExportMenuButton resource="houses" search={filters.search} />
 				<Button onClick={ui.openCreate}>
 					<Plus className="h-4 w-4" />
 					{housesConfig.buttons.create}
 				</Button>
+				</div>
 			</div>
 
 			<DataTable

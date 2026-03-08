@@ -27,7 +27,7 @@ export const fetchCitizensList = fetchCitizensOptions;
 
 export const useCitizens = (
 	pagination: PaginationState,
-	filters?: { search?: string },
+	filters?: { search?: string; family_id?: string },
 ) => {
 	return useQuery({
 		queryKey: ["citizens", pagination, filters],
@@ -38,6 +38,7 @@ export const useCitizens = (
 						page: pagination.pageIndex + 1,
 						limit: pagination.pageSize,
 						search: filters?.search,
+						family_id: filters?.family_id,
 					},
 				})
 				.json<ApiResponse<Citizen>>();
