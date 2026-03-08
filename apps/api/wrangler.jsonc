@@ -60,22 +60,22 @@
   "secrets_store_secrets": [
     {
       "binding": "BETTER_AUTH_SECRET",
-      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "BETTER_AUTH_SECRET"
     },
     {
       "binding": "RESEND_API_KEY",
-      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "RESEND_API_KEY"
     },
     {
       "binding": "TURNSTILE_SECRET_KEY",
-      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "TURNSTILE_SECRET_KEY"
     },
     {
       "binding": "BOOTSTRAP_ADMIN_KEY",
-      "store_id": "f372e184266a40cdbc91ddd75962dd53",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "BOOTSTRAP_ADMIN_KEY"
     }
   ],
@@ -103,22 +103,22 @@
       "secrets_store_secrets": [
         {
           "binding": "BETTER_AUTH_SECRET",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "BETTER_AUTH_SECRET"
         },
         {
           "binding": "RESEND_API_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "RESEND_API_KEY"
         },
         {
           "binding": "TURNSTILE_SECRET_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "TURNSTILE_SECRET_KEY"
         },
         {
           "binding": "BOOTSTRAP_ADMIN_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "BOOTSTRAP_ADMIN_KEY"
         }
       ],
@@ -151,22 +151,22 @@
       "secrets_store_secrets": [
         {
           "binding": "BETTER_AUTH_SECRET",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "BETTER_AUTH_SECRET"
         },
         {
           "binding": "RESEND_API_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "RESEND_API_KEY"
         },
         {
           "binding": "TURNSTILE_SECRET_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "TURNSTILE_SECRET_KEY"
         },
         {
           "binding": "BOOTSTRAP_ADMIN_KEY",
-          "store_id": "f372e184266a40cdbc91ddd75962dd53",
+          "store_id": "f10e20552f8b4e8a894e81177562be2c",
           "secret_name": "BOOTSTRAP_ADMIN_KEY"
         }
       ],
