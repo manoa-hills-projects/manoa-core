@@ -10,10 +10,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	component: RootComponent,
 });
 
+import { TooltipProvider } from "@/shared/ui/tooltip";
+
 function RootComponent() {
 	return (
 		<TanStackQueryProvider>
-			<Outlet />
+			<TooltipProvider>
+				<Outlet />
+			</TooltipProvider>
 		</TanStackQueryProvider>
 	);
 }

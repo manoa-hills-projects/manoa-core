@@ -14,7 +14,9 @@
     "seed": "tsx ./scripts/seed-super-admin.ts"
   },
   "dependencies": {
+    "@cloudflare/ai-chat": "^0.1.8",
     "@hono/zod-validator": "^0.7.6",
+    "agents": "^0.7.5",
     "ai": "^6.0.111",
     "better-auth": "^1.4.5",
     "better-sqlite3": "^12.6.2",
@@ -31,8 +33,8 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/papaparse": "^5.3.16",
     "drizzle-kit": "^0.31.8",
+    "tsx": "^4.19.2",
     "vite-tsconfig-paths": "^6.0.5",
-    "wrangler": "^4.67.0",
-    "tsx": "^4.19.2"
+    "wrangler": "^4.67.0"
   }
 }

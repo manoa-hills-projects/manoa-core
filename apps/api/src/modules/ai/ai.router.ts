@@ -1,33 +1,26 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
-import { queryAssistant, getConversations, getMessages, chatAssistant } from "./ai.handler";
-import { queryAiDto } from "./dto/query-ai.dto";
-import { chatDto } from "./dto/chat.dto";
+import { getConversations, getMessages, createConversation, deleteConversation } from "./ai.handler";
 
 const aiRouter = new Hono<HonoConfig>()
-  .post(
-    "/query",
-    zValidator("json", queryAiDto),
-    async (c) => {
-      const db = c.get("db");
-      const data = c.req.valid("json");
-
-      const result = await queryAssistant(db, data, {
-        ai: c.env.AI,
-        model: c.env.AI_MODEL ?? "@cf/meta/llama-3.1-8b-instruct",
-      });
-
-      return c.json(result, 200);
-    },
-  )
   .get("/conversations", async (c) => {
     const db = c.get("db");
-    const user = c.get("user");
+    const session = c.get("session");
+    const user = session?.user;
     if (!user) return c.json({ data: [] }, 401);
 
     const result = await getConversations(db, user.id);
     return c.json(result, 200);
+  })
+  .post("/conversations", async (c) => {
+    const db = c.get("db");
+    const session = c.get("session");
+    const user = session?.user;
+    if (!user) return c.json({ message: "No autorizado" }, 401);
+
+    const body = await c.req.json<{ title?: string }>().catch(() => ({}) as { title?: string });
+    const result = await createConversation(db, user.id, body.title);
+    return c.json(result, 201);
   })
   .get("/conversations/:id/messages", async (c) => {
     const db = c.get("db");
@@ -36,20 +29,15 @@ const aiRouter = new Hono<HonoConfig>()
     const result = await getMessages(db, id);
     return c.json(result, 200);
   })
-  .post("/chat", zValidator("json", chatDto), async (c) => {
+  .delete("/conversations/:id", async (c) => {
     const db = c.get("db");
-    const user = c.get("user");
-    if (!user) return c.json({ error: "No autorizado" }, 401);
+    const session = c.get("session");
+    const user = session?.user;
+    if (!user) return c.json({ message: "No autorizado" }, 401);
 
-    const data = c.req.valid("json");
-
-    const result = await chatAssistant(db, user.id, data, {
-      ai: c.env.AI,
-      model: c.env.AI_MODEL ?? "@cf/meta/llama-3.1-8b-instruct",
-    });
-
+    const id = c.req.param("id");
+    const result = await deleteConversation(db, id, user.id);
     return c.json(result, 200);
   });
 
 export default aiRouter;
-

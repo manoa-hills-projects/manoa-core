@@ -1,12 +1,12 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "api",
-	"main": "src/index.ts",
-	"compatibility_date": "2026-01-26",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-01-26",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
     "logs": {
@@ -21,26 +21,42 @@
       "head_sampling_rate": 1
     }
   },
-	// "r2_buckets": [
-	// 	{
-	// 		"binding": "BUCKET",
-	// 		"bucket_name": "sigcc-manoa-storage"
-	// 	}
-	// ],
-	"d1_databases": [
-		{
-			"binding": "sigcc_manoa_db",
-			"database_name": "sigcc-manoa-db",
-			"database_id": "dbdb463f-3b0c-4ed6-baea-7f91a5ba8d75",
-			"migrations_dir": "./src/shared/database/migrations"
-		}
-	],
-	"ai": {
-		"binding": "AI"
-	},
-	"vars": {
-	  "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
-	  "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
-	  "RESEND_FROM_EMAIL": "onboarding@resend.dev"
-	}
+  // "r2_buckets": [
+  // 	{
+  // 		"binding": "BUCKET",
+  // 		"bucket_name": "sigcc-manoa-storage"
+  // 	}
+  // ],
+  "d1_databases": [
+    {
+      "binding": "sigcc_manoa_db",
+      "database_name": "sigcc-manoa-db",
+      "database_id": "dbdb463f-3b0c-4ed6-baea-7f91a5ba8d75",
+      "migrations_dir": "./src/shared/database/migrations"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ChatAgent",
+        "class_name": "ChatAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ChatAgent"
+      ]
+    }
+  ],
+  "vars": {
+    "BETTER_AUTH_URL": "https://api.armandodt2004.workers.dev",
+    "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
+    "RESEND_FROM_EMAIL": "onboarding@resend.dev"
+  }
 }

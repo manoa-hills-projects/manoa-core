@@ -14,6 +14,8 @@ import { pollsRouter } from './modules/polls/polls.router'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
+import { ChatAgent } from './modules/ai/chat-agent'
+import { routeAgentRequest } from 'agents'
 
 type Bindings = {
   sigcc_manoa_db: D1Database
@@ -28,6 +30,7 @@ type Bindings = {
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
   BOOTSTRAP_ADMIN_KEY?: string;
+  ChatAgent: DurableObjectNamespace;
 }
 
 type Variables = {
@@ -208,6 +211,48 @@ const app = new Hono<HonoConfig>()
   .route('/polls', pollsRouter)
   .route('/reports', reportsRouter);
 
-export default app
+export { ChatAgent }
+
+const handler = {
+  async fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
+    // 1. Manejar preflight (OPTIONS) para los agentes
+    if (request.method === "OPTIONS") {
+      const origin = request.headers.get("Origin");
+      if (origin) {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Agent-Auth",
+            "Access-Control-Allow-Credentials": "true",
+          },
+        });
+      }
+    }
+
+    // 2. Ruta de agentes
+    const agentResponse = await routeAgentRequest(request, env);
+    if (agentResponse) {
+      // Si es una conexión WebSocket (101), la devolvemos intacta.
+      // Envolverla en 'new Response' rompería el túnel del WebSocket.
+      if (agentResponse.status === 101) {
+        return agentResponse;
+      }
+
+      // Para peticiones HTTP (descarga de mensajes, etc.), añadimos CORS manualmente.
+      const origin = request.headers.get("Origin") || "*";
+      const response = new Response(agentResponse.body, agentResponse);
+      response.headers.set("Access-Control-Allow-Origin", origin);
+      response.headers.set("Access-Control-Allow-Credentials", "true");
+      return response;
+    }
+
+    // 3. Ruta normal de Hono
+    return app.fetch(request, env, ctx);
+  }
+};
+
+export default handler
 
 export type AppType = typeof app
