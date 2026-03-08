@@ -1,6 +1,7 @@
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import type { Citizen } from "@/entities/citizens";
 import { CitizenFormSheet } from "./citizen-form-sheet";
+import { CitizenDetailSheet } from "./citizen-detail-sheet";
 
 interface CitizenTableOverlaysProps {
     ui: {
@@ -19,6 +20,11 @@ interface CitizenTableOverlaysProps {
 export function CitizenTableOverlays({ ui, onDeleteConfirm, isDeleting }: CitizenTableOverlaysProps) {
     return (
         <>
+            <CitizenDetailSheet
+                open={ui.isDetailOpen}
+                onOpenChange={ui.setDetailOpen}
+                citizen={ui.selectedItem}
+            />
             <CitizenFormSheet
                 open={ui.isSheetOpen}
                 onOpenChange={ui.setSheetOpen}

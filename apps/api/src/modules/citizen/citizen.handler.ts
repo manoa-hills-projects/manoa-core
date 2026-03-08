@@ -57,9 +57,13 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       familyId: schema.citizens.familyId,
       userId: schema.citizens.userId,
       familyName: schema.families.name,
+      houseAddress: schema.houses.address,
+      houseSector: schema.houses.sector,
+      houseNumber: schema.houses.number,
     })
     .from(schema.citizens)
-    .leftJoin(schema.families, eq(schema.families.id, schema.citizens.familyId));
+    .leftJoin(schema.families, eq(schema.families.id, schema.citizens.familyId))
+    .leftJoin(schema.houses, eq(schema.houses.id, schema.families.houseId));
 
   const conditions = [];
 
@@ -93,6 +97,8 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     family_id: row.familyId,
     user_id: row.userId,
     family_label: row.familyName,
+    house_label: (!row.houseAddress && !row.houseSector && !row.houseNumber) ? null :
+      [row.houseSector, row.houseNumber, row.houseAddress].filter(Boolean).join(" · "),
   }));
 
   return buildPaginatedData(data, total, page, limit);
