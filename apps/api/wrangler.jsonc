@@ -37,7 +37,8 @@
         {
           "binding": "DB",
           "database_name": "manoa-db-local",
-          "database_id": "33a57dfd-bfb5-49be-a19b-f231a8bc91d2"
+          "database_id": "33a57dfd-bfb5-49be-a19b-f231a8bc91d2",
+          "migrations_dir": "./src/shared/database/migrations"
         }
       ],
       "ai": {
@@ -84,7 +85,8 @@
         {
           "binding": "DB",
           "database_name": "manoa-db-prod",
-          "database_id": "566bd30a-2219-49a3-b0e4-0e266bf9198d"
+          "database_id": "566bd30a-2219-49a3-b0e4-0e266bf9198d",
+          "migrations_dir": "./src/shared/database/migrations"
         }
       ],
       "ai": {
