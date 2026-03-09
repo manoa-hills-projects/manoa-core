@@ -301,10 +301,12 @@ export { ChatAgent }
 
 const handler = {
   async fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
-    // 1. Manejar preflight (OPTIONS) para los agentes
+    // 1. Preflight OPTIONS para rutas de agentes (/agents/*)
+    // Las rutas normales de Hono (/api/*) manejan su propio CORS.
     if (request.method === "OPTIONS") {
+      const url = new URL(request.url);
       const origin = request.headers.get("Origin");
-      if (origin) {
+      if (origin && url.pathname.startsWith("/agents/")) {
         return new Response(null, {
           status: 204,
           headers: {

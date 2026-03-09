@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "wrangler dev --env local",
     "dev:remote": "wrangler dev --remote --env local",
-    "deploy": "wrangler deploy --minify --env production",
+    "deploy": "wrangler deploy --minify --env=\"\"",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:studio": "npx drizzle-kit studio",
     "db:generate": "npx drizzle-kit generate",
