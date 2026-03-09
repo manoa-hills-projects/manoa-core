@@ -189,7 +189,7 @@ const app = new Hono<HonoConfig>()
       },
       credentials: true,
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key", "x-turnstile-token"],
+      allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "x-turnstile-token", "X-Bootstrap-Key"],
       exposeHeaders: ["Content-Disposition", "Content-Type"],
     })(c, next);
   })
