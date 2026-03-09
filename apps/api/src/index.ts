@@ -298,12 +298,17 @@ export { ChatAgent }
 
 const handler = {
   async fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
-    // 1. Preflight OPTIONS para rutas de agentes (/agents/*)
-    // Las rutas normales de Hono (/api/*) manejan su propio CORS.
+    const url = new URL(request.url);
+
+    // 1. Rutas normales de Hono primero (/api/*)
+    if (url.pathname.startsWith("/api/")) {
+      return app.fetch(request, env, ctx);
+    }
+
+    // 2. Preflight OPTIONS para rutas de agentes
     if (request.method === "OPTIONS") {
-      const url = new URL(request.url);
       const origin = request.headers.get("Origin");
-      if (origin && url.pathname.startsWith("/agents/")) {
+      if (origin) {
         return new Response(null, {
           status: 204,
           headers: {
@@ -316,28 +321,13 @@ const handler = {
       }
     }
 
-    try {
-      await resolveRuntimeSecrets(env);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Configuración de secretos inválida";
-      return new Response(JSON.stringify({ message }), {
-        status: 503,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-
-    // 2. Ruta de agentes
+    // 3. Ruta de agentes (WebSocket + HTTP)
     const agentResponse = await routeAgentRequest(request, env);
     if (agentResponse) {
-      // Si es una conexión WebSocket (101), la devolvemos intacta.
-      // Envolverla en 'new Response' rompería el túnel del WebSocket.
       if (agentResponse.status === 101) {
         return agentResponse;
       }
 
-      // Para peticiones HTTP (descarga de mensajes, etc.), añadimos CORS manualmente.
       const origin = request.headers.get("Origin") || "*";
       const response = new Response(agentResponse.body, agentResponse);
       response.headers.set("Access-Control-Allow-Origin", origin);
@@ -345,8 +335,7 @@ const handler = {
       return response;
     }
 
-    // 3. Ruta normal de Hono
-    return app.fetch(request, env, ctx);
+    return new Response("Not found", { status: 404 });
   }
 };
 
