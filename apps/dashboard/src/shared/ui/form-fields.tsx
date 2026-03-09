@@ -52,17 +52,18 @@ export function FormInputField<T extends FieldValues>({
 			render={({ field }) => (
 				<FormItem className={className}>
 					{label && <FormLabel>{label}</FormLabel>}
-					<FormControl>
-						<div className="relative">
-							{Icon && <Icon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
+					<div className="relative">
+						{Icon && <Icon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />}
+						<FormControl>
 							<Input
 								{...field}
+								value={field.value ?? ""}
 								placeholder={placeholder}
 								type={type}
 								className={Icon ? "pl-8" : undefined}
 							/>
-						</div>
-					</FormControl>
+						</FormControl>
+					</div>
 					<FormMessage />
 				</FormItem>
 			)}
