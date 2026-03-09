@@ -32,6 +32,8 @@ function ManoaAssistantPage() {
           conversationId={conversationId}
           open={open}
           onOpenChange={setOpen}
+          onSelect={(id) => setConversationId(id as `${string}-${string}-${string}-${string}-${string}`)}
+          onNewChat={handleNewChat}
         />
       </>
     );
