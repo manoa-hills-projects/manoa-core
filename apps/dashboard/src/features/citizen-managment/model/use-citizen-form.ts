@@ -17,7 +17,9 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 
     const form = useForm<CitizenFormValues>({
         resolver: zodResolver(citizenSchema),
-        defaultValues: {
+        mode: "onChange",
+        reValidateMode: "onChange",
+        values: {
             cedula: citizen?.cedula || "",
             names: citizen?.names || "",
             surnames: citizen?.surnames || "",

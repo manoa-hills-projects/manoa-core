@@ -1,77 +1,27 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X } from "lucide-react";
-import { useEffect } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { useFieldArray } from "react-hook-form";
 
-import { useCreatePoll } from "@/entities/polls";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
 import { FormInputField, FormTextareaField } from "@/shared/ui/form-fields";
+import { FormSubmitButton } from "@/shared/ui/form-submit-button";
+import { usePollForm } from "../model/use-poll-form";
 
 interface PollFormSheetProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }
 
-const formSchema = z.object({
-	title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
-	description: z.string().optional(),
-	options: z
-		.array(
-			z.object({
-				text: z.string().min(1, "La opción no puede estar vacía"),
-			}),
-		)
-		.min(2, "Debe agregar al menos 2 opciones"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
-	const createMutation = useCreatePoll();
-
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			title: "",
-			description: "",
-			options: [{ text: "" }, { text: "" }],
-		},
-	});
+    const { form, onSubmit, isSubmitting } = usePollForm({
+        onSuccess: () => onOpenChange(false)
+    });
 
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
 		name: "options",
 	});
-
-	useEffect(() => {
-		if (open) {
-			form.reset({
-				title: "",
-				description: "",
-				options: [{ text: "Aprobar" }, { text: "Rechazar" }],
-			});
-		}
-	}, [open, form]);
-
-	const onSubmit = async (values: FormValues) => {
-		try {
-			const payload = {
-				title: values.title,
-				description: values.description,
-				options: values.options.map((opt) => opt.text),
-			};
-
-			await createMutation.mutateAsync(payload);
-			toast.success("Asamblea creada exitosamente");
-			onOpenChange(false);
-		} catch (error: any) {
-			toast.error(error.message || "Error al crear la asamblea");
-		}
-	};
 
 	return (
 		<DataSheet
@@ -82,7 +32,7 @@ export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
 		>
 			<Form {...form}>
 				<form
-					onSubmit={form.handleSubmit(onSubmit)}
+					onSubmit={onSubmit}
 					className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto px-1 pb-4"
 				>
 					<FormInputField
@@ -146,13 +96,13 @@ export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
 						)}
 					</div>
 
-					<Button
-						type="submit"
-						disabled={form.formState.isSubmitting}
+					<FormSubmitButton
 						className="mt-4"
+						isSubmitting={isSubmitting}
+						isDisabled={!form.formState.isValid}
 					>
-						{form.formState.isSubmitting ? "Guardando..." : "Crear Asamblea"}
-					</Button>
+						Crear Asamblea
+					</FormSubmitButton>
 				</form>
 			</Form>
 		</DataSheet>
