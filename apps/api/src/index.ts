@@ -132,31 +132,21 @@ const resolveRuntimeSecrets = (env: Bindings) => {
   return resolver;
 };
 
-const verifyTurnstileToken = async (
-  secret: string,
-  token: string,
-  remoteIp?: string,
-) => {
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      secret,
-      response: token,
-      remoteip: remoteIp ?? "",
-    }),
-  });
-
-  if (!response.ok) {
-    return false;
-  }
-
-  const data = await response.json<{ success?: boolean }>();
-
-  return Boolean(data.success);
-};
+// TURNSTILE DESACTIVADO TEMPORALMENTE
+// const verifyTurnstileToken = async (
+//   secret: string,
+//   token: string,
+//   remoteIp?: string,
+// ) => {
+//   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+//     body: new URLSearchParams({ secret, response: token, remoteip: remoteIp ?? "" }),
+//   });
+//   if (!response.ok) return false;
+//   const data = await response.json<{ success?: boolean }>();
+//   return Boolean(data.success);
+// };
 
 const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
   const auth = c.get("auth");
@@ -212,36 +202,39 @@ const app = new Hono<HonoConfig>()
 
     await next();
   })
-  .use('/auth/sign-in/email', async (c, next) => {
-    if (c.req.method !== "POST") {
-      await next();
-      return;
-    }
-
-    const { turnstileSecret } = c.get("runtimeSecrets");
-
-    if (!turnstileSecret) {
-      await next();
-      return;
-    }
-
-    const turnstileToken = c.req.header("X-Turnstile-Token");
-
-    if (!turnstileToken) {
-      return c.json({ message: "Captcha requerido" }, 400);
-    }
-
-    const isValid = await verifyTurnstileToken(
-      turnstileSecret,
-      turnstileToken,
-      c.req.header("CF-Connecting-IP"),
-    );
-
-    if (!isValid) {
-      return c.json({ message: "Captcha inválido" }, 400);
-    }
-
+  .use('/auth/sign-in/email', async (_c, next) => {
+    // TURNSTILE DESACTIVADO TEMPORALMENTE
     await next();
+
+    // if (c.req.method !== "POST") {
+    //   await next();
+    //   return;
+    // }
+
+    // const { turnstileSecret } = c.get("runtimeSecrets");
+
+    // if (!turnstileSecret) {
+    //   await next();
+    //   return;
+    // }
+
+    // const turnstileToken = c.req.header("X-Turnstile-Token");
+
+    // if (!turnstileToken) {
+    //   return c.json({ message: "Captcha requerido" }, 400);
+    // }
+
+    // const isValid = await verifyTurnstileToken(
+    //   turnstileSecret,
+    //   turnstileToken,
+    //   c.req.header("CF-Connecting-IP"),
+    // );
+
+    // if (!isValid) {
+    //   return c.json({ message: "Captcha inválido" }, 400);
+    // }
+
+    // await next();
   })
   .use('/auth/sign-up/email', async (c, next) => {
     if (c.req.method !== "POST") {

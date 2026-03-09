@@ -1,13 +1,10 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import {
 	type FormEvent,
-	useEffect,
 	useId,
-	useMemo,
 	useRef,
 	useState,
 } from "react";
-import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/shared/ui/button";
 import {
@@ -37,134 +34,60 @@ function RouteComponent() {
 	const forgotEmailInputId = useId();
 	const { data, isPending, refetch } = authClient.useSession();
 
-	const turnstileSiteKey = env.VITE_TURNSTILE_SITE_KEY;
-	const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+	// TURNSTILE DESACTIVADO TEMPORALMENTE
 	const turnstileWidgetIdRef = useRef<string | null>(null);
 	const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-	const [turnstileStatus, setTurnstileStatus] = useState<
-		"idle" | "loading" | "ready" | "error"
-	>("idle");
+	const turnstileEnabled = false;
+	// const turnstileEnabled = useMemo(
+	// 	() => Boolean(turnstileSiteKey && mode === "login"),
+	// 	[mode, turnstileSiteKey],
+	// );
 
-	const turnstileEnabled = useMemo(
-		() => Boolean(turnstileSiteKey && mode === "login"),
-		[mode, turnstileSiteKey],
-	);
-
-	useEffect(() => {
-		if (!turnstileEnabled) {
-			setTurnstileToken(null);
-			setTurnstileStatus("idle");
-			return;
-		}
-
-		setTurnstileStatus("loading");
-
-		const scriptId = "cf-turnstile-script";
-		let cancelled = false;
-		let timeoutId: number | null = null;
-
-		const renderWidget = () => {
-			if (cancelled || !turnstileContainerRef.current || !turnstileSiteKey) {
-				return;
-			}
-
-			const turnstile = (
-				window as Window & {
-					turnstile?: {
-						render: (
-							element: HTMLElement,
-							options: Record<string, unknown>,
-						) => string;
-						remove: (id: string) => void;
-						reset: (id: string) => void;
-					};
-				}
-			).turnstile;
-
-			if (!turnstile) {
-				return;
-			}
-
-			if (turnstileWidgetIdRef.current) {
-				turnstile.remove(turnstileWidgetIdRef.current);
-				turnstileWidgetIdRef.current = null;
-			}
-
-			turnstileWidgetIdRef.current = turnstile.render(
-				turnstileContainerRef.current,
-				{
-					sitekey: turnstileSiteKey,
-					callback: (token: string) => {
-						setTurnstileToken(token);
-						setTurnstileStatus("ready");
-					},
-					"expired-callback": () => {
-						setTurnstileToken(null);
-						setTurnstileStatus("loading");
-					},
-					"error-callback": () => {
-						setTurnstileToken(null);
-						setTurnstileStatus("error");
-					},
-				},
-			);
-		};
-
-		const existingScript = document.getElementById(
-			scriptId,
-		) as HTMLScriptElement | null;
-		let onLoadHandler: (() => void) | null = null;
-
-		if (!existingScript) {
-			const script = document.createElement("script");
-			script.id = scriptId;
-			script.src =
-				"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-			script.async = true;
-			script.defer = true;
-			script.onload = renderWidget;
-			script.onerror = () => {
-				if (!cancelled) {
-					setTurnstileStatus("error");
-				}
-			};
-			document.head.appendChild(script);
-		} else {
-			const turnstile = (
-				window as Window & {
-					turnstile?: unknown;
-				}
-			).turnstile;
-
-			if (turnstile) {
-				renderWidget();
-			} else {
-				onLoadHandler = () => {
-					renderWidget();
-				};
-
-				existingScript.addEventListener("load", onLoadHandler, { once: true });
-			}
-		}
-
-		timeoutId = window.setTimeout(() => {
-			if (!cancelled && turnstileEnabled) {
-				setTurnstileStatus((prev) => (prev === "loading" ? "error" : prev));
-			}
-		}, 8000);
-
-		return () => {
-			cancelled = true;
-
-			if (existingScript && onLoadHandler) {
-				existingScript.removeEventListener("load", onLoadHandler);
-			}
-
-			if (timeoutId !== null) {
-				window.clearTimeout(timeoutId);
-			}
-		};
-	}, [turnstileEnabled, turnstileSiteKey]);
+	// useEffect(() => {
+	// 	if (!turnstileEnabled) {
+	// 		setTurnstileToken(null);
+	// 		setTurnstileStatus("idle");
+	// 		return;
+	// 	}
+	// 	setTurnstileStatus("loading");
+	// 	const scriptId = "cf-turnstile-script";
+	// 	let cancelled = false;
+	// 	let timeoutId: number | null = null;
+	// 	const renderWidget = () => {
+	// 		if (cancelled || !turnstileContainerRef.current || !turnstileSiteKey) return;
+	// 		const turnstile = (window as Window & { turnstile?: { render: (element: HTMLElement, options: Record<string, unknown>) => string; remove: (id: string) => void; reset: (id: string) => void; }; }).turnstile;
+	// 		if (!turnstile) return;
+	// 		if (turnstileWidgetIdRef.current) { turnstile.remove(turnstileWidgetIdRef.current); turnstileWidgetIdRef.current = null; }
+	// 		turnstileWidgetIdRef.current = turnstile.render(turnstileContainerRef.current, {
+	// 			sitekey: turnstileSiteKey,
+	// 			callback: (token: string) => { setTurnstileToken(token); setTurnstileStatus("ready"); },
+	// 			"expired-callback": () => { setTurnstileToken(null); setTurnstileStatus("loading"); },
+	// 			"error-callback": () => { setTurnstileToken(null); setTurnstileStatus("error"); },
+	// 		});
+	// 	};
+	// 	const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null;
+	// 	let onLoadHandler: (() => void) | null = null;
+	// 	if (!existingScript) {
+	// 		const script = document.createElement("script");
+	// 		script.id = scriptId;
+	// 		script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+	// 		script.async = true;
+	// 		script.defer = true;
+	// 		script.onload = renderWidget;
+	// 		script.onerror = () => { if (!cancelled) setTurnstileStatus("error"); };
+	// 		document.head.appendChild(script);
+	// 	} else {
+	// 		const turnstile = (window as Window & { turnstile?: unknown }).turnstile;
+	// 		if (turnstile) { renderWidget(); }
+	// 		else { onLoadHandler = () => { renderWidget(); }; existingScript.addEventListener("load", onLoadHandler, { once: true }); }
+	// 	}
+	// 	timeoutId = window.setTimeout(() => { if (!cancelled && turnstileEnabled) setTurnstileStatus((prev) => (prev === "loading" ? "error" : prev)); }, 8000);
+	// 	return () => {
+	// 		cancelled = true;
+	// 		if (existingScript && onLoadHandler) existingScript.removeEventListener("load", onLoadHandler);
+	// 		if (timeoutId !== null) window.clearTimeout(timeoutId);
+	// 	};
+	// }, [turnstileEnabled, turnstileSiteKey]);
 
 	if (isPending) {
 		return (
@@ -201,10 +124,9 @@ function RouteComponent() {
 					email,
 					password,
 				},
-				headers:
-					turnstileToken && turnstileEnabled
-						? { "X-Turnstile-Token": turnstileToken }
-						: undefined,
+				// headers: turnstileToken && turnstileEnabled
+				// 	? { "X-Turnstile-Token": turnstileToken }
+				// 	: undefined,
 			});
 
 			await refetch();
@@ -311,21 +233,22 @@ function RouteComponent() {
 								/>
 							</div>
 
-							{!turnstileSiteKey ? (
-								<p className="text-xs text-amber-600">
-									Captcha no configurado: define VITE_TURNSTILE_SITE_KEY en
-									.env.local
-								</p>
-							) : null}
+						{/* TURNSTILE DESACTIVADO TEMPORALMENTE */}
+						{/* {!turnstileSiteKey ? (
+							<p className="text-xs text-amber-600">
+								Captcha no configurado: define VITE_TURNSTILE_SITE_KEY en
+								.env.local
+							</p>
+						) : null}
 
-							{turnstileEnabled ? <div ref={turnstileContainerRef} /> : null}
+						{turnstileEnabled ? <div ref={turnstileContainerRef} /> : null}
 
-							{turnstileEnabled && turnstileStatus === "error" ? (
-								<p className="text-xs text-amber-600">
-									No se pudo cargar el captcha. Revisa tu conexión o
-										bloqueadores y vuelve a intentarlo.
-								</p>
-							) : null}
+						{turnstileEnabled && turnstileStatus === "error" ? (
+							<p className="text-xs text-amber-600">
+								No se pudo cargar el captcha. Revisa tu conexión o
+									bloqueadores y vuelve a intentarlo.
+							</p>
+						) : null} */}
 
 							<Button
 								type="submit"
