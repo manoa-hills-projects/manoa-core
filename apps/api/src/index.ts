@@ -176,11 +176,10 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
 
 const app = new Hono<HonoConfig>()
   .basePath("/api")
-  .use(etag(), logger())
-  .use('*', async (c, next) => {
+  .use(async (c, next) => {
+    // CORS global para todas las rutas, incluidas delegadas
     const allowedOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
-
-    return cors({
+    await cors({
       origin: (origin) => {
         if (allowedOrigin === '*' && origin) {
           return origin;
@@ -193,6 +192,7 @@ const app = new Hono<HonoConfig>()
       exposeHeaders: ["Content-Disposition", "Content-Type"],
     })(c, next);
   })
+  .use(etag(), logger())
   .use('*', async (c, next) => {
     const db = drizzle(c.env.DB, { schema });
     const dashboardOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
