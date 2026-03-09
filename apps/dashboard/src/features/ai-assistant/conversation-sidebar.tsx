@@ -57,35 +57,35 @@ export function ConversationSidebar({
             ?.slice()
             .reverse()
             .map((conv) => (
-              <button
-                key={conv.id}
-                type="button"
-                onClick={() => onSelect(conv.id)}
-                className={cn(
-                  "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent",
-                  activeId === conv.id && "bg-accent font-medium",
-                )}
-              >
-                <MessageSquareIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">
-                  {conv.title || "Nueva conversación"}
-                </span>
+              <div key={conv.id} className="group relative">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => onSelect(conv.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-2 py-2 pr-7 text-left text-sm transition-colors hover:bg-accent",
+                    activeId === conv.id && "bg-accent font-medium",
+                  )}
+                >
+                  <MessageSquareIcon className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">
+                    {conv.title || "Nueva conversación"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     deleteMutation.mutate(conv.id, {
                       onSuccess: () => {
                         if (activeId === conv.id) onNewChat();
                       },
                     });
                   }}
-                  className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                   title="Eliminar"
                 >
                   <Trash2Icon className="size-3.5" />
                 </button>
-              </button>
+              </div>
             ))}
         </div>
       </ScrollArea>
