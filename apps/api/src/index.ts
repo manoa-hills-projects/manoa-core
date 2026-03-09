@@ -16,6 +16,7 @@ import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
 import { ChatAgent } from './modules/ai/chat-agent'
 import { routeAgentRequest } from 'agents'
+import { seedRouter } from './modules/seed';
 
 type Bindings = {
   DB: D1Database
@@ -293,7 +294,8 @@ const app = new Hono<HonoConfig>()
   .route('/citizens', citizensRouter)
   .route('/ai', aiRouter)
   .route('/polls', pollsRouter)
-  .route('/reports', reportsRouter);
+  .route('/reports', reportsRouter)
+  .route('/seed', seedRouter);
 
 export { ChatAgent }
 
