@@ -2,6 +2,7 @@ import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import type { Citizen } from "@/entities/citizens";
 import { CitizenFormSheet } from "./citizen-form-sheet";
 import { CitizenDetailSheet } from "./citizen-detail-sheet";
+import { CitizenLetterSheet } from "./citizen-letter-sheet";
 
 interface CitizenTableOverlaysProps {
     ui: {
@@ -12,6 +13,8 @@ interface CitizenTableOverlaysProps {
         isDeleteDialogOpen: boolean;
         setDeleteOpen: (open: boolean) => void;
         selectedItem: Citizen | null;
+        citizenForLetter: Citizen | null;
+        closeLetterModal: () => void;
     };
     onDeleteConfirm: () => void;
     isDeleting: boolean;
@@ -37,6 +40,10 @@ export function CitizenTableOverlays({ ui, onDeleteConfirm, isDeleting }: Citize
                 description={`¿Está seguro de eliminar el ciudadano ${ui.selectedItem?.names} ${ui.selectedItem?.surnames}?`}
                 onConfirm={onDeleteConfirm}
                 isLoading={isDeleting}
+            />
+            <CitizenLetterSheet
+                citizen={ui.citizenForLetter}
+                onOpenChange={ui.closeLetterModal}
             />
         </>
     );

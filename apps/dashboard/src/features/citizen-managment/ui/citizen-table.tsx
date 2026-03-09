@@ -33,6 +33,7 @@ export function CitizenTable() {
                     onView={ui.openDetails}
                     onEdit={ui.openEdit}
                     onDelete={ui.openDelete}
+                    onDownloadLetter={ui.openLetterModal}
                 />
             ),
         },

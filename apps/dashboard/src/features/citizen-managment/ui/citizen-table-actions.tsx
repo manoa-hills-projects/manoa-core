@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Eye, Pencil, Trash } from "lucide-react";
+import { Eye, FileDown, Pencil, Trash } from "lucide-react";
 import { type Citizen } from "@/entities/citizens";
 import { DataTableActions, type ActionItem } from "@/shared/ui/data-table-actions";
 
@@ -8,13 +8,15 @@ interface CitizenTableActionsProps {
     onView: (citizen: Citizen) => void;
     onEdit: (citizen: Citizen) => void;
     onDelete: (citizen: Citizen) => void;
+    onDownloadLetter: (citizen: Citizen) => void;
 }
 
 export const CitizenTableActions = ({
     citizen,
     onView,
     onEdit,
-    onDelete
+    onDelete,
+    onDownloadLetter
 }: CitizenTableActionsProps) => {
 
     const actions = useMemo<ActionItem<Citizen>[]>(() => [
@@ -34,7 +36,12 @@ export const CitizenTableActions = ({
             onClick: onDelete,
             className: "text-red-600 focus:bg-red-50 focus:text-red-600",
         },
-    ], [onView, onEdit, onDelete]);
+        {
+            label: "Carta de Residencia",
+            icon: FileDown,
+            onClick: onDownloadLetter,
+        },
+    ], [onView, onEdit, onDelete, onDownloadLetter]);
 
     return (
         <DataTableActions
