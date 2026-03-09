@@ -176,20 +176,12 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
 
 const app = new Hono<HonoConfig>()
   .basePath("/api")
-  .use(async (c, next) => {
-    const allowedOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
-    await cors({
-      origin: (origin) => {
-        if (allowedOrigin === '*' && origin) return origin;
-        return allowedOrigin;
-      },
-      credentials: true,
-      allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: (requestedHeaders) =>
-        requestedHeaders ?? "Content-Type, Authorization, X-Turnstile-Token, X-Bootstrap-Key",
-      exposeHeaders: ["Content-Disposition", "Content-Type"],
-    })(c, next);
-  })
+  .use(cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["*"],
+    exposeHeaders: ["Content-Disposition", "Content-Type"],
+  }))
   .use(etag(), logger())
   .use('*', async (c, next) => {
     const db = drizzle(c.env.DB, { schema });
