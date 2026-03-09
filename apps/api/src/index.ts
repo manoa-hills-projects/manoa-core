@@ -177,9 +177,10 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
 const app = new Hono<HonoConfig>()
   .basePath("/api")
   .use(cors({
-    origin: "*",
+    origin: (origin) => origin ?? "*",
+    credentials: true,
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["*"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
     exposeHeaders: ["Content-Disposition", "Content-Type"],
   }))
   .use(etag(), logger())
