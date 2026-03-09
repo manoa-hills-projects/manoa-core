@@ -1,7 +1,5 @@
-import { useEffect } from "react";
 import { type Citizen } from "@/entities/citizens";
 import { familyOptionAdapter, fetchFamiliesOptions } from "@/entities/families";
-import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
 import {
@@ -10,6 +8,7 @@ import {
     FormSelectField,
     FormSwitchField,
 } from "@/shared/ui/form-fields";
+import { FormSubmitButton } from "@/shared/ui/form-submit-button";
 import { useCitizenForm } from "../model/use-citizen-form";
 
 interface CitizenFormSheetProps {
@@ -29,20 +28,6 @@ export function CitizenFormSheet({
         citizen,
         onSuccess: () => onOpenChange(false),
     });
-
-    useEffect(() => {
-        if (open) {
-            form.reset({
-                cedula: citizen?.cedula || "",
-                names: citizen?.names || "",
-                surnames: citizen?.surnames || "",
-                gender: citizen?.gender || "",
-                birth_date: citizen?.birth_date || "",
-                is_head_of_household: citizen?.is_head_of_household || false,
-                family_id: citizen?.family_id || "",
-            });
-        }
-    }, [citizen, open, form]);
 
     return (
         <DataSheet
@@ -108,13 +93,13 @@ export function CitizenFormSheet({
                         label="Jefe de Hogar"
                     />
 
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting}
+                    <FormSubmitButton
                         className="mt-4"
+                        isSubmitting={isSubmitting}
+                        isDisabled={!form.formState.isValid}
                     >
-                        {isSubmitting ? "Guardando..." : "Guardar"}
-                    </Button>
+                        {isEditing ? "Guardar Cambios" : "Guardar"}
+                    </FormSubmitButton>
                 </form>
             </Form>
         </DataSheet>

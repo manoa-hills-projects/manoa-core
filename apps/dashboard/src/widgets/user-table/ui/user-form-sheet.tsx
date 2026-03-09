@@ -1,15 +1,9 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { useState } from "react";
+import { type User } from "@/entities/users";
 import {
 	citizenOptionAdapter,
 	fetchCitizensOptions,
-	useUpdateCitizen,
 } from "@/entities/citizens";
-import { type User, useCreateUser, useUpdateUser } from "@/entities/users";
-import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
 import {
@@ -17,6 +11,8 @@ import {
 	FormInputField,
 	FormSelectField,
 } from "@/shared/ui/form-fields";
+import { FormSubmitButton } from "@/shared/ui/form-submit-button";
+import { useUserForm } from "../model/use-user-form";
 
 interface UserFormSheetProps {
 	open: boolean;
@@ -24,129 +20,22 @@ interface UserFormSheetProps {
 	user?: User | null;
 }
 
-const formSchema = z
-	.object({
-		name: z.string().min(1, { message: "Requerido" }),
-		email: z.string().email({ message: "Correo inválido" }),
-		role: z.string().min(1, { message: "Requerido" }),
-		citizen_id: z.string().optional(),
-		password: z.string().optional(),
-	})
-	.refine(
-		(data) => {
-			// Si no hay un ciudadano seleccionado, la contraseña es obligatoria en creación
-			if (!data.citizen_id && !data.password) {
-				return false;
-			}
-			return true;
-		},
-		{
-			message: "Se requiere contraseña o asociar a un ciudadano",
-			path: ["password"],
-		},
-	);
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function UserFormSheet({
 	open,
 	onOpenChange,
 	user,
 }: UserFormSheetProps) {
-	const createMutation = useCreateUser();
-	const updateMutation = useUpdateUser();
-	const updateCitizenMutation = useUpdateCitizen();
-
-	const isEditing = !!user;
+	const isEditing = !!user?.id;
 
 	// Fetch citizen to get the initial label for the combobox if editing
 	const [citizenLabel, setCitizenLabel] = useState<string | null>(null);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			name: user?.name || "",
-			email: user?.email || "",
-			role: user?.role || "user",
-			citizen_id: "",
-			password: "",
-		},
+	const { form, onSubmit, isSubmitting } = useUserForm({
+		user,
+		onSuccess: () => onOpenChange(false),
 	});
 
 	const watchCitizenId = form.watch("citizen_id");
-
-	useEffect(() => {
-		if (open) {
-			form.reset({
-				name: user?.name || "",
-				email: user?.email || "",
-				role: user?.role || "user",
-				citizen_id: "", // TODO: If user is bound to a citizen, fetch and set here
-				password: "",
-			});
-			setCitizenLabel(null);
-		}
-	}, [user, open, form]);
-
-	const onSubmit = async (values: FormValues) => {
-		try {
-			if (isEditing && user) {
-				await updateMutation.mutateAsync({
-					id: user.id,
-					data: {
-						name: values.name,
-						email: values.email,
-						role: values.role as "user" | "admin" | "superadmin",
-					},
-				});
-				toast.success("Usuario actualizado exitosamente");
-			} else {
-				let passwordToUse = values.password;
-
-				// Si seleccionó ciudadano pero no puso contraseña, tratar de extraer la cédula
-				if (values.citizen_id && !values.password) {
-					// Hack: fetch the options and find the citizen to get the cedula
-					// In a real scenario, the combobox should expose the whole object or
-					// we should fetch the specific citizen details
-					const options = await fetchCitizensOptions({
-						search: "",
-						limit: 100,
-					});
-					const selectedCitizen = options.find(
-						(c) => c.id === values.citizen_id,
-					);
-					if (selectedCitizen) {
-						passwordToUse = selectedCitizen.cedula;
-					} else {
-						toast.error(
-							"No se pudo obtener la cédula del ciudadano para la contraseña",
-						);
-						return;
-					}
-				}
-
-				const newUser = await createMutation.mutateAsync({
-					email: values.email,
-					name: values.name,
-					password: passwordToUse!,
-					role: values.role as "user" | "admin" | "superadmin",
-				});
-
-				// Si asoció a un ciudadano, actualizar el ciudadano con el nuevo user_id
-				if (values.citizen_id && newUser?.user?.id) {
-					await updateCitizenMutation.mutateAsync({
-						id: values.citizen_id,
-						data: { user_id: newUser.user.id },
-					});
-				}
-
-				toast.success("Usuario creado exitosamente");
-			}
-			onOpenChange(false);
-		} catch (error: any) {
-			toast.error(error.message || "Error al guardar el usuario");
-		}
-	};
 
 	return (
 		<DataSheet
@@ -161,7 +50,7 @@ export function UserFormSheet({
 		>
 			<Form {...form}>
 				<form
-					onSubmit={form.handleSubmit(onSubmit)}
+					onSubmit={onSubmit}
 					className="flex flex-col gap-4"
 				>
 					<FormInputField control={form.control} name="name" label="Nombre" />
@@ -222,13 +111,13 @@ export function UserFormSheet({
 						</div>
 					)}
 
-					<Button
-						type="submit"
-						disabled={form.formState.isSubmitting}
+					<FormSubmitButton
 						className="mt-4"
+						isSubmitting={isSubmitting}
+						isDisabled={!form.formState.isValid}
 					>
-						{form.formState.isSubmitting ? "Guardando..." : "Guardar"}
-					</Button>
+						{isEditing ? "Guardar Cambios" : "Guardar"}
+					</FormSubmitButton>
 				</form>
 			</Form>
 		</DataSheet>
