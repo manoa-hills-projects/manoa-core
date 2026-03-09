@@ -1,6 +1,4 @@
 import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import type { Citizen } from "@/entities/citizens";
 
 // Using standard fonts for PDF
@@ -99,21 +97,21 @@ const styles = StyleSheet.create({
 
 interface ResidencyLetterPDFProps {
     citizen: Citizen;
+    loggedInCitizen?: Citizen;
+    sessionUser?: { name?: string | null, email?: string | null };
 }
 
-export const ResidencyLetterPDF = ({ citizen }: ResidencyLetterPDFProps) => {
-    // Generate dates
-    const today = new Date();
-    // Static values from template
-    const voceraName = "Blanco Yalin Iraima";
-    const voceraId = "V-1.569.192";
-    const consejoName = "BARRIO UNI\u00D3N \"SECTOR LA PIEDRA\"";
-    const parroquia = "Fernando Gir\u00F3n Tovar";
-    const sectorDate = "01 de enero 1990";
-    const phone = "0426-113.95.01";
-    const address = "Barrio Uni\u00F3n, calle Uni\u00F3n No. 55, Puerto Ayacucho Estado Amazonas.";
+export const ResidencyLetterPDF = ({ citizen, loggedInCitizen, sessionUser }: ResidencyLetterPDFProps) => {
+    // Determine vocero identity
+    // Prioritize citizen profile if it exists, otherwise fallback to basic session user info
+    let voceraName = "VOCERO NO ASIGNADO";
+    if (loggedInCitizen?.names && loggedInCitizen?.surnames) {
+        voceraName = `${loggedInCitizen.names} ${loggedInCitizen.surnames}`;
+    } else if (sessionUser?.name) {
+        voceraName = sessionUser.name;
+    }
 
-    const citizenName = `${citizen.names} ${citizen.surnames}`.toUpperCase();
+    const voceraIdRaw = loggedInCitizen?.cedula;
     
     // Format document ID to include dots if possible, otherwise use raw
     const formatDocumentId = (docId: string | undefined | null) => {
@@ -127,6 +125,16 @@ export const ResidencyLetterPDF = ({ citizen }: ResidencyLetterPDFProps) => {
         return `V-${docId}`;
     };
 
+    const voceraId = voceraIdRaw ? formatDocumentId(voceraIdRaw) : null;
+    const voceraCedulaText = voceraId ? `, portador(a) de la cédula de identidad No. ` : "";
+    const voceraCedulaValue = voceraId ? voceraId : "";
+
+    // Static variables based on Bicentenario Manoa
+    const consejoName = "CONSEJO COMUNAL BICENTENARIO MANOA DE LA 10 A LA 20, PERIODO 2025 - 2028";
+    const direccion = "MUNICIPIO CARONÍ - PARROQUIA SIMÓN BOLÍVAR";
+    const currentYear = new Date().getFullYear();
+
+    const citizenName = `${citizen.names} ${citizen.surnames}`.toUpperCase();
     const citizenId = formatDocumentId(citizen.cedula);
 
     return (
@@ -134,24 +142,12 @@ export const ResidencyLetterPDF = ({ citizen }: ResidencyLetterPDFProps) => {
             <Page size="LETTER" style={styles.page}>
                 {/* Header */}
                 <View style={styles.headerRow}>
-                    <View style={styles.headerTextLeft}>
-                        {/* Placeholder for Escudo */}
-                        <Text style={styles.bold}>REPÚBLICA</Text>
-                        <Text style={styles.bold}>BOLIVARIANA</Text>
-                        <Text style={styles.bold}>DE VENEZUELA</Text>
-                    </View>
-
                     <View style={styles.headerTextCenter}>
-                        <Text style={styles.headerTitle}>CONSEJO COMUNAL BARRIO UNIÓN</Text>
-                        <Text style={styles.headerTitle}>"SECTOR LA PIEDRA"</Text>
-                        <Text style={styles.headerRif}>RIF. C-29933234-8</Text>
-                    </View>
-
-                    <View style={styles.headerTextRight}>
-                        {/* Placeholder for Venezuela logo */}
-                        <Text>PUERTO AYACUCHO</Text>
-                        <Text>MUNICIPIO ATURES</Text>
-                        <Text>ESTADO AMAZONAS</Text>
+                        <Text style={styles.headerTitle}>REPÚBLICA BOLIVARIANA DE VENEZUELA</Text>
+                        <Text style={styles.headerTitle}>MINISTERIO DEL PODER POPULAR PARA LAS COMUNAS</Text>
+                        <Text style={styles.headerTitle}>CUADERNILLO DE VOTACIÓN RENOVACIÓN DE VOCERIAS</Text>
+                        <Text style={styles.headerSubtitle}>{consejoName}</Text>
+                        <Text style={styles.headerSubtitle}>{direccion}</Text>
                     </View>
                 </View>
 
@@ -176,44 +172,33 @@ export const ResidencyLetterPDF = ({ citizen }: ResidencyLetterPDFProps) => {
 
                 {/* Body Paragraph 1 */}
                 <Text style={styles.paragraph}>
-                    Quien suscribe, <Text style={styles.bold}>{voceraName}</Text>, venezolana, mayor de edad, 
-                    portadora de la cédula de identidad No. <Text style={styles.bold}>{voceraId}</Text> en mi cargo 
-                    como Vocera Principal del Consejo Comunal "{consejoName}", Parroquia {parroquia}, hago constar que por medio de la 
-                    presente que la Ciudadana: <Text style={styles.bold}>{citizenName}</Text>, mayor de edad, 
-                    venezolana, titular de la C.I. No. <Text style={styles.bold}>{citizenId}</Text>, fijo su residencia 
-                    en este sector desde {sectorDate}, hasta la presente fecha. Ha demostrado buena conducta, así como 
+                    Quien suscribe, <Text style={styles.bold}>{voceraName}</Text>, mayor de edad
+                    {voceraCedulaText}<Text style={styles.bold}>{voceraCedulaValue}</Text> en mi cargo 
+                    como Vocero Principal del {consejoName}, hago constar que por medio de la 
+                    presente que el/la Ciudadano(a): <Text style={styles.bold}>{citizenName}</Text>, mayor de edad, 
+                    titular de la C.I. No. <Text style={styles.bold}>{citizenId}</Text>, fijo su residencia 
+                    en este sector. Ha demostrado buena conducta, así como 
                     un espíritu de colaboración para con todos, es una persona de reconocida solvencia moral, responsable y recta procedencia, 
                     razones suficientes que nos permite recomendarla ampliamente.
                 </Text>
 
                 {/* Body Paragraph 2 */}
                 <Text style={styles.paragraph}>
-                    Constancia que se expide a solicitud de partes interesadas en Puerto Ayacucho al primer 
-                    (01) día del mes de octubre de 2020. Manifiesta que la requiere con fines de: TRAMITES BANCARIOS.
+                    Constancia que se expide a solicitud de partes interesadas a la fecha de hoy, del periodo {currentYear}. Manifiesta que la requiere con fines documentales u organizativos pertinentes.
                 </Text>
-                {/* Note: I left the specific "01 dia del mes de octubre de 2020" from the template, 
-                    but uncomment the following if you want dynamic dates based on today's date:
-                <Text style={styles.paragraph}>
-                    Constancia que se expide a solicitud de partes interesadas en Puerto Ayacucho al 
-                    {day} día del mes de {month} de {year}. Manifiesta que la requiere con fines de: TRAMITES BANCARIOS.
-                </Text>
-                */}
 
                 {/* Signatures */}
                 <View style={styles.signatureSection}>
                     <Text>Atentamente,</Text>
-                    <Text style={{ marginTop: 15 }}>Por el Consejo Comunal <Text style={styles.bold}>{consejoName}</Text></Text>
+                    <Text style={{ marginTop: 15 }}>Por el {consejoName}</Text>
                     
                     <View style={styles.signatureName}>
                         <Text>{voceraName.toUpperCase()}</Text>
-                        <Text>C.I.No.{voceraId.replace("V-", "")}</Text>
-                        <Text>{phone}</Text>
-                        <Text>Vocera Principal</Text>
+                        {voceraId && <Text>C.I.No.{voceraId.replace("V-", "")}</Text>}
+                        <Text>Vocero Principal</Text>
                     </View>
                 </View>
 
-                {/* Footer */}
-                <Text style={styles.footer}>{address} {phone}</Text>
             </Page>
         </Document>
     );

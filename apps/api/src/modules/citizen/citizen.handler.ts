@@ -43,7 +43,7 @@ export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: s
 }
 
 export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, queryParams: CitizenQueryParams) => {
-  const { limit, page, search, family_id } = queryParams;
+  const { limit, page, search, family_id, user_id } = queryParams;
 
   const query = db
     .select({
@@ -75,6 +75,10 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
 
   if (family_id) {
     conditions.push(eq(schema.citizens.familyId, family_id));
+  }
+
+  if (user_id) {
+    conditions.push(eq(schema.citizens.userId, user_id));
   }
 
   if (conditions.length > 0) {

@@ -4,6 +4,8 @@ import type { Citizen } from "@/entities/citizens";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { ResidencyLetterPDF } from "./residency-letter-pdf";
+import { authClient } from "@/lib/auth-client";
+import { useCitizens } from "@/entities/citizens";
 
 interface CitizenLetterSheetProps {
     citizen: Citizen | null;
@@ -13,8 +15,26 @@ interface CitizenLetterSheetProps {
 export function CitizenLetterSheet({ citizen, onOpenChange }: CitizenLetterSheetProps) {
     if (!citizen) return null;
 
+    const { data: sessionData } = authClient.useSession();
+    const userId = sessionData?.user?.id;
+
+    const { data: userCitizensResponse } = useCitizens(
+        { pageIndex: 0, pageSize: 1 },
+        { user_id: userId }
+    );
+
+    const loggedInCitizen = userCitizensResponse?.data?.[0];
+
     // Use the PDF generation hook inline when the sheet is opened
-    const [instance] = usePDF({ document: <ResidencyLetterPDF citizen={citizen} /> });
+    const [instance] = usePDF({ 
+        document: citizen ? (
+            <ResidencyLetterPDF 
+                citizen={citizen} 
+                loggedInCitizen={loggedInCitizen} 
+                sessionUser={sessionData?.user} 
+            />
+        ) : <></>
+    });
 
     const handlePrint = () => {
         if (instance.url) {
