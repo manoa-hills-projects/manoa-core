@@ -1,196 +1,118 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Loader2, Send, User } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { env } from "@/env";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/shared/api/api-client";
+import { authClient } from "@/lib/auth-client";
+import {
+	HomeIcon,
+	UsersIcon,
+	UserIcon,
+	SparklesIcon,
+	ArrowRightIcon,
+	MessageSquareIcon,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
-import { Input } from "@/shared/ui/input";
-import { ScrollArea } from "@/shared/ui/scroll-area";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/")({
 	component: RouteComponent,
 });
 
-type ChatMessage = {
-	id: string;
-	role: "user" | "assistant";
-	content: string;
+type CensusSummary = {
+	houses: number;
+	families: number;
+	citizens: number;
 };
 
-type QueryApiResponse = {
-	data?: {
-		answer?: string;
-	};
-};
-
-function RouteComponent() {
-	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const [input, setInput] = useState("");
-	const [messages, setMessages] = useState<ChatMessage[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
-
-	const apiOrigin = useMemo(
-		() => env.VITE_API_ORIGIN ?? "http://localhost:8787",
-		[],
-	);
-
-	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+const useCensusSummary = () =>
+	useQuery({
+		queryKey: ["census-summary"],
+		queryFn: async () => {
+			const [houses, families, citizens] = await Promise.all([
+				api.get("houses", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
+				api.get("families", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
+				api.get("citizens", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
+			]);
+			return {
+				houses: houses.metadata.total,
+				families: families.metadata.total,
+				citizens: citizens.metadata.total,
+			} satisfies CensusSummary;
+		},
 	});
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
+const STATS = [
+	{ key: "houses" as const, label: "Viviendas", icon: HomeIcon, color: "text-blue-500", bg: "bg-blue-500/10" },
+	{ key: "families" as const, label: "Familias", icon: UsersIcon, color: "text-violet-500", bg: "bg-violet-500/10" },
+	{ key: "citizens" as const, label: "Habitantes", icon: UserIcon, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+];
 
-		const question = input.trim();
+function RouteComponent() {
+	const { data: session } = authClient.useSession();
+	const { data, isLoading } = useCensusSummary();
 
-		if (!question || isLoading) {
-			return;
-		}
-
-		const userMessage: ChatMessage = {
-			id: crypto.randomUUID(),
-			role: "user",
-			content: question,
-		};
-
-		setMessages((prev) => [...prev, userMessage]);
-		setInput("");
-		setIsLoading(true);
-
-		try {
-			const response = await fetch(`${apiOrigin}/api/ai/query`, {
-				method: "POST",
-				credentials: "include",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ question }),
-			});
-
-			if (!response.ok) {
-				throw new Error("No se pudo obtener respuesta del asistente");
-			}
-
-			const payload = (await response.json()) as QueryApiResponse;
-			const answer =
-				payload.data?.answer?.trim() || "No pude generar una respuesta.";
-
-			setMessages((prev) => [
-				...prev,
-				{
-					id: crypto.randomUUID(),
-					role: "assistant",
-					content: answer,
-				},
-			]);
-		} catch {
-			setMessages((prev) => [
-				...prev,
-				{
-					id: crypto.randomUUID(),
-					role: "assistant",
-					content: "Hubo un error procesando tu consulta.",
-				},
-			]);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const firstName = session?.user?.name?.split(" ")[0] ?? "Admin";
 
 	return (
-		<div className="flex h-full w-full flex-col gap-4 p-4 lg:mx-auto lg:max-w-4xl">
-			<div className="mb-4 space-y-2 text-center">
-				<h1 className="text-3xl font-bold tracking-tight text-foreground">
-					Asistente Manoa
+		<div className="flex flex-col gap-6 p-6">
+			{/* Saludo */}
+			<div>
+				<h1 className="text-2xl font-bold tracking-tight">
+					Bienvenido, {firstName} 👋
 				</h1>
-				<p className="text-muted-foreground">
-					Pregunta sobre estadísticas, ciudadanos o gestión de la comunidad.
+				<p className="text-muted-foreground text-sm mt-1">
+					Aquí está el resumen del Consejo Comunal de Manoa.
 				</p>
 			</div>
 
-			<Card className="flex flex-1 flex-col overflow-hidden border bg-background shadow-sm">
-				<ScrollArea className="flex-1 p-4">
-					<div className="flex flex-col gap-4 pb-4">
-						{messages.length === 0 && (
-							<div className="flex h-full flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
-								<Bot className="mb-4 h-16 w-16" />
-								<p>¿En qué puedo ayudarte hoy?</p>
+			{/* Stats del censo */}
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+				{STATS.map(({ key, label, icon: Icon, color, bg }) => (
+					<Card key={key}>
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-sm font-medium text-muted-foreground">
+								{label}
+							</CardTitle>
+							<div className={`rounded-md p-2 ${bg}`}>
+								<Icon className={`size-4 ${color}`} />
 							</div>
-						)}
-
-						{messages.map((m) => (
-							<div
-								key={m.id}
-								className={`flex w-full gap-3 ${
-									m.role === "user" ? "flex-row-reverse" : "flex-row"
-								}`}
-							>
-								<Avatar className="mt-1 h-8 w-8 border bg-background">
-									{m.role === "user" ? (
-										<AvatarFallback className="bg-primary text-primary-foreground">
-											<User className="h-4 w-4" />
-										</AvatarFallback>
-									) : (
-										<AvatarFallback className="bg-blue-600 text-white">
-											<Bot className="h-4 w-4" />
-										</AvatarFallback>
-									)}
-								</Avatar>
-
-								<div
-									className={`max-w-[80%] rounded-xl px-4 py-2 text-sm shadow-sm ${
-										m.role === "user"
-											? "bg-primary text-primary-foreground"
-											: "border bg-muted/50 text-foreground"
-									}`}
-								>
-									<div className="whitespace-pre-wrap leading-relaxed">
-										{m.content}
-									</div>
-								</div>
-							</div>
-						))}
-
-						{isLoading &&
-							messages.length > 0 &&
-							messages[messages.length - 1].role === "user" && (
-								<div className="flex w-full gap-3">
-									<Avatar className="mt-1 h-8 w-8 border bg-background">
-										<AvatarFallback className="bg-blue-600 text-white">
-											<Bot className="h-4 w-4" />
-										</AvatarFallback>
-									</Avatar>
-									<div className="flex items-center gap-2 rounded-xl border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-										<Loader2 className="h-3 w-3 animate-spin" />
-										<span>Pensando...</span>
-									</div>
-								</div>
+						</CardHeader>
+						<CardContent>
+							{isLoading ? (
+								<Skeleton className="h-8 w-20" />
+							) : (
+								<p className="text-3xl font-bold">
+									{data?.[key].toLocaleString("es-VE") ?? "—"}
+								</p>
 							)}
-						<div ref={messagesEndRef} />
-					</div>
-				</ScrollArea>
+						</CardContent>
+					</Card>
+				))}
+			</div>
 
-				<div className="border-t bg-background/50 p-4 backdrop-blur-sm">
-					<form onSubmit={handleSubmit} className="flex gap-2">
-						<Input
-							value={input}
-							onChange={(event) => setInput(event.target.value)}
-							placeholder="Ej: ¿Cuántas familias hay registradas?"
-							className="h-11 flex-1 shadow-sm"
-							disabled={isLoading}
-						/>
-						<Button
-							type="submit"
-							size="icon"
-							className="h-11 w-11 shrink-0 shadow-sm"
-							disabled={isLoading || !input.trim()}
-						>
-							<Send className="h-4 w-4" />
-							<span className="sr-only">Enviar</span>
-						</Button>
-					</form>
-				</div>
+			{/* Acceso rápido al asistente */}
+			<Card className="border-dashed">
+				<CardContent className="flex flex-col items-start gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex items-start gap-4">
+						<div className="rounded-xl bg-primary/10 p-3">
+							<SparklesIcon className="size-6 text-primary" />
+						</div>
+						<div>
+							<h2 className="font-semibold">Asistente Manoa IA</h2>
+							<p className="text-sm text-muted-foreground max-w-sm">
+								Consulta estadísticas, información del censo o gestiona
+								trámites usando lenguaje natural.
+							</p>
+						</div>
+					</div>
+					<Button asChild className="shrink-0 gap-2">
+						<Link to="/ai-assistant">
+							<MessageSquareIcon className="size-4" />
+							Abrir asistente
+							<ArrowRightIcon className="size-4" />
+						</Link>
+					</Button>
+				</CardContent>
 			</Card>
 		</div>
 	);
