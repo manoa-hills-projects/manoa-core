@@ -177,18 +177,15 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
 const app = new Hono<HonoConfig>()
   .basePath("/api")
   .use(async (c, next) => {
-    // CORS global para todas las rutas, incluidas delegadas
     const allowedOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
     await cors({
       origin: (origin) => {
-        if (allowedOrigin === '*' && origin) {
-          return origin;
-        }
+        if (allowedOrigin === '*' && origin) return origin;
         return allowedOrigin;
       },
       credentials: true,
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "x-turnstile-token", "X-Bootstrap-Key"],
+      allowHeaders: (headers) => headers,
       exposeHeaders: ["Content-Disposition", "Content-Type"],
     })(c, next);
   })
