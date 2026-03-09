@@ -185,7 +185,8 @@ const app = new Hono<HonoConfig>()
       },
       credentials: true,
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: (headers) => headers,
+      allowHeaders: (requestedHeaders) =>
+        requestedHeaders ?? "Content-Type, Authorization, X-Turnstile-Token, X-Bootstrap-Key",
       exposeHeaders: ["Content-Disposition", "Content-Type"],
     })(c, next);
   })
@@ -276,7 +277,10 @@ const app = new Hono<HonoConfig>()
 
     await next();
   })
-  .on(["GET", "POST"], '/auth/*', async (c) => {
+  .on(["GET", "POST", "OPTIONS"], '/auth/*', async (c) => {
+    if (c.req.method === "OPTIONS") {
+      return new Response(null, { status: 204 });
+    }
     const auth = c.get('auth');
     return auth.handler(c.req.raw);
   })
