@@ -1,13 +1,20 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle2, Loader2, Plus } from "lucide-react";
+import { CheckCircle2, Loader2, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { usePolls, useUpdatePollStatus, useVotePoll } from "@/entities/polls";
+import type { Poll } from "@/entities/polls";
+import {
+	useDeletePoll,
+	usePolls,
+	useUpdatePollStatus,
+	useVotePoll,
+} from "@/entities/polls";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import {
 	Card,
 	CardContent,
@@ -16,6 +23,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 
@@ -23,6 +36,7 @@ import { PollFormSheet } from "./poll-form-sheet";
 
 export function PollList() {
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
+	const [pollToDelete, setPollToDelete] = useState<Poll | null>(null);
 	const [selectedOptions, setSelectedOptions] = useState<
 		Record<string, string>
 	>({});
@@ -36,6 +50,7 @@ export function PollList() {
 
 	const { data, isLoading } = usePolls({ limit: 50 }); // Fetching enough for the demo
 	const { mutate: updateStatus, isPending: isUpdating } = useUpdatePollStatus();
+	const { mutate: deletePoll, isPending: isDeleting } = useDeletePoll();
 	const { mutate: vote, isPending: isVoting } = useVotePoll();
 
 	const handleCreate = () => {
@@ -62,6 +77,19 @@ export function PollList() {
 		);
 	};
 
+	const handleConfirmDelete = () => {
+		if (!pollToDelete) return;
+		deletePoll(pollToDelete.id, {
+			onSuccess: () => {
+				toast.success("Asamblea eliminada correctamente");
+				setPollToDelete(null);
+			},
+			onError: () => {
+				toast.error("No se pudo eliminar la asamblea");
+			},
+		});
+	};
+
 	const handleVote = (pollId: string) => {
 		const optionId = selectedOptions[pollId];
 		if (!optionId) {
@@ -75,8 +103,10 @@ export function PollList() {
 				onSuccess: () => {
 					toast.success("Voto registrado exitosamente");
 				},
-				onError: (error: any) => {
-					toast.error(error.message || "Error al registrar el voto");
+				onError: (error: unknown) => {
+					toast.error(
+						error instanceof Error ? error.message : "Error al registrar el voto",
+					);
 				},
 			},
 		);
@@ -150,9 +180,41 @@ export function PollList() {
 											{format(new Date(poll.createdAt), "PPP", { locale: es })}
 										</CardDescription>
 									</div>
-									<Badge variant={isOpen ? "default" : "secondary"}>
-										{isOpen ? "En Curso" : "Finalizada"}
-									</Badge>
+									<div className="flex items-center gap-2">
+										<Badge variant={isOpen ? "default" : "secondary"}>
+											{isOpen ? "En Curso" : "Finalizada"}
+										</Badge>
+										{isAdmin && (
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8 shrink-0"
+													>
+														<MoreVertical className="h-4 w-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end">
+													<DropdownMenuItem
+														onClick={() =>
+															handleToggleStatus(poll.id, poll.status)
+														}
+														disabled={isUpdating}
+													>
+														{isOpen ? "Cerrar Asamblea" : "Reabrir Asamblea"}
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														variant="destructive"
+														onClick={() => setPollToDelete(poll)}
+													>
+														<Trash2 className="h-4 w-4" />
+														Eliminar Asamblea
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										)}
+									</div>
 								</div>
 							</CardHeader>
 
@@ -287,6 +349,16 @@ export function PollList() {
 			</div>
 
 			<PollFormSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+
+			<ConfirmDialog
+				open={!!pollToDelete}
+				onOpenChange={(open) => !open && setPollToDelete(null)}
+				title="Eliminar asamblea"
+				description={`¿Está seguro de eliminar la asamblea "${pollToDelete?.title}"? Esta acción no se puede deshacer.`}
+				onConfirm={handleConfirmDelete}
+				confirmText="Eliminar"
+				isLoading={isDeleting}
+			/>
 		</div>
 	);
 }
