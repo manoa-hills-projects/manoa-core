@@ -15,6 +15,13 @@
       "when": 1772989280912,
       "tag": "0001_nice_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773519917137,
+      "tag": "0002_lyrical_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }

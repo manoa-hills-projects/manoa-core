@@ -11,6 +11,7 @@ import citizensRouter from './modules/citizen/citizen.router'
 import reportsRouter from './modules/reports/reports.router'
 import aiRouter from './modules/ai/ai.router'
 import { pollsRouter } from './modules/polls/polls.router'
+import documentsRouter from './modules/documents/documents.router'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
@@ -276,12 +277,19 @@ const app = new Hono<HonoConfig>()
   .use('/ai/*', requireAuth)
   .use('/polls/*', requireAuth)
   .use('/reports/*', requireAuth)
+  .use('/documents/*', async (c, next) => {
+    if (c.req.method === 'POST') {
+      return requireAuth(c, next)
+    }
+    await next()
+  })
   .route('/houses', housesRouter)
   .route('/families', familiesRouter)
   .route('/citizens', citizensRouter)
   .route('/ai', aiRouter)
   .route('/polls', pollsRouter)
   .route('/reports', reportsRouter)
+  .route('/documents', documentsRouter)
   .route('/seed', seedRouter);
 
 export { ChatAgent }

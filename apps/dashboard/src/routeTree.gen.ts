@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as VerifyIdRouteImport } from './routes/verify/$id'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
 import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticated/meetings'
@@ -33,6 +34,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthIndexRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/meetings': typeof AuthenticatedMeetingsRoute
   '/_authenticated/polls': typeof AuthenticatedPollsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/auth/': typeof AuthIndexRoute
 }
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/users'
+    | '/verify/$id'
     | '/auth/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/users'
+    | '/verify/$id'
     | '/'
     | '/auth'
   id:
@@ -139,12 +150,14 @@ export interface FileRouteTypes {
     | '/_authenticated/meetings'
     | '/_authenticated/polls'
     | '/_authenticated/users'
+    | '/verify/$id'
     | '/_authenticated/'
     | '/auth/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  VerifyIdRoute: typeof VerifyIdRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/users': {
       id: '/_authenticated/users'
@@ -250,6 +270,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  VerifyIdRoute: VerifyIdRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
