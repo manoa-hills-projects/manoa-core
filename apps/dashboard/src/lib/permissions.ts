@@ -9,6 +9,7 @@ export const statement = {
 	houses: ["read"],
 	families: ["read"],
 	citizens: ["read"],
+	requests: ["create", "read", "approve", "reject", "download"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -19,6 +20,7 @@ export const user = ac.newRole({
 	houses: ["read"],
 	families: ["read"],
 	citizens: ["read"],
+	requests: ["create", "read", "download"],
 });
 
 export const admin = ac.newRole({
@@ -29,6 +31,7 @@ export const admin = ac.newRole({
 	houses: ["read"],
 	families: ["read"],
 	citizens: ["read"],
+	requests: ["create", "read", "approve", "reject", "download"],
 });
 
 export const superadmin = ac.newRole({
@@ -40,4 +43,5 @@ export const superadmin = ac.newRole({
 	houses: ["read"],
 	families: ["read"],
 	citizens: ["read"],
+	requests: ["create", "read", "approve", "reject", "download"],
 });

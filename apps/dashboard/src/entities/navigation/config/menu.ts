@@ -1,5 +1,6 @@
 import {
   IconDashboard,
+  IconFileDescription,
   IconHome,
   IconSettings,
   IconSparkles,
@@ -44,6 +45,12 @@ export const NAV_ITEMS: NavigationItems[] = [
     url: "/polls",
     icon: IconSpeakerphone,
     permission: { project: ["read"] },
+  },
+  {
+    title: "Solicitudes",
+    url: "/requests",
+    icon: IconFileDescription,
+    permission: { requests: ["read"] },
   },
   {
     title: "Asambleas",

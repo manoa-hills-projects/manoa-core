@@ -18,6 +18,8 @@ import { getAuth } from './shared/utils/auth.util'
 import { ChatAgent } from './modules/ai/chat-agent'
 import { routeAgentRequest } from 'agents'
 import { seedRouter } from './modules/seed';
+import { requestsRouter } from './modules/requests/requests.router';
+import { signatoriesRouter } from './modules/signatories/signatories.router';
 
 type Bindings = {
   DB: D1Database
@@ -170,7 +172,7 @@ const app = new Hono<HonoConfig>()
   .use(cors({
     origin: (origin) => origin ?? "*",
     credentials: true,
-    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
     exposeHeaders: ["Content-Disposition", "Content-Type"],
   }))
@@ -283,8 +285,17 @@ const app = new Hono<HonoConfig>()
   .route('/ai', aiRouter)
   .route('/polls', pollsRouter)
   .route('/reports', reportsRouter)
-  .route('/certificaciones', certificationsRouter)
-  .route('/seed', seedRouter);
+  .route('/seed', seedRouter)
+  .use('/requests/*', requireAuth)
+  .route('/requests', requestsRouter)
+  .use('/signatories/*', async (c, next) => {
+    // GET /signatories is public (needed for PDF preview), PUT requires auth
+    if (c.req.method !== 'GET') {
+      return requireAuth(c, next);
+    }
+    await next();
+  })
+  .route('/signatories', signatoriesRouter);
 
 export { ChatAgent }
 
