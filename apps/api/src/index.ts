@@ -11,6 +11,7 @@ import citizensRouter from './modules/citizen/citizen.router'
 import reportsRouter from './modules/reports/reports.router'
 import aiRouter from './modules/ai/ai.router'
 import { pollsRouter } from './modules/polls/polls.router'
+import certificationsRouter from './modules/certifications/index'
 import { logger } from 'hono/logger'
 import { etag } from 'hono/etag'
 import { getAuth } from './shared/utils/auth.util'
@@ -282,6 +283,7 @@ const app = new Hono<HonoConfig>()
   .route('/ai', aiRouter)
   .route('/polls', pollsRouter)
   .route('/reports', reportsRouter)
+  .route('/certificaciones', certificationsRouter)
   .route('/seed', seedRouter);
 
 export { ChatAgent }
