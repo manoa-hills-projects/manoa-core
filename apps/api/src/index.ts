@@ -20,6 +20,7 @@ import { ChatAgent } from './modules/ai/chat-agent'
 import { routeAgentRequest } from 'agents'
 import { seedRouter } from './modules/seed';
 import { requestsRouter } from './modules/requests/requests.router';
+import validationsRouter from './modules/validations/validations.router';
 import { signatoriesRouter } from './modules/signatories/signatories.router';
 
 type Bindings = {
@@ -303,7 +304,9 @@ const app = new Hono<HonoConfig>()
     }
     await next();
   })
-  .route('/signatories', signatoriesRouter);
+  .route('/signatories', signatoriesRouter)
+  .use('/validations/*', requireAuth)
+  .route('/validations', validationsRouter);
 
 export { ChatAgent }
 

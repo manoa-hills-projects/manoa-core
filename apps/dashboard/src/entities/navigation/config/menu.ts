@@ -3,6 +3,7 @@ import {
 	IconFileDescription,
 	IconHome,
 	IconSettings,
+	IconShieldCheck,
 	IconSparkles,
 	IconSpeakerphone,
 	IconUser,
@@ -62,6 +63,12 @@ export const NAV_ITEMS: NavigationItems[] = [
 		title: "Usuarios",
 		url: "/users",
 		icon: IconUsers,
+		permission: { user: ["list"] },
+	},
+	{
+		title: "Validaciones",
+		url: "/validations",
+		icon: IconShieldCheck,
 		permission: { user: ["list"] },
 	},
 ];

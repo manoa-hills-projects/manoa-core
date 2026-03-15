@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as VerifyIdRouteImport } from './routes/verify/$id'
+import { Route as AuthenticatedValidationsRouteImport } from './routes/_authenticated/validations'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
 import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
@@ -44,6 +45,12 @@ const VerifyIdRoute = VerifyIdRouteImport.update({
   path: '/verify/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedValidationsRoute =
+  AuthenticatedValidationsRouteImport.update({
+    id: '/validations',
+    path: '/validations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/polls': typeof AuthenticatedPollsRoute
   '/requests': typeof AuthenticatedRequestsRouteWithChildren
   '/users': typeof AuthenticatedUsersRoute
+  '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
   '/auth/': typeof AuthIndexRoute
   '/requests/admin': typeof AuthenticatedRequestsAdminRoute
@@ -128,6 +136,7 @@ export interface FileRoutesByTo {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthIndexRoute
@@ -146,6 +155,7 @@ export interface FileRoutesById {
   '/_authenticated/polls': typeof AuthenticatedPollsRoute
   '/_authenticated/requests': typeof AuthenticatedRequestsRouteWithChildren
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/_authenticated/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/auth/': typeof AuthIndexRoute
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/polls'
     | '/requests'
     | '/users'
+    | '/validations'
     | '/verify/$id'
     | '/auth/'
     | '/requests/admin'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/users'
+    | '/validations'
     | '/verify/$id'
     | '/'
     | '/auth'
@@ -196,6 +208,7 @@ export interface FileRouteTypes {
     | '/_authenticated/polls'
     | '/_authenticated/requests'
     | '/_authenticated/users'
+    | '/_authenticated/validations'
     | '/verify/$id'
     | '/_authenticated/'
     | '/auth/'
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify/$id'
       preLoaderRoute: typeof VerifyIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/validations': {
+      id: '/_authenticated/validations'
+      path: '/validations'
+      fullPath: '/validations'
+      preLoaderRoute: typeof AuthenticatedValidationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/users': {
       id: '/_authenticated/users'
@@ -346,6 +366,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPollsRoute: typeof AuthenticatedPollsRoute
   AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRouteWithChildren
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
+  AuthenticatedValidationsRoute: typeof AuthenticatedValidationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -358,6 +379,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPollsRoute: AuthenticatedPollsRoute,
   AuthenticatedRequestsRoute: AuthenticatedRequestsRouteWithChildren,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
+  AuthenticatedValidationsRoute: AuthenticatedValidationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
