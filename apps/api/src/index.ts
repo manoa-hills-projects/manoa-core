@@ -22,6 +22,7 @@ import { seedRouter } from './modules/seed';
 import { requestsRouter } from './modules/requests/requests.router';
 import validationsRouter from './modules/validations/validations.router';
 import { signatoriesRouter } from './modules/signatories/signatories.router';
+import lawsRouter from './modules/laws/laws.router';
 
 type Bindings = {
   DB: D1Database
@@ -29,6 +30,8 @@ type Bindings = {
   TURNSTILE_SECRET_KEY?: string | { get: () => Promise<string> };
   RESEND_API_KEY?: string | { get: () => Promise<string> };
   BOOTSTRAP_ADMIN_KEY?: string | { get: () => Promise<string> };
+  CF_ACCOUNT_ID: string | { get: () => Promise<string> };
+  CF_BR_API_TOKEN: string | { get: () => Promise<string> };
   AI?: {
     run: (model: string, input: unknown) => Promise<unknown>
   }
@@ -306,7 +309,9 @@ const app = new Hono<HonoConfig>()
   })
   .route('/signatories', signatoriesRouter)
   .use('/validations/*', requireAuth)
-  .route('/validations', validationsRouter);
+  .route('/validations', validationsRouter)
+  .use('/laws/scrape', requireAuth)
+  .route('/laws', lawsRouter);
 
 export { ChatAgent }
 

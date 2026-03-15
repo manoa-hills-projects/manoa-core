@@ -1,6 +1,7 @@
 import {
 	IconDashboard,
 	IconFileDescription,
+	IconFileText,
 	IconHome,
 	IconSettings,
 	IconShieldCheck,
@@ -52,6 +53,12 @@ export const NAV_ITEMS: NavigationItems[] = [
 		url: "/requests",
 		icon: IconFileDescription,
 		permission: { requests: ["read"] },
+	},
+	{
+		title: "Leyes",
+		url: "/laws",
+		icon: IconFileText,
+		permission: { laws: ["read"] },
 	},
 	{
 		title: "Asambleas",

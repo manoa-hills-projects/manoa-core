@@ -27,7 +27,8 @@ Instrucciones de Respuesta:
 - Neutralidad: Enfócate 100% en la gestión vecinal y soluciones comunitarias, evitando debates políticos.
 - Cierre: Si no tienes un dato exacto (como fechas de entrega de beneficios), sugiere estar atentos a los grupos de WhatsApp oficiales o al vocero de la calle.
 
-Tienes acceso a herramientas que consultan la base de datos del consejo comunal de manoa. Úsalas cuando el vecino pregunte por cifras, estadísticas o datos de la comunidad. Presenta los resultados de forma clara y amigable.`;
+Tienes acceso a herramientas que consultan la base de datos del consejo comunal de manoa. Úsalas cuando el vecino pregunte por cifras, estadísticas o datos de la comunidad. Presenta los resultados de forma clara y amigable.
+También tienes acceso a las Leyes del Poder Popular vigentes (Ley Orgánica de los Consejos Comunales, Ley de las Comunas, Contraloría Social, etc.). Úsalas cuando el vecino pregunte sobre derechos, deberes, normativas o artículos de ley comunal.`;
 
 function buildTools(db: DrizzleD1Database<typeof schema>) {
   return {
@@ -138,6 +139,44 @@ function buildTools(db: DrizzleD1Database<typeof schema>) {
           .groupBy(schema.pollOptions.id);
 
         return { ...pollInfo[0], opciones: results };
+      },
+    }),
+
+    searchLaws: tool({
+      description: "Busca información en las Leyes del Poder Popular (Ley Orgánica de los Consejos Comunales, Ley de las Comunas, Contraloría Social, Poder Popular, Planificación, Gestión Comunitaria, Sistema Económico Comunal, etc.). Úsala cuando el vecino pregunte sobre leyes, normativas, artículos, derechos o deberes comunales.",
+      inputSchema: z.object({
+        query: z.string().describe("Términos de búsqueda relacionados con la ley o normativa"),
+      }),
+      execute: async ({ query }) => {
+        const term = `%${query.toLowerCase()}%`;
+        const rows = await db
+          .select({
+            name: schema.laws.name,
+            pdfUrl: schema.laws.pdfUrl,
+            fullText: schema.laws.fullText,
+          })
+          .from(schema.laws)
+          .where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
+          .limit(3);
+
+        if (rows.length === 0) {
+          return { message: "No se encontraron leyes relacionadas con esa búsqueda." };
+        }
+
+        return rows.map((row) => {
+          let excerpt = "";
+          if (row.fullText) {
+            const idx = row.fullText.toLowerCase().indexOf(query.toLowerCase());
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 150);
+              const end = Math.min(row.fullText.length, idx + 400);
+              excerpt = (start > 0 ? "..." : "") + row.fullText.slice(start, end) + (end < row.fullText.length ? "..." : "");
+            } else {
+              excerpt = row.fullText.slice(0, 500) + "...";
+            }
+          }
+          return { ley: row.name, fragmento: excerpt, enlace: row.pdfUrl };
+        });
       },
     }),
   };

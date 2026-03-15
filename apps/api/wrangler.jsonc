@@ -65,6 +65,16 @@
       "binding": "TURNSTILE_SECRET_KEY",
       "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "TURNSTILE_SECRET_KEY"
+    },
+    {
+      "binding": "CF_ACCOUNT_ID",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
+      "secret_name": "CF_ACCOUNT_ID"
+    },
+    {
+      "binding": "CF_BR_API_TOKEN",
+      "store_id": "f10e20552f8b4e8a894e81177562be2c",
+      "secret_name": "CF_BR_API_TOKEN"
     }
   ],
   "vars": {

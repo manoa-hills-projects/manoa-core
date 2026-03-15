@@ -1,7 +1,7 @@
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 
-export const statement = {
+const statement = {
 	...defaultStatements,
 	project: ["create", "update", "delete", "vote", "read"],
 	document: ["create", "read", "delete"],
@@ -10,6 +10,7 @@ export const statement = {
 	families: ["read"],
 	citizens: ["read"],
 	requests: ["create", "read", "approve", "reject", "download"],
+	laws: ["read", "sync"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -21,6 +22,7 @@ export const user = ac.newRole({
 	families: ["read"],
 	citizens: ["read"],
 	requests: ["create", "read", "download"],
+	laws: ["read"],
 });
 
 export const admin = ac.newRole({
@@ -32,6 +34,7 @@ export const admin = ac.newRole({
 	families: ["read"],
 	citizens: ["read"],
 	requests: ["create", "read", "approve", "reject", "download"],
+	laws: ["read", "sync"],
 });
 
 export const superadmin = ac.newRole({
@@ -44,4 +47,5 @@ export const superadmin = ac.newRole({
 	families: ["read"],
 	citizens: ["read"],
 	requests: ["create", "read", "approve", "reject", "download"],
+	laws: ["read", "sync"],
 });

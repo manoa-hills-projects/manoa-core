@@ -18,6 +18,7 @@ import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
 import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
 import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticated/meetings'
+import { Route as AuthenticatedLawsRouteImport } from './routes/_authenticated/laws'
 import { Route as AuthenticatedHousesRouteImport } from './routes/_authenticated/houses'
 import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticated/families'
 import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
@@ -71,6 +72,11 @@ const AuthenticatedMeetingsRoute = AuthenticatedMeetingsRouteImport.update({
   path: '/meetings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLawsRoute = AuthenticatedLawsRouteImport.update({
+  id: '/laws',
+  path: '/laws',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHousesRoute = AuthenticatedHousesRouteImport.update({
   id: '/houses',
   path: '/houses',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
+  '/laws': typeof AuthenticatedLawsRoute
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/requests': typeof AuthenticatedRequestsRouteWithChildren
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
   '/houses': typeof AuthenticatedHousesRoute
+  '/laws': typeof AuthenticatedLawsRoute
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/users': typeof AuthenticatedUsersRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/citizens': typeof AuthenticatedCitizensRoute
   '/_authenticated/families': typeof AuthenticatedFamiliesRoute
   '/_authenticated/houses': typeof AuthenticatedHousesRoute
+  '/_authenticated/laws': typeof AuthenticatedLawsRoute
   '/_authenticated/meetings': typeof AuthenticatedMeetingsRoute
   '/_authenticated/polls': typeof AuthenticatedPollsRoute
   '/_authenticated/requests': typeof AuthenticatedRequestsRouteWithChildren
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/citizens'
     | '/families'
     | '/houses'
+    | '/laws'
     | '/meetings'
     | '/polls'
     | '/requests'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/citizens'
     | '/families'
     | '/houses'
+    | '/laws'
     | '/meetings'
     | '/polls'
     | '/users'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/_authenticated/citizens'
     | '/_authenticated/families'
     | '/_authenticated/houses'
+    | '/_authenticated/laws'
     | '/_authenticated/meetings'
     | '/_authenticated/polls'
     | '/_authenticated/requests'
@@ -288,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMeetingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/laws': {
+      id: '/_authenticated/laws'
+      path: '/laws'
+      fullPath: '/laws'
+      preLoaderRoute: typeof AuthenticatedLawsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/houses': {
       id: '/_authenticated/houses'
       path: '/houses'
@@ -362,6 +381,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
   AuthenticatedFamiliesRoute: typeof AuthenticatedFamiliesRoute
   AuthenticatedHousesRoute: typeof AuthenticatedHousesRoute
+  AuthenticatedLawsRoute: typeof AuthenticatedLawsRoute
   AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
   AuthenticatedPollsRoute: typeof AuthenticatedPollsRoute
   AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRouteWithChildren
@@ -375,6 +395,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCitizensRoute: AuthenticatedCitizensRoute,
   AuthenticatedFamiliesRoute: AuthenticatedFamiliesRoute,
   AuthenticatedHousesRoute: AuthenticatedHousesRoute,
+  AuthenticatedLawsRoute: AuthenticatedLawsRoute,
   AuthenticatedMeetingsRoute: AuthenticatedMeetingsRoute,
   AuthenticatedPollsRoute: AuthenticatedPollsRoute,
   AuthenticatedRequestsRoute: AuthenticatedRequestsRouteWithChildren,
