@@ -6,6 +6,7 @@ import type { CreateRequestInput } from "./dto/create-request.dto";
 import type { ReviewRequestInput } from "./dto/review-request.dto";
 import { generateResidencyLetterPdf } from "./requests.pdf";
 import type { ResidencyLetterPayload } from "./dto/create-request.dto";
+import { certifyDocument } from "../documents/documents.handler";
 
 const DEFAULT_LIMIT = 20;
 
@@ -99,6 +100,7 @@ export const reviewRequest = async (
     return buildSingleData(updated ?? null);
 };
 
+
 export const generateRequestDocument = async (
     db: DrizzleD1Database<typeof schema>,
     id: string,
@@ -118,10 +120,18 @@ export const generateRequestDocument = async (
 
     const payload = JSON.parse(request.payload) as ResidencyLetterPayload;
 
+    // Create a certification record so the QR verification works
+    const certification = await certifyDocument(db, {
+        documentType: "CARTA_RESIDENCIA",
+        citizenId: request.userId,
+    }, requestingUserId);
+
+    const certificationId = certification.data.id;
+
     // Fetch signatories for the PDF signature blocks
     const signatories = await db.select().from(schema.councilSignatories);
 
-    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, id);
+    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, certificationId);
 
     return pdfBytes;
 };
