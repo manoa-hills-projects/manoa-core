@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
-import { findAllLaws, findOneLaw, triggerScrape, searchLaws } from "./laws.handler";
+import { findAllLaws, findOneLaw, searchLaws } from "./laws.handler";
 import { lawsQueryDto, lawsSearchDto } from "./dto";
 
 const lawsRouter = new Hono<HonoConfig>()
@@ -25,17 +25,9 @@ const lawsRouter = new Hono<HonoConfig>()
 		return c.json(result, 200);
 	})
 	.post("/scrape", async (c) => {
-		const db = c.get("db");
 		const env = c.env;
-		const accountId = await (typeof env.CF_ACCOUNT_ID === "string"
-			? Promise.resolve(env.CF_ACCOUNT_ID)
-			: env.CF_ACCOUNT_ID.get());
-		const apiToken = await (typeof env.CF_BR_API_TOKEN === "string"
-			? Promise.resolve(env.CF_BR_API_TOKEN)
-			: env.CF_BR_API_TOKEN.get());
-
-		const result = await triggerScrape(db, accountId, apiToken);
-		return c.json(result, 200);
+		await env.LAWS_SCRAPE_QUEUE.send({ type: "scrape_laws" });
+		return c.json({ message: "Sincronización encolada. El proceso se ejecutará en segundo plano." }, 202);
 	});
 
 export default lawsRouter;

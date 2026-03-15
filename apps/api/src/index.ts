@@ -23,6 +23,7 @@ import { requestsRouter } from './modules/requests/requests.router';
 import validationsRouter from './modules/validations/validations.router';
 import { signatoriesRouter } from './modules/signatories/signatories.router';
 import lawsRouter from './modules/laws/laws.router';
+import { scrapeAndStoreLaws } from './modules/laws/laws.scraper';
 
 type Bindings = {
   DB: D1Database
@@ -40,6 +41,11 @@ type Bindings = {
   DASHBOARD_ORIGIN?: string;
   RESEND_FROM_EMAIL?: string;
   ChatAgent: DurableObjectNamespace;
+  LAWS_SCRAPE_QUEUE: Queue<LawsScrapeMessage>;
+}
+
+type LawsScrapeMessage = {
+  type: "scrape_laws";
 }
 
 type RuntimeSecrets = {
@@ -376,6 +382,34 @@ const handler = {
     }
 
     return new Response("Not found", { status: 404 });
+  },
+
+  async queue(batch: MessageBatch<LawsScrapeMessage>, env: Bindings): Promise<void> {
+    const db = drizzle(env.DB, { schema });
+    const accountId = typeof env.CF_ACCOUNT_ID === "string"
+      ? env.CF_ACCOUNT_ID
+      : await env.CF_ACCOUNT_ID.get();
+    const apiToken = typeof env.CF_BR_API_TOKEN === "string"
+      ? env.CF_BR_API_TOKEN
+      : await env.CF_BR_API_TOKEN.get();
+
+    for (const message of batch.messages) {
+      if (message.body.type === "scrape_laws") {
+        try {
+          const result = await scrapeAndStoreLaws(db, accountId, apiToken);
+          console.log(`[laws-queue] Completado: ${result.scraped} leyes procesadas. Errores: ${result.errors.length}`);
+          if (result.errors.length > 0) {
+            console.warn("[laws-queue] Errores:", result.errors);
+          }
+          message.ack();
+        } catch (err) {
+          console.error("[laws-queue] Error en scrape:", err);
+          message.retry();
+        }
+      } else {
+        message.ack();
+      }
+    }
   }
 };
 

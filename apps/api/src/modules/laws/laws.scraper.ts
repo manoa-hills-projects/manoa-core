@@ -45,13 +45,13 @@ async function pollCrawlJob(
 }
 
 function parseLawLinksFromMarkdown(markdown: string): ParsedLaw[] {
-	const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+\.pdf)\)/gi;
+	const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi;
 	const laws: ParsedLaw[] = [];
 
 	for (const match of markdown.matchAll(linkRegex)) {
 		const name = match[1].trim();
 		const pdfUrl = match[2].trim();
-		if (name && pdfUrl) {
+		if (name && pdfUrl && pdfUrl.toLowerCase().includes("pdf")) {
 			laws.push({ name, pdfUrl });
 		}
 	}
@@ -89,9 +89,9 @@ export async function scrapeAndStoreLaws(
 			body: JSON.stringify({
 				url: SOURCE_URL,
 				limit: 1,
-				depth: 0,
+				depth: 1,
 				formats: ["markdown"],
-				render: false,
+				render: true,
 			}),
 		},
 	);
@@ -119,9 +119,11 @@ export async function scrapeAndStoreLaws(
 	}
 
 	// Phase 2: parse PDF links from markdown
+	console.log("[laws-scraper] markdown preview:", pageRecord.markdown.slice(0, 1000));
 	const parsedLaws = parseLawLinksFromMarkdown(pageRecord.markdown);
+	console.log(`[laws-scraper] found ${parsedLaws.length} PDF links`);
 	if (parsedLaws.length === 0) {
-		throw new Error("No PDF links found on the page");
+		throw new Error(`No PDF links found on the page. Markdown preview: ${pageRecord.markdown.slice(0, 500)}`);
 	}
 
 	// Phase 3: extract text from each PDF and upsert to D1

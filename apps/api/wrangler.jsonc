@@ -77,6 +77,22 @@
       "secret_name": "CF_BR_API_TOKEN"
     }
   ],
+  "queues": {
+    "producers": [
+      {
+        "queue": "manoa-laws-scrape",
+        "binding": "LAWS_SCRAPE_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "manoa-laws-scrape",
+        "max_batch_size": 1,
+        "max_batch_timeout": 30,
+        "max_retries": 2
+      }
+    ]
+  },
   "vars": {
     "BETTER_AUTH_URL": "https://manoa-api.manoa-it.workers.dev",
     "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
