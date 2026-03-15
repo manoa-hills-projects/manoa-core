@@ -96,9 +96,15 @@ const styles = StyleSheet.create({
 	bold: {
 		fontWeight: "bold",
 	},
-	signatureSection: {
+	signatureAndQrRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "flex-end",
 		marginTop: 60,
+	},
+	signatureSection: {
 		alignItems: "center",
+		flex: 1,
 	},
 	signatureName: {
 		marginTop: 40,
@@ -113,10 +119,8 @@ const styles = StyleSheet.create({
 		textAlign: "left",
 	},
 	qrContainer: {
-		position: "absolute",
-		bottom: 40,
-		right: 50,
 		alignItems: "center",
+		width: 120,
 	},
 	qrCode: {
 		width: 80,
@@ -242,25 +246,36 @@ export const ResidencyLetterPDF = ({
 					fines documentales u organizativos pertinentes.
 				</Text>
 
-				{/* Signatures */}
-				<View style={styles.signatureSection}>
-					<Text>Atentamente,</Text>
-					<Text style={{ marginTop: 15 }}>Por el {consejoName}</Text>
+				{/* Signatures and QR Row */}
+				<View style={styles.signatureAndQrRow}>
+					{/* Left placeholder for symmetric spacing if needed, or empty */}
+					<View style={{ width: 120 }} />
 
-					<View style={styles.signatureName}>
-						<Text>{voceraName.toUpperCase()}</Text>
-						{voceraId && <Text>C.I.No.{voceraId.replace("V-", "")}</Text>}
-						<Text>Vocero Principal</Text>
+					{/* Center Signature */}
+					<View style={styles.signatureSection}>
+						<Text>Atentamente,</Text>
+						<Text style={{ marginTop: 15 }}>Por el {consejoName}</Text>
+
+						<View style={styles.signatureName}>
+							<Text>{voceraName.toUpperCase()}</Text>
+							{voceraId && <Text>C.I.No.{voceraId.replace("V-", "")}</Text>}
+							<Text>Vocero Principal</Text>
+						</View>
+					</View>
+
+					{/* Right QR */}
+					<View style={styles.qrContainer}>
+						{qrCodeBase64 ? (
+							<>
+								<Image src={qrCodeBase64} style={styles.qrCode} />
+								<Text style={styles.qrText}>Documento Verificado</Text>
+								<Text style={styles.qrText}>Escanea para Validar</Text>
+							</>
+						) : (
+							<View style={{ width: 80, height: 80 }} />
+						)}
 					</View>
 				</View>
-
-				{qrCodeBase64 && (
-					<View style={styles.qrContainer}>
-						<Image src={qrCodeBase64} style={styles.qrCode} />
-						<Text style={styles.qrText}>Documento Verificado</Text>
-						<Text style={styles.qrText}>Escanea para Validar</Text>
-					</View>
-				)}
 			</Page>
 		</Document>
 	);
