@@ -42,6 +42,7 @@ export const verifyDocument = async (
   db: DrizzleD1Database<typeof schema>,
   id: string
 ) => {
+  // First, try document_certifications
   const result = await db
     .select({
       id: schema.documentCertifications.id,
@@ -59,9 +60,37 @@ export const verifyDocument = async (
     .where(eq(schema.documentCertifications.id, id))
     .get();
 
-  if (!result || result.status !== "VALID") {
-    return { data: null, error: "Documento inválido o revocado" };
+  if (result && result.status === "VALID") {
+    return { data: buildSingleData(result), error: null };
   }
 
-  return { data: buildSingleData(result), error: null };
+  // Fallback: check document_requests (for QR codes using request ID)
+  const request = await db
+    .select({
+      id: schema.documentRequests.id,
+      type: schema.documentRequests.type,
+      status: schema.documentRequests.status,
+      payload: schema.documentRequests.payload,
+      createdAt: schema.documentRequests.createdAt,
+    })
+    .from(schema.documentRequests)
+    .where(eq(schema.documentRequests.id, id))
+    .get();
+
+  if (request && request.status === "approved") {
+    const payload = JSON.parse(request.payload) as { fullName?: string; idNumber?: string };
+    return {
+      data: buildSingleData({
+        id: request.id,
+        documentType: "CARTA_RESIDENCIA",
+        citizenNames: payload.fullName ?? "N/A",
+        citizenDni: payload.idNumber ?? "N/A",
+        issuedAt: request.createdAt,
+        status: "VALID",
+      }),
+      error: null,
+    };
+  }
+
+  return { data: null, error: "Documento inválido o revocado" };
 };
