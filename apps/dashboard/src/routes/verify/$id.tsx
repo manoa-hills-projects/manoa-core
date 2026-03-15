@@ -131,7 +131,7 @@ function VerifyDocumentPage() {
 								<p className="text-xs text-neutral-400 text-center break-all">
 									ID: {data.id}
 									<br />
-									HASH: {data.hash.slice(0, 16)}...
+									HASH: {data.hash ? `${data.hash.slice(0, 16)}...` : "N/A"}
 								</p>
 							</div>
 						</div>

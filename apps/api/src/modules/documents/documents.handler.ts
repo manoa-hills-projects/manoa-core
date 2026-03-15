@@ -87,6 +87,7 @@ export const verifyDocument = async (
         citizenDni: payload.idNumber ?? "N/A",
         issuedAt: request.createdAt,
         status: "VALID",
+        hash: "verified-via-request",
       }),
       error: null,
     };

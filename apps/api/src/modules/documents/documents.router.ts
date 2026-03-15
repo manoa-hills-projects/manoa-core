@@ -14,7 +14,7 @@ router.get("/verify/:id", async (c) => {
   const { data, error } = await verifyDocument(db, id);
 
   if (error) {
-    return c.json({ message: error }, 404);
+    return c.json({ data: null, message: error }, 200);
   }
 
   return c.json(data);
