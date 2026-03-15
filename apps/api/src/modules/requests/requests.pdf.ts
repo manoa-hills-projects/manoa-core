@@ -5,6 +5,7 @@ import type { CouncilSignatory } from "@/shared/database/schemas";
 export const generateResidencyLetterPdf = async (
     payload: ResidencyLetterPayload,
     signatories: CouncilSignatory[],
+    requestId: string,
 ): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]); // A4
@@ -183,6 +184,32 @@ export const generateResidencyLetterPdf = async (
         "* Esta carta tiene una validez de 90 días a partir de la fecha de emisión.",
         { x: marginX, y, size: 8, font: regularFont, color: rgb(0.4, 0.4, 0.4) },
     );
+
+    // ── QR Code ──────────────────────────────────────────────────
+    try {
+        const verifyUrl = `https://manoa-backoffice.pages.dev/verify/${requestId}`;
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}`;
+        const qrResponse = await fetch(qrApiUrl);
+        if (qrResponse.ok) {
+            const qrArrayBuffer = await qrResponse.arrayBuffer();
+            const qrImage = await pdfDoc.embedPng(new Uint8Array(qrArrayBuffer));
+            const qrSize = 70;
+            const qrX = width - marginX - qrSize;
+            const qrY = 40;
+            page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+            const labelText = "Escanear para verificar";
+            const labelW = regularFont.widthOfTextAtSize(labelText, 6);
+            page.drawText(labelText, {
+                x: qrX + (qrSize - labelW) / 2,
+                y: qrY - 10,
+                size: 6,
+                font: regularFont,
+                color: rgb(0.4, 0.4, 0.4),
+            });
+        }
+    } catch {
+        // QR generation failed silently – PDF still valid without it
+    }
 
     return pdfDoc.save();
 };

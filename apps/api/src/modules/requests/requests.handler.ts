@@ -121,7 +121,7 @@ export const generateRequestDocument = async (
     // Fetch signatories for the PDF signature blocks
     const signatories = await db.select().from(schema.councilSignatories);
 
-    const pdfBytes = await generateResidencyLetterPdf(payload, signatories);
+    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, id);
 
     return pdfBytes;
 };
