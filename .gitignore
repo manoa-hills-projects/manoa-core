@@ -22,3 +22,6 @@ dist/
 
 # TanStack Router (Archivos autogenerados)
 src/routeTree.gen.ts
+
+# Lock
+*.lock
