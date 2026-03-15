@@ -1,7 +1,7 @@
+import type { House } from "@/entities/houses";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { HouseDetailSheet } from "@/widgets/house-detail-sheet";
 import { HouseFormSheet } from "./house-form-sheet";
-import type { House } from "@/entities/houses";
 
 interface HouseTableOverlaysProps {
 	ui: {
@@ -17,7 +17,11 @@ interface HouseTableOverlaysProps {
 	isDeleting: boolean;
 }
 
-export function HouseTableOverlays({ ui, onDeleteConfirm, isDeleting }: HouseTableOverlaysProps) {
+export function HouseTableOverlays({
+	ui,
+	onDeleteConfirm,
+	isDeleting,
+}: HouseTableOverlaysProps) {
 	return (
 		<>
 			<HouseDetailSheet

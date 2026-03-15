@@ -1,5 +1,7 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { ForgotPasswordForm } from "@/features/auth/ui/forgot-password-form";
+import { LoginForm } from "@/features/auth/ui/login-form";
 import { authClient } from "@/lib/auth-client";
 import {
 	Card,
@@ -8,8 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
-import { LoginForm } from "@/features/auth/ui/login-form";
-import { ForgotPasswordForm } from "@/features/auth/ui/forgot-password-form";
 
 export const Route = createFileRoute("/auth/")({
 	component: RouteComponent,

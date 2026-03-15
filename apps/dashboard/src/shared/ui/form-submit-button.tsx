@@ -1,7 +1,7 @@
+import { Save } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/spinner";
-import { Save } from "lucide-react";
 
 interface FormSubmitButtonProps
 	extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {

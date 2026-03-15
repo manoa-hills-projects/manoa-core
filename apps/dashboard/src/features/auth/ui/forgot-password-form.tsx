@@ -4,13 +4,8 @@ import { FormSubmitButton } from "@/shared/ui/form-submit-button";
 import { useForgotPasswordForm } from "../model/use-auth-form";
 
 export function ForgotPasswordForm() {
-	const {
-		form,
-		onSubmit,
-		isSubmitting,
-		errorMessage,
-		successMessage,
-	} = useForgotPasswordForm();
+	const { form, onSubmit, isSubmitting, errorMessage, successMessage } =
+		useForgotPasswordForm();
 
 	return (
 		<div className="space-y-4">
@@ -18,9 +13,7 @@ export function ForgotPasswordForm() {
 				<p className="text-sm font-medium text-destructive">{errorMessage}</p>
 			) : null}
 			{successMessage ? (
-				<p className="text-sm font-medium text-emerald-600">
-					{successMessage}
-				</p>
+				<p className="text-sm font-medium text-emerald-600">{successMessage}</p>
 			) : null}
 
 			<Form {...form}>

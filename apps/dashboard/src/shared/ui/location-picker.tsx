@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import Map, { Marker } from 'react-map-gl/maplibre';
+import Map, { Marker } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface LocationPickerProps {
@@ -21,7 +21,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 						});
 					},
 					undefined,
-					{ enableHighAccuracy: true }
+					{ enableHighAccuracy: true },
 				);
 			}
 		}
@@ -34,7 +34,14 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 	console.log("LocationPicker render", { value });
 
 	return (
-		<div style={{ width: "100%", height: 320, borderRadius: 12, overflow: "hidden" }}>
+		<div
+			style={{
+				width: "100%",
+				height: 320,
+				borderRadius: 12,
+				overflow: "hidden",
+			}}
+		>
 			<Map
 				ref={mapRef}
 				initialViewState={{
@@ -46,7 +53,9 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 				mapLib={import("maplibre-gl")}
 				onClick={handleMapClick}
 			>
-				{value && <Marker latitude={value.latitude} longitude={value.longitude} />}
+				{value && (
+					<Marker latitude={value.latitude} longitude={value.longitude} />
+				)}
 			</Map>
 			<div className="flex gap-2 mt-2">
 				<button

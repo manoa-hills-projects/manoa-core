@@ -17,5 +17,5 @@ export const familiesConfig = {
 		create: "Registrar Familia",
 		edit: "Editar Familia",
 		delete: "Eliminar Familia",
-	}
+	},
 };

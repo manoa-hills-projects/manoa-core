@@ -1,12 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth-client";
 import {
-	loginSchema,
+	type ForgotPasswordFormValues,
 	forgotPasswordSchema,
 	type LoginFormValues,
-	type ForgotPasswordFormValues,
+	loginSchema,
 } from "./auth-schema";
 
 interface UseLoginFormProps {
@@ -71,31 +71,34 @@ export function useForgotPasswordForm() {
 		reValidateMode: "onChange",
 	});
 
-	const onSubmit = useCallback(async (values: ForgotPasswordFormValues) => {
-		setErrorMessage(null);
-		setSuccessMessage(null);
+	const onSubmit = useCallback(
+		async (values: ForgotPasswordFormValues) => {
+			setErrorMessage(null);
+			setSuccessMessage(null);
 
-		try {
-			await authClient.$fetch("/request-password-reset", {
-				method: "POST",
-				body: {
-					email: values.email,
-					redirectTo: `${window.location.origin}/auth`,
-				},
-			});
+			try {
+				await authClient.$fetch("/request-password-reset", {
+					method: "POST",
+					body: {
+						email: values.email,
+						redirectTo: `${window.location.origin}/auth`,
+					},
+				});
 
-			setSuccessMessage(
-				"Si el correo existe, enviamos un enlace para restablecer la contraseña.",
-			);
-			form.reset();
-		} catch (error) {
-			setErrorMessage(
-				error instanceof Error
-					? error.message
-					: "No se pudo procesar la solicitud",
-			);
-		}
-	}, [form]);
+				setSuccessMessage(
+					"Si el correo existe, enviamos un enlace para restablecer la contraseña.",
+				);
+				form.reset();
+			} catch (error) {
+				setErrorMessage(
+					error instanceof Error
+						? error.message
+						: "No se pudo procesar la solicitud",
+				);
+			}
+		},
+		[form],
+	);
 
 	return {
 		form,

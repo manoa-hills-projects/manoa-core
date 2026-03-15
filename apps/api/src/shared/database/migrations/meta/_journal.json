@@ -15,6 +15,20 @@
       "when": 1772989280912,
       "tag": "0001_nice_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773511295811,
+      "tag": "0002_conscious_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1773525731778,
+      "tag": "0003_rich_lifeguard",
+      "breakpoints": true
     }
   ]
 }

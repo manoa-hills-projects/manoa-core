@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { type Family } from "@/entities/families";
+import type { Family } from "@/entities/families";
 import { fetchHousesOptions, houseOptionAdapter } from "@/entities/houses";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
@@ -50,10 +50,7 @@ export function FamilyFormSheet({
 			}
 		>
 			<Form {...form}>
-				<form
-					onSubmit={onSubmit}
-					className="flex flex-col gap-4"
-				>
+				<form onSubmit={onSubmit} className="flex flex-col gap-4">
 					<FormInputField
 						control={form.control}
 						name="family_name"
@@ -74,11 +71,7 @@ export function FamilyFormSheet({
 						)}
 					/>
 
-					<Button
-						type="submit"
-						disabled={isSubmitting}
-						className="mt-4"
-					>
+					<Button type="submit" disabled={isSubmitting} className="mt-4">
 						{isSubmitting ? "Guardando..." : "Guardar"}
 					</Button>
 				</form>

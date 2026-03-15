@@ -150,7 +150,7 @@ export function UserTable() {
 				},
 			},
 		],
-		[resetPassword],
+		[],
 	);
 
 	return (

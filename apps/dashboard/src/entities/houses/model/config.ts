@@ -17,5 +17,5 @@ export const housesConfig = {
 		create: "Registrar Vivienda",
 		edit: "Editar Vivienda",
 		delete: "Eliminar Vivienda",
-	}
+	},
 };
