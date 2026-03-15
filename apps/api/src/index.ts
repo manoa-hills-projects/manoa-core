@@ -60,6 +60,15 @@ export type HonoConfig = { Bindings: Bindings, Variables: Variables };
 
 const DEFAULT_DASHBOARD_ORIGIN = "http://localhost:3000";
 
+const PAGES_PREVIEW_PATTERN = /^https:\/\/[a-z0-9]+\.manoa-backoffice\.pages\.dev$/;
+
+const isAllowedOrigin = (origin: string, dashboardOrigin: string): boolean => {
+  if (origin === dashboardOrigin) return true;
+  if (origin === DEFAULT_DASHBOARD_ORIGIN) return true;
+  if (PAGES_PREVIEW_PATTERN.test(origin)) return true;
+  return false;
+};
+
 const resolveAuthBaseUrl = (envBaseUrl: string | undefined, requestUrl: string) => {
   const requestOrigin = new URL(requestUrl).origin;
 
@@ -174,13 +183,19 @@ const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
 
 const app = new Hono<HonoConfig>()
   .basePath("/api")
-  .use(cors({
-    origin: (origin) => origin ?? "*",
-    credentials: true,
-    allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
-    exposeHeaders: ["Content-Disposition", "Content-Type"],
-  }))
+  .use(async (c, next) => {
+    const dashboardOrigin = c.env.DASHBOARD_ORIGIN ?? DEFAULT_DASHBOARD_ORIGIN;
+    return cors({
+      origin: (origin) => {
+        if (!origin) return "*";
+        return isAllowedOrigin(origin, dashboardOrigin) ? origin : null;
+      },
+      credentials: true,
+      allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization", "X-Turnstile-Token", "X-Bootstrap-Key"],
+      exposeHeaders: ["Content-Disposition", "Content-Type"],
+    })(c, next);
+  })
   .use(etag(), logger())
   .use('*', async (c, next) => {
     const db = drizzle(c.env.DB, { schema });
@@ -195,13 +210,19 @@ const app = new Hono<HonoConfig>()
       return c.json({ message }, 503);
     }
 
+    const requestHeader = c.req.header("Origin");
+    const trustedOrigins = [dashboardOrigin, requestOrigin];
+    if (requestHeader && !trustedOrigins.includes(requestHeader) && PAGES_PREVIEW_PATTERN.test(requestHeader)) {
+      trustedOrigins.push(requestHeader);
+    }
+
     const auth = getAuth({
       d1: c.env.DB,
       secret: runtimeSecrets.betterAuthSecret,
       baseURL: resolveAuthBaseUrl(c.env.BETTER_AUTH_URL, c.req.url),
       resendApiKey: runtimeSecrets.resendApiKey,
       resendFromEmail: c.env.RESEND_FROM_EMAIL,
-      trustedOrigins: [dashboardOrigin, requestOrigin],
+      trustedOrigins,
     });
 
     c.set('db', db);
