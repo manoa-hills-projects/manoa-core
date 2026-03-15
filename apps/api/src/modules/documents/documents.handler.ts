@@ -43,22 +43,28 @@ export const verifyDocument = async (
   id: string
 ) => {
   // First, try document_certifications
-  const result = await db
-    .select({
-      id: schema.documentCertifications.id,
-      documentType: schema.documentCertifications.documentType,
-      citizenId: schema.documentCertifications.citizenId,
-      hash: schema.documentCertifications.hash,
-      issuedAt: schema.documentCertifications.issuedAt,
-      status: schema.documentCertifications.status,
-      citizenNames: schema.citizens.firstName,
-      citizenSurnames: schema.citizens.lastName,
-      citizenDni: schema.citizens.dni,
-    })
-    .from(schema.documentCertifications)
-    .leftJoin(schema.citizens, eq(schema.citizens.id, schema.documentCertifications.citizenId))
-    .where(eq(schema.documentCertifications.id, id))
-    .get();
+  let result = null;
+  try {
+    result = await db
+      .select({
+        id: schema.documentCertifications.id,
+        documentType: schema.documentCertifications.documentType,
+        citizenId: schema.documentCertifications.citizenId,
+        hash: schema.documentCertifications.hash,
+        issuedAt: schema.documentCertifications.issuedAt,
+        status: schema.documentCertifications.status,
+        citizenNames: schema.citizens.firstName,
+        citizenSurnames: schema.citizens.lastName,
+        citizenDni: schema.citizens.dni,
+      })
+      .from(schema.documentCertifications)
+      .leftJoin(schema.citizens, eq(schema.citizens.id, schema.documentCertifications.citizenId))
+      .where(eq(schema.documentCertifications.id, id))
+      .get();
+  } catch (err) {
+    // Si la tabla no existe (ej. falta migración) u ocurre otro error SQL, ignoramos e intentamos el fallback
+    result = null;
+  }
 
   if (result && result.status === "VALID") {
     return { data: buildSingleData(result), error: null };
