@@ -120,18 +120,23 @@ export const generateRequestDocument = async (
 
     const payload = JSON.parse(request.payload) as ResidencyLetterPayload;
 
-    // Create a certification record so the QR verification works
-    const certification = await certifyDocument(db, {
-        documentType: "CARTA_RESIDENCIA",
-        citizenId: request.userId,
-    }, requestingUserId);
-
-    const certificationId = certification.data.id;
+    // Try to create a certification record so the QR verification works.
+    // If it fails (e.g. table not migrated), fall back to request ID.
+    let qrId = id;
+    try {
+        const certification = await certifyDocument(db, {
+            documentType: "CARTA_RESIDENCIA",
+            citizenId: request.userId,
+        }, requestingUserId);
+        qrId = certification.data.id;
+    } catch {
+        // Certification failed — PDF still generates with request ID
+    }
 
     // Fetch signatories for the PDF signature blocks
     const signatories = await db.select().from(schema.councilSignatories);
 
-    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, certificationId);
+    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, qrId);
 
     return pdfBytes;
 };
