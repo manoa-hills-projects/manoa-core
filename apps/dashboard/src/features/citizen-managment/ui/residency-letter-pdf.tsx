@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font, Image } from "@react-pdf/renderer";
 import type { Citizen } from "@/entities/citizens";
 
 // Using standard fonts for PDF
@@ -92,6 +92,21 @@ const styles = StyleSheet.create({
         right: 50,
         fontSize: 9,
         textAlign: "left",
+    },
+    qrContainer: {
+        position: "absolute",
+        bottom: 40,
+        right: 50,
+        alignItems: "center",
+    },
+    qrCode: {
+        width: 80,
+        height: 80,
+    },
+    qrText: {
+        fontSize: 7,
+        marginTop: 4,
+        color: "#666",
     }
 });
 
@@ -99,9 +114,10 @@ interface ResidencyLetterPDFProps {
     citizen: Citizen;
     loggedInCitizen?: Citizen;
     sessionUser?: { name?: string | null, email?: string | null };
+    qrCodeBase64?: string;
 }
 
-export const ResidencyLetterPDF = ({ citizen, loggedInCitizen, sessionUser }: ResidencyLetterPDFProps) => {
+export const ResidencyLetterPDF = ({ citizen, loggedInCitizen, sessionUser, qrCodeBase64 }: ResidencyLetterPDFProps) => {
     // Determine vocero identity
     // Prioritize citizen profile if it exists, otherwise fallback to basic session user info
     let voceraName = "VOCERO NO ASIGNADO";
@@ -198,6 +214,14 @@ export const ResidencyLetterPDF = ({ citizen, loggedInCitizen, sessionUser }: Re
                         <Text>Vocero Principal</Text>
                     </View>
                 </View>
+
+                {qrCodeBase64 && (
+                    <View style={styles.qrContainer}>
+                        <Image src={qrCodeBase64} style={styles.qrCode} />
+                        <Text style={styles.qrText}>Documento Verificado</Text>
+                        <Text style={styles.qrText}>Escanea para Validar</Text>
+                    </View>
+                )}
 
             </Page>
         </Document>

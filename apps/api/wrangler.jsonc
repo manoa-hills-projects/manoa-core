@@ -65,11 +65,6 @@
       "binding": "TURNSTILE_SECRET_KEY",
       "store_id": "f10e20552f8b4e8a894e81177562be2c",
       "secret_name": "TURNSTILE_SECRET_KEY"
-    },
-    {
-      "binding": "BOOTSTRAP_ADMIN_KEY",
-      "store_id": "f10e20552f8b4e8a894e81177562be2c",
-      "secret_name": "BOOTSTRAP_ADMIN_KEY"
     }
   ],
   "vars": {
