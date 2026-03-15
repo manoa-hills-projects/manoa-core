@@ -3,11 +3,11 @@ import { Thread } from "@/shared/ui/assistant-ui/thread";
 import { useChatRuntime } from "./api/use-chat-runtime";
 
 export function ManoaChat({ conversationId }: { conversationId: string }) {
-  const runtime = useChatRuntime(conversationId);
+	const runtime = useChatRuntime(conversationId);
 
-  return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <Thread />
-    </AssistantRuntimeProvider>
-  );
+	return (
+		<AssistantRuntimeProvider runtime={runtime}>
+			<Thread />
+		</AssistantRuntimeProvider>
+	);
 }

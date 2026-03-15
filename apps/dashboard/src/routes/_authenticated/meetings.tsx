@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AssemblyRoom } from "@/widgets/assembly-room/ui/assembly-room";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
+import { AssemblyRoom } from "@/widgets/assembly-room/ui/assembly-room";
 
 export const Route = createFileRoute("/_authenticated/meetings")({
 	component: MeetingsPage,

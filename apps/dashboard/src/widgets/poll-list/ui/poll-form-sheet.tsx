@@ -14,9 +14,9 @@ interface PollFormSheetProps {
 }
 
 export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
-    const { form, onSubmit, isSubmitting } = usePollForm({
-        onSuccess: () => onOpenChange(false)
-    });
+	const { form, onSubmit, isSubmitting } = usePollForm({
+		onSuccess: () => onOpenChange(false),
+	});
 
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,

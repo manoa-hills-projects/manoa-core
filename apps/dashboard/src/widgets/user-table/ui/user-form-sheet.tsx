@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { type User } from "@/entities/users";
 import {
 	citizenOptionAdapter,
 	fetchCitizensOptions,
 } from "@/entities/citizens";
+import type { User } from "@/entities/users";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
 import {
@@ -28,7 +28,7 @@ export function UserFormSheet({
 	const isEditing = !!user?.id;
 
 	// Fetch citizen to get the initial label for the combobox if editing
-	const [citizenLabel, setCitizenLabel] = useState<string | null>(null);
+	const [citizenLabel] = useState<string | null>(null);
 
 	const { form, onSubmit, isSubmitting } = useUserForm({
 		user,
@@ -49,10 +49,7 @@ export function UserFormSheet({
 			}
 		>
 			<Form {...form}>
-				<form
-					onSubmit={onSubmit}
-					className="flex flex-col gap-4"
-				>
+				<form onSubmit={onSubmit} className="flex flex-col gap-4">
 					<FormInputField control={form.control} name="name" label="Nombre" />
 
 					<FormInputField

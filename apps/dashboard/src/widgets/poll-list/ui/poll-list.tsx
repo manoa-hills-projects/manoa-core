@@ -1,6 +1,12 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle2, Loader2, MoreVertical, Plus, Trash2 } from "lucide-react";
+import {
+	CheckCircle2,
+	Loader2,
+	MoreVertical,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +20,6 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import {
 	Card,
 	CardContent,
@@ -23,6 +28,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -105,7 +111,9 @@ export function PollList() {
 				},
 				onError: (error: unknown) => {
 					toast.error(
-						error instanceof Error ? error.message : "Error al registrar el voto",
+						error instanceof Error
+							? error.message
+							: "Error al registrar el voto",
 					);
 				},
 			},

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { FamilyTable } from "@/features/family-managment";
+import { ProtectedRoute } from "@/shared/ui/protected-route";
 
 export const Route = createFileRoute("/_authenticated/families")({
 	component: RouteComponent,

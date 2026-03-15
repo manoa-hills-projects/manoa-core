@@ -1,12 +1,12 @@
 export const downloadFile = (blob: Blob, fileName: string) => {
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
+	const objectUrl = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
 
-  anchor.href = objectUrl;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
+	anchor.href = objectUrl;
+	anchor.download = fileName;
+	document.body.appendChild(anchor);
+	anchor.click();
+	anchor.remove();
 
-  URL.revokeObjectURL(objectUrl);
+	URL.revokeObjectURL(objectUrl);
 };

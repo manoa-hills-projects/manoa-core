@@ -1,7 +1,7 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import type { Control, FieldValues, Path } from "react-hook-form";
-
 import {
 	FormControl,
 	FormField,
@@ -20,7 +20,6 @@ import {
 import { Switch } from "@/shared/ui/switch";
 import { Textarea } from "@/shared/ui/textarea";
 import { CommandCombobox, type CommandComboboxProps } from "./async-select";
-import type { LucideIcon } from "lucide-react";
 
 interface BaseFieldProps<T extends FieldValues> {
 	control: Control<T>;
@@ -53,7 +52,9 @@ export function FormInputField<T extends FieldValues>({
 				<FormItem className={className}>
 					{label && <FormLabel>{label}</FormLabel>}
 					<div className="relative">
-						{Icon && <Icon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />}
+						{Icon && (
+							<Icon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+						)}
 						<FormControl>
 							<Input
 								{...field}
@@ -145,7 +146,7 @@ export function FormSelectField<T extends FieldValues>({
 }
 
 interface FormSwitchFieldProps<T extends FieldValues>
-	extends BaseFieldProps<T> { }
+	extends BaseFieldProps<T> {}
 
 export function FormSwitchField<T extends FieldValues>({
 	control,
@@ -178,7 +179,7 @@ export function FormSwitchField<T extends FieldValues>({
 
 interface FormCommandComboboxFieldProps<TField extends FieldValues, TData>
 	extends BaseFieldProps<TField>,
-	Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {
+		Omit<CommandComboboxProps<TData>, "value" | "onChange" | "label"> {
 	initialLabel?: string | null;
 }
 

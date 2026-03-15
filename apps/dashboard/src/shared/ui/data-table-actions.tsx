@@ -37,7 +37,9 @@ export const DataTableActions = <T,>({
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" aria-labelledby={menuLabelId}>
-				{label && <DropdownMenuLabel id={menuLabelId}>{label}</DropdownMenuLabel>}
+				{label && (
+					<DropdownMenuLabel id={menuLabelId}>{label}</DropdownMenuLabel>
+				)}
 				{actions.map((action) => {
 					if (action.show && !action.show(data)) return null;
 

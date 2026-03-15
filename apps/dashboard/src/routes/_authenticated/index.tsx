@@ -1,17 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/shared/api/api-client";
-import { authClient } from "@/lib/auth-client";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	HomeIcon,
-	UsersIcon,
-	UserIcon,
-	SparklesIcon,
 	ArrowRightIcon,
+	HomeIcon,
 	MessageSquareIcon,
+	SparklesIcon,
+	UserIcon,
+	UsersIcon,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { authClient } from "@/lib/auth-client";
+import { api } from "@/shared/api/api-client";
 import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -29,9 +29,15 @@ const useCensusSummary = () =>
 		queryKey: ["census-summary"],
 		queryFn: async () => {
 			const [houses, families, citizens] = await Promise.all([
-				api.get("houses", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
-				api.get("families", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
-				api.get("citizens", { searchParams: { limit: 1 } }).json<{ metadata: { total: number } }>(),
+				api
+					.get("houses", { searchParams: { limit: 1 } })
+					.json<{ metadata: { total: number } }>(),
+				api
+					.get("families", { searchParams: { limit: 1 } })
+					.json<{ metadata: { total: number } }>(),
+				api
+					.get("citizens", { searchParams: { limit: 1 } })
+					.json<{ metadata: { total: number } }>(),
 			]);
 			return {
 				houses: houses.metadata.total,
@@ -42,9 +48,27 @@ const useCensusSummary = () =>
 	});
 
 const STATS = [
-	{ key: "houses" as const, label: "Viviendas", icon: HomeIcon, color: "text-blue-500", bg: "bg-blue-500/10" },
-	{ key: "families" as const, label: "Familias", icon: UsersIcon, color: "text-violet-500", bg: "bg-violet-500/10" },
-	{ key: "citizens" as const, label: "Habitantes", icon: UserIcon, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+	{
+		key: "houses" as const,
+		label: "Viviendas",
+		icon: HomeIcon,
+		color: "text-blue-500",
+		bg: "bg-blue-500/10",
+	},
+	{
+		key: "families" as const,
+		label: "Familias",
+		icon: UsersIcon,
+		color: "text-violet-500",
+		bg: "bg-violet-500/10",
+	},
+	{
+		key: "citizens" as const,
+		label: "Habitantes",
+		icon: UserIcon,
+		color: "text-emerald-500",
+		bg: "bg-emerald-500/10",
+	},
 ];
 
 function RouteComponent() {
@@ -100,8 +124,8 @@ function RouteComponent() {
 						<div>
 							<h2 className="font-semibold">Asistente Manoa IA</h2>
 							<p className="text-sm text-muted-foreground max-w-sm">
-								Consulta estadísticas, información del censo o gestiona
-								trámites usando lenguaje natural.
+								Consulta estadísticas, información del censo o gestiona trámites
+								usando lenguaje natural.
 							</p>
 						</div>
 					</div>

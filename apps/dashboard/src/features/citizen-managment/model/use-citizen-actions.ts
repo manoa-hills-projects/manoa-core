@@ -1,25 +1,30 @@
-import { useState, useCallback } from "react";
-import { useDeleteCitizen, type Citizen } from "@/entities/citizens";
+import { useCallback, useState } from "react";
+import { type Citizen, useDeleteCitizen } from "@/entities/citizens";
 import { useResourceActions } from "@/shared/hooks/use-resource-actions";
 
 export function useCitizenActions() {
-    const { mutateAsync: deleteCitizen } = useDeleteCitizen();
-    const resourceActions = useResourceActions<Citizen>(deleteCitizen, "Ciudadano");
-    
-    const [citizenForLetter, setCitizenForLetter] = useState<Citizen | null>(null);
+	const { mutateAsync: deleteCitizen } = useDeleteCitizen();
+	const resourceActions = useResourceActions<Citizen>(
+		deleteCitizen,
+		"Ciudadano",
+	);
 
-    const openLetterModal = useCallback((citizen: Citizen) => {
-        setCitizenForLetter(citizen);
-    }, []);
+	const [citizenForLetter, setCitizenForLetter] = useState<Citizen | null>(
+		null,
+	);
 
-    const closeLetterModal = useCallback(() => {
-        setCitizenForLetter(null);
-    }, []);
+	const openLetterModal = useCallback((citizen: Citizen) => {
+		setCitizenForLetter(citizen);
+	}, []);
 
-    return {
-        ...resourceActions,
-        citizenForLetter,
-        openLetterModal,
-        closeLetterModal
-    };
+	const closeLetterModal = useCallback(() => {
+		setCitizenForLetter(null);
+	}, []);
+
+	return {
+		...resourceActions,
+		citizenForLetter,
+		openLetterModal,
+		closeLetterModal,
+	};
 }
