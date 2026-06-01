@@ -1,0 +1,44 @@
+name: Deploy Dashboard - DEV
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'apps/dashboard/**'
+
+env:
+  ENVIRONMENT: dev
+
+jobs:
+  deploy-dashboard-dev:
+    name: Deploy Dashboard (DEV)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/dashboard
+
+      - name: Build
+        run: npm run build:dev
+        working-directory: apps/dashboard
+
+      - name: Deploy to Cloudflare Pages (DEV)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          projectName: manoa-backoffice-dev
+          directory: apps/dashboard/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,109 @@
+name: Deploy API - DEV
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'apps/api/**'
+      - 'infrastructure/**'
+
+env:
+  ENVIRONMENT: dev
+  API_WORKER_NAME: manoa-api
+  ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+
+jobs:
+  deploy-api:
+    name: Deploy API Worker (DEV)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/api
+
+      - name: Build Worker
+        run: npx wrangler deploy --env ${{ env.ENVIRONMENT }} --dry-run
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Terraform Init
+        run: |
+          terraform init
+          terraform validate
+        working-directory: infrastructure
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
+          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+          TF_VAR_better_auth_secret: ${{ secrets.DEV_BETTER_AUTH_SECRET }}
+          TF_VAR_resend_api_key: ${{ secrets.DEV_RESEND_API_KEY }}
+          TF_VAR_turnstile_secret_key: ${{ secrets.DEV_TURNSTILE_SECRET_KEY }}
+          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_cf_br_api_token: ${{ secrets.DEV_CF_BR_API_TOKEN }}
+          TF_VAR_bootstrap_admin_key: ${{ secrets.DEV_BOOTSTRAP_ADMIN_KEY }}
+
+      - name: Terraform Plan
+        run: terraform plan -var-file="environments/dev/terraform.tfvars"
+        working-directory: infrastructure
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
+          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+          TF_VAR_better_auth_secret: ${{ secrets.DEV_BETTER_AUTH_SECRET }}
+          TF_VAR_resend_api_key: ${{ secrets.DEV_RESEND_API_KEY }}
+          TF_VAR_turnstile_secret_key: ${{ secrets.DEV_TURNSTILE_SECRET_KEY }}
+          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_cf_br_api_token: ${{ secrets.DEV_CF_BR_API_TOKEN }}
+          TF_VAR_bootstrap_admin_key: ${{ secrets.DEV_BOOTSTRAP_ADMIN_KEY }}
+
+      - name: Terraform Apply
+        run: terraform apply -var-file="environments/dev/terraform.tfvars" -auto-approve
+        working-directory: infrastructure
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
+          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+          TF_VAR_better_auth_secret: ${{ secrets.DEV_BETTER_AUTH_SECRET }}
+          TF_VAR_resend_api_key: ${{ secrets.DEV_RESEND_API_KEY }}
+          TF_VAR_turnstile_secret_key: ${{ secrets.DEV_TURNSTILE_SECRET_KEY }}
+          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_cf_br_api_token: ${{ secrets.DEV_CF_BR_API_TOKEN }}
+          TF_VAR_bootstrap_admin_key: ${{ secrets.DEV_BOOTSTRAP_ADMIN_KEY }}
+
+      - name: Deploy API Worker
+        run: npx wrangler deploy --env ${{ env.ENVIRONMENT }} --secrets-file .dev.vars.dev
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+  deploy-ai:
+    name: Deploy AI Worker (DEV)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy AI Worker
+        run: |
+          cd apps/api
+          npx wrangler deploy --env ai-dev --secrets-file .dev.vars.dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
