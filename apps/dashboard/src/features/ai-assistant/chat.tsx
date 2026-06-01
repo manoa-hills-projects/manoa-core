@@ -1,13 +1,15 @@
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/shared/ui/assistant-ui/thread";
+import { ChatThread } from "./chat-thread";
 import { useChatRuntime } from "./api/use-chat-runtime";
 
 export function ManoaChat({ conversationId }: { conversationId: string }) {
-	const runtime = useChatRuntime(conversationId);
+	const { messages, status, sendMessage, stop } = useChatRuntime(conversationId);
 
 	return (
-		<AssistantRuntimeProvider runtime={runtime}>
-			<Thread />
-		</AssistantRuntimeProvider>
+		<ChatThread
+			messages={messages}
+			status={status}
+			onSend={sendMessage}
+			onStop={stop}
+		/>
 	);
 }

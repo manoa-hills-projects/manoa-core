@@ -1,5 +1,3 @@
-import type { useChat } from "@ai-sdk/react";
-import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import { useAgentChat } from "@cloudflare/ai-chat/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAgent } from "agents/react";
@@ -38,5 +36,5 @@ export const useChatRuntime = (conversationId: string) => {
 		onFinish,
 	});
 
-	return useAISDKRuntime(chat as unknown as ReturnType<typeof useChat>);
+	return chat;
 };
