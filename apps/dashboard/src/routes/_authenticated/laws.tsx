@@ -11,10 +11,12 @@ export const Route = createFileRoute("/_authenticated/laws")({
 
 function RouteComponent() {
 	return (
-		<ProtectedRoute permissions={{ laws: ["read"] }}>
+		<ProtectedRoute module="laws">
 			<div className="space-y-6">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Leyes del Poder Popular</h1>
+					<h1 className="text-3xl font-bold tracking-tight">
+						Leyes del Poder Popular
+					</h1>
 					<p className="text-muted-foreground">
 						Consulta las leyes y normativas del Poder Popular. Sincroniza para
 						actualizar desde comunas.gob.ve.

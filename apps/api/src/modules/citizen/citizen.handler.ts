@@ -4,6 +4,9 @@ import { count, eq, sql, and } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import type { CitizenQueryParams, createCitizenInput, updateCitizenInput } from "./dto";
 
+/**
+ * Full citizen response (private - for ownership/mine=true)
+ */
 const toCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
   id: citizen.id,
   cedula: citizen.dni,
@@ -14,6 +17,15 @@ const toCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
   is_head_of_household: citizen.isHeadOfHousehold,
   family_id: citizen.familyId,
   user_id: citizen.userId,
+});
+
+/**
+ * Public citizen response (limited fields - no sensitive PII)
+ */
+const toPublicCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
+  id: citizen.id,
+  names: citizen.firstName,
+  surnames: citizen.lastName,
 });
 
 export const createCitizen = async (
@@ -43,7 +55,11 @@ export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: s
 }
 
 export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, queryParams: CitizenQueryParams) => {
-  const { limit, page, search, family_id, user_id } = queryParams;
+  const { limit, page, search, family_id, user_id, mine } = queryParams;
+
+  // If mine=true, filter by user_id from session (passed via query params or override)
+  const isMine = mine === "true";
+  const effectiveUserId = user_id;
 
   const query = db
     .select({
@@ -77,8 +93,8 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     conditions.push(eq(schema.citizens.familyId, family_id));
   }
 
-  if (user_id) {
-    conditions.push(eq(schema.citizens.userId, user_id));
+  if (effectiveUserId) {
+    conditions.push(eq(schema.citizens.userId, effectiveUserId));
   }
 
   if (conditions.length > 0) {
@@ -90,20 +106,33 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     db.select({ total: count() }).from(schema.citizens),
   ]);
 
-  const data = rows.map((row) => ({
-    id: row.id,
-    cedula: row.dni,
-    names: row.firstName,
-    surnames: row.lastName,
-    birth_date: row.birthDate,
-    gender: row.gender,
-    is_head_of_household: row.isHeadOfHousehold,
-    family_id: row.familyId,
-    user_id: row.userId,
-    family_label: row.familyName,
-    house_label: (!row.houseAddress && !row.houseSector && !row.houseNumber) ? null :
-      [row.houseSector, row.houseNumber, row.houseAddress].filter(Boolean).join(" · "),
-  }));
+  // Public listing: limited fields (no sensitive PII)
+  // Private listing (mine=true or explicit query): full data with family/house info
+  const data = rows.map((row) => {
+    if (isMine) {
+      // Private listing - full data
+      return {
+        id: row.id,
+        cedula: row.dni,
+        names: row.firstName,
+        surnames: row.lastName,
+        birth_date: row.birthDate,
+        gender: row.gender,
+        is_head_of_household: row.isHeadOfHousehold,
+        family_id: row.familyId,
+        user_id: row.userId,
+        family_label: row.familyName,
+        house_label: (!row.houseAddress && !row.houseSector && !row.houseNumber) ? null :
+          [row.houseSector, row.houseNumber, row.houseAddress].filter(Boolean).join(" · "),
+      };
+    }
+    // Public listing - limited fields
+    return {
+      id: row.id,
+      names: row.firstName,
+      surnames: row.lastName,
+    };
+  });
 
   return buildPaginatedData(data, total, page, limit);
 };

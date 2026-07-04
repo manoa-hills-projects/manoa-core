@@ -1,12 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 
-export type AppPermission = Record<string, string[]>;
-
 export interface NavigationItems {
 	title: string;
 	url: string;
 	icon: LucideIcon;
-	permission?: AppPermission;
+	/** Módulo requerido para ver este item (sin prop = visible para todos) */
+	permission?: string;
 	items?: NavigationSubItems[];
 	isActive?: boolean;
 }
@@ -14,5 +13,5 @@ export interface NavigationItems {
 export interface NavigationSubItems {
 	title: string;
 	url: string;
-	permission?: AppPermission;
+	permission?: string;
 }

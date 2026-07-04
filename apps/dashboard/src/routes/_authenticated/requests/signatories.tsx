@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/requests/signatories")({
 
 function RouteComponent() {
 	return (
-		<ProtectedRoute permissions={{ requests: ["approve"] }}>
+		<ProtectedRoute module="signatories">
 			<div className="space-y-6">
 				<SectionHeader
 					name="Firmantes de Documentos"

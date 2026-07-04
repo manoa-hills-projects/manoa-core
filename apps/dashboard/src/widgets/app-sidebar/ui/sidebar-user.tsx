@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, Shield } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import {
@@ -17,6 +17,8 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/shared/ui/sidebar";
+import { Badge } from "@/shared/ui/badge";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function SidebarUser({
 	user,
@@ -28,10 +30,14 @@ export function SidebarUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
+	const { profileName, isSuperAdmin } = usePermissions();
+
 	const initials = user.name
 		.split(" ")
 		.map((name) => name[0])
-		.join("");
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
 
 	return (
 		<SidebarMenu>
@@ -50,7 +56,9 @@ export function SidebarUser({
 							</Avatar>
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{user.name}</span>
-								<span className="truncate text-xs">{user.email}</span>
+								<span className="truncate text-xs text-muted-foreground">
+									{profileName || "Cargando..."}
+								</span>
 							</div>
 							<ChevronsUpDown className="ml-auto size-4" />
 						</SidebarMenuButton>
@@ -65,17 +73,35 @@ export function SidebarUser({
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 								<Avatar className="h-8 w-8 rounded-lg">
 									<AvatarImage src={user.avatar} alt={user.name} />
-									<AvatarFallback className="rounded-lg">CN</AvatarFallback>
+									<AvatarFallback className="rounded-lg">
+										{initials}
+									</AvatarFallback>
 								</Avatar>
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-medium">{user.name}</span>
-									<span className="truncate text-xs">{user.email}</span>
+									<span className="truncate text-xs text-muted-foreground">
+										{user.email}
+									</span>
 								</div>
 							</div>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
+						{/* Perfil actual */}
+						<div className="px-2 py-1.5">
+							<div className="flex items-center gap-2 text-sm">
+								<Shield className="h-4 w-4 text-muted-foreground" />
+								<span className="text-muted-foreground">Perfil:</span>
+								<Badge
+									variant={isSuperAdmin ? "default" : "secondary"}
+									className="ml-auto"
+								>
+									{profileName || "Sin perfil"}
+								</Badge>
+							</div>
+						</div>
+						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => authClient.signOut()}>
-							<LogOut />
+							<LogOut className="mr-2 h-4 w-4" />
 							Cerrar sesión
 						</DropdownMenuItem>
 					</DropdownMenuContent>

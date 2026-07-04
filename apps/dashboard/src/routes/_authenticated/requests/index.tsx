@@ -5,7 +5,7 @@ import { requestsConfig } from "@/entities/requests";
 import { RequestFormDialog } from "@/features/requests-managment/ui/request-form-dialog";
 import { RequestHistoryTable } from "@/features/requests-managment/ui/request-history-table";
 import { RequestTypeCard } from "@/features/requests-managment/ui/request-type-card";
-import { authClient } from "@/lib/auth-client";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/shared/ui/button";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { SectionHeader } from "@/widgets/section-header/ui/section-header";
@@ -19,19 +19,17 @@ export const Route = createFileRoute("/_authenticated/requests/")({
 
 function RouteComponent() {
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const { data: sessionData } = authClient.useSession();
-	const role = (sessionData?.user?.role ?? "user") as string;
-	const isAdmin = role === "admin" || role === "superadmin";
+	const { canManage } = usePermissions();
 
 	return (
-		<ProtectedRoute permissions={{ requests: ["read"] }}>
+		<ProtectedRoute>
 			<div className="space-y-8">
 				<div className="flex items-start justify-between gap-4">
 					<SectionHeader
 						name={requestsConfig.entityName}
 						description={requestsConfig.description}
 					/>
-					{isAdmin && (
+					{canManage("requests") && (
 						<Button variant="outline" size="sm" asChild>
 							<Link to="/requests/admin">
 								<ShieldCheck className="mr-2 h-4 w-4" />

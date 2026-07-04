@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/houses")({
 
 function RouteComponent() {
 	return (
-		<ProtectedRoute permissions={{ census: ["read"] }}>
+		<ProtectedRoute module="houses">
 			<SectionHeader
 				name={housesConfig.entityName}
 				description={housesConfig.description}

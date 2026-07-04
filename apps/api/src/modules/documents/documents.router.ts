@@ -3,6 +3,8 @@ import { zValidator } from "@hono/zod-validator";
 import { createDocumentSchema } from "./dto/documents.dto";
 import { certifyDocument, verifyDocument } from "./documents.handler";
 import type { HonoConfig } from "@/index";
+import { requirePermission } from "@/shared/utils/permissions.middleware";
+import { MODULES } from "@/shared/constants";
 
 const router = new Hono<HonoConfig>();
 
@@ -20,21 +22,18 @@ router.get("/verify/:id", async (c) => {
   return c.json(data);
 });
 
-// POST / (protegido por requireAuth en el index)
+// POST / (protegido por requirePermission)
 router.post(
   "/",
+  requirePermission(MODULES.DOCUMENTS),
   zValidator("json", createDocumentSchema),
   async (c) => {
     const db = c.get("db");
-    const sessionResult = c.get("session") as { user?: { id: string } };
-    const user = sessionResult?.user;
-    
-    if (!user || !user.id) {
-       return c.json({ message: "No autorizado" }, 401);
-    }
+    const permissionContext = c.get("permissionContext");
+    const userId = permissionContext.userId;
 
     const data = c.req.valid("json");
-    const result = await certifyDocument(db, data, user.id);
+    const result = await certifyDocument(db, data, userId);
 
     return c.json(result, 201);
   }

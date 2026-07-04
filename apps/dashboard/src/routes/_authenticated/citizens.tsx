@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/citizens")({
 
 function RouteComponent() {
 	return (
-		<ProtectedRoute permissions={{ census: ["read"] }}>
+		<ProtectedRoute module="citizens">
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">Ciudadanos</h1>

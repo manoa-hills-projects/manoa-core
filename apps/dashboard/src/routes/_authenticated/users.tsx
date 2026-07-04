@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/users")({
 
 function UsersPage() {
 	return (
-		<ProtectedRoute permissions={{ user: ["list"] }}>
+		<ProtectedRoute module="users">
 			<div className="flex flex-col gap-6">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>

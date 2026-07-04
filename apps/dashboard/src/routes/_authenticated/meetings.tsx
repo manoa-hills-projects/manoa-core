@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/meetings")({
 
 function MeetingsPage() {
 	return (
-		<ProtectedRoute permissions={{ project: ["read"] }}>
+		<ProtectedRoute>
 			<div className="flex flex-col gap-4 p-4 md:p-8 w-full max-w-7xl mx-auto">
 				<div className="flex flex-col gap-2">
 					<h1 className="text-3xl font-bold tracking-tight">

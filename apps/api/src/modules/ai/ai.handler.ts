@@ -17,7 +17,30 @@ export const getConversations = async (
 export const getMessages = async (
   db: DrizzleD1Database<typeof schema>,
   conversationId: string,
+  userId?: string,
 ) => {
+  // Build query: if userId provided, check ownership; otherwise (super_admin) skip ownership
+  const conversationQuery = userId
+    ? db
+        .select()
+        .from(schema.conversations)
+        .where(
+          and(
+            eq(schema.conversations.id, conversationId),
+            eq(schema.conversations.userId, userId),
+          )
+        )
+    : db
+        .select()
+        .from(schema.conversations)
+        .where(eq(schema.conversations.id, conversationId));
+
+  const [conversation] = await conversationQuery;
+
+  if (!conversation) {
+    return { data: [], error: "No encontrado" };
+  }
+
   const result = await db
     .select()
     .from(schema.messages)

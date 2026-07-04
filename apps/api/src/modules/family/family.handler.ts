@@ -57,7 +57,11 @@ export const findOneFamily = async (db: DrizzleD1Database<typeof schema>, id: st
   return { data: result ? toFamilyResponse(result) : null };
 }
 
-export const findAllFamilies = async (db: DrizzleD1Database<typeof schema>, queryParams: FamilyQueryParams) => {
+export const findAllFamilies = async (
+  db: DrizzleD1Database<typeof schema>,
+  queryParams: FamilyQueryParams,
+  userId?: string
+) => {
   const { limit, page, search, house_id } = queryParams;
 
   const query = db
@@ -85,6 +89,25 @@ export const findAllFamilies = async (db: DrizzleD1Database<typeof schema>, quer
 
   if (house_id) {
     conditions.push(eq(schema.families.houseId, house_id));
+  }
+
+  // Filter by ownership: user must have a citizen record belonging to the family
+  if (userId) {
+    const userCitizens = await db
+      .select({ familyId: schema.citizens.familyId })
+      .from(schema.citizens)
+      .where(eq(schema.citizens.userId, userId));
+
+    const familyIds = userCitizens
+      .map(c => c.familyId)
+      .filter((id): id is string => id !== null);
+
+    if (familyIds.length === 0) {
+      // User has no citizen records, return empty result
+      return buildPaginatedData([], 0, page, limit);
+    }
+
+    conditions.push(sql`${schema.families.id} IN ${familyIds}`);
   }
 
   if (conditions.length > 0) {

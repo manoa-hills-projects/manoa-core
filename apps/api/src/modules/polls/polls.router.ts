@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import type { AppContext } from "../../shared/utils/app-context";
+import type { HonoConfig } from "../../index";
 import {
   createPoll,
   findAllPolls,
   findOnePoll,
+  findActivePolls,
   updatePollStatus,
   deletePoll,
   voteOnPoll,
@@ -15,30 +16,39 @@ import {
   updatePollStatusDto,
   voteDto,
 } from "./dto";
-import { requirePermission } from "../../shared/utils/permissions.middleware"; // Asumiendo que tienes un middleware para chequear permisos
+import { requirePermission } from "../../shared/utils/permissions.middleware";
+import { MODULES } from "../../shared/constants";
 
-export const pollsRouter = new Hono<AppContext>();
+export const pollsRouter = new Hono<HonoConfig>();
 
-// Obtener todas las asambleas (Todos pueden ver)
+// Obtener todas las asambleas (Zona 1 - solo requiere auth, no requirePermission)
 pollsRouter.get(
   "/",
-  requirePermission("project", "read"),
   zValidator("query", pollQueryDto),
   async (c) => {
     const db = c.get("db");
     const session = c.get("session");
     const query = c.req.valid("query");
-    
-    // Pasamos el ID del usuario para saber si ya votó
     const result = await findAllPolls(db, query, session?.user?.id);
     return c.json(result);
   }
 );
 
-// Crear una asamblea (Solo Admin)
+// Obtener votaciones activas (público - solo requiere autenticación)
+pollsRouter.get(
+  "/public/active",
+  async (c) => {
+    const db = c.get("db");
+    const session = c.get("session");
+    const result = await findActivePolls(db, session?.user?.id);
+    return c.json(result);
+  }
+);
+
+// Crear una asamblea
 pollsRouter.post(
   "/",
-  requirePermission("project", "create"),
+  requirePermission(MODULES.POLLS),
   zValidator("json", createPollDto),
   async (c) => {
     const db = c.get("db");
@@ -51,12 +61,11 @@ pollsRouter.post(
 // Obtener una asamblea específica
 pollsRouter.get(
   "/:id",
-  requirePermission("project", "read"),
+  requirePermission(MODULES.POLLS),
   async (c) => {
     const db = c.get("db");
     const id = c.req.param("id");
     const session = c.get("session");
-    
     const result = await findOnePoll(db, id, session?.user?.id);
     if (!result.data) {
       return c.json({ error: "Asamblea no encontrada" }, 404);
@@ -65,45 +74,42 @@ pollsRouter.get(
   }
 );
 
-// Actualizar el estado de una asamblea (Abrir/Cerrar) (Solo Admin)
+// Actualizar el estado de una asamblea (Abrir/Cerrar)
 pollsRouter.patch(
   "/:id/status",
-  requirePermission("project", "update"),
+  requirePermission(MODULES.POLLS),
   zValidator("json", updatePollStatusDto),
   async (c) => {
     const db = c.get("db");
     const id = c.req.param("id");
     const body = c.req.valid("json");
-    
     const result = await updatePollStatus(db, id, body);
     return c.json(result);
   }
 );
 
-// Eliminar una asamblea (Solo Admin)
+// Eliminar una asamblea
 pollsRouter.delete(
   "/:id",
-  requirePermission("project", "delete"),
+  requirePermission(MODULES.POLLS),
   async (c) => {
     const db = c.get("db");
     const id = c.req.param("id");
-    
     const result = await deletePoll(db, id);
     return c.json(result);
   }
 );
 
-// Emitir un voto (Habitantes)
+// Emitir un voto (Zona 2 - cualquier autenticado puede votar)
 pollsRouter.post(
   "/:id/vote",
-  requirePermission("project", "vote"),
   zValidator("json", voteDto),
   async (c) => {
     const db = c.get("db");
     const id = c.req.param("id");
     const body = c.req.valid("json");
     const session = c.get("session");
-    
+
     if (!session?.user?.id) {
       return c.json({ error: "Usuario no autenticado" }, 401);
     }
@@ -112,7 +118,6 @@ pollsRouter.post(
       const result = await voteOnPoll(db, id, session.user.id, body);
       return c.json(result);
     } catch (error: any) {
-      // Si el error es por validaciones de negocio (ya votó, está cerrada)
       return c.json({ error: error.message }, 400);
     }
   }

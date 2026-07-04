@@ -78,7 +78,7 @@ export function LawsTable() {
 						onChange={(value) => filters.setSearch(value)}
 					/>
 				</div>
-				<ProtectedRoute permissions={{ laws: ["sync"] }} fallback={null}>
+				<ProtectedRoute module="laws" fallback={null}>
 					<Button onClick={handleScrape} disabled={isScraping} className="gap-2">
 						<RefreshCw className={`size-4 ${isScraping ? "animate-spin" : ""}`} />
 						{isScraping ? "Sincronizando..." : "Sincronizar leyes"}

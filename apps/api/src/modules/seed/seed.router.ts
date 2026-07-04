@@ -1,11 +1,12 @@
 import { Hono } from "hono";
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { user as userTable } from "../../shared/database/schemas/auth.schema";
 import * as schema from "../../shared/database/schemas";
 import { CENSUS_HOUSES, CENSUS_CITIZENS } from "./census-data";
+import { seedRbacProfiles } from "../../shared/seed/rbac-seed";
 import type { HonoConfig } from "../../index";
 
 export const seedRouter = new Hono<HonoConfig>();
@@ -41,7 +42,22 @@ seedRouter.post("/seed-superadmin", async (c) => {
       role: "superadmin",
     },
   });
-  return c.json({ ok: true, user: newUser });
+
+  // Después de crear el super admin, inicializar perfiles RBAC
+  const fullDb = c.get("db");
+  const rbacResult = await seedRbacProfiles(fullDb, newUser.id);
+
+  // Asignar perfil super_admin al usuario recién creado
+  await fullDb.insert(schema.userProfiles).values({
+    userId: newUser.id,
+    profileId: rbacResult.profileIds.superAdmin,
+  });
+
+  return c.json({
+    ok: true,
+    user: newUser,
+    rbac: rbacResult,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -212,5 +228,51 @@ seedRouter.post("/seed-census", async (c) => {
     const stack = err instanceof Error ? err.stack : undefined;
     console.error("[seed-census] Error:", err);
     return c.json({ error: message, stack }, 500);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/seed/seed-rbac
+// Inicializa los perfiles y permisos del sistema RBAC
+// Idempotente: si ya existen, no los duplica
+// ─────────────────────────────────────────────────────────────
+seedRouter.post("/seed-rbac", async (c) => {
+  try {
+    const db = c.get("db");
+
+    // Obtener o crear un usuario "sistema" para auditoría
+    let systemUser = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.email, "system@manoa.local"))
+      .get();
+
+    if (!systemUser) {
+      const [inserted] = await db
+        .insert(schema.user)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Sistema",
+          email: "system@manoa.local",
+          emailVerified: 1,
+          role: "superadmin",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+        .returning();
+      systemUser = inserted;
+    }
+
+    const result = await seedRbacProfiles(db, systemUser.id);
+
+    return c.json({
+      ok: true,
+      message: "Perfiles y permisos RBAC inicializados correctamente",
+      result,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[seed-rbac] Error:", err);
+    return c.json({ error: message }, 500);
   }
 });

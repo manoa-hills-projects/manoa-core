@@ -1,3 +1,14 @@
+/**
+ * @deprecated Access control legacy de Better Auth.
+ *
+ * Este archivo define los roles del plugin admin de Better Auth.
+ * La autorización real de la aplicación usa el sistema RBAC basado
+ * en perfiles (ver hooks/use-permissions.ts y shared/ui/protected-route.tsx).
+ *
+ * NO usar para verificaciones de permisos en la app. Mantener solo
+ * para compatibilidad con el plugin admin de Better Auth.
+ */
+
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 

@@ -26,6 +26,7 @@ import lawsRouter from './modules/laws/laws.router';
 import { scrapeAndStoreLaws } from './modules/laws/laws.scraper';
 import { settingsRouter } from './modules/settings';
 import { statsRouter } from './modules/stats';
+import { profilesRouter } from './modules/profiles/profiles.router';
 
 type Bindings = {
   DB: D1Database
@@ -154,6 +155,12 @@ const resolveRuntimeSecrets = (env: Bindings) => {
 const requireAuth: MiddlewareHandler<HonoConfig> = async (c, next) => {
   const auth = c.get("auth");
   const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  // sessionData can be null when no session cookie is present
+  if (!sessionData) {
+    return c.json({ message: "No autorizado" }, 401);
+  }
+
   const session = "data" in (sessionData as Record<string, unknown>)
     ? (sessionData as { data?: { session?: unknown, user?: unknown } | null }).data
     : (sessionData as { session?: unknown, user?: unknown } | null);
@@ -269,7 +276,9 @@ const app = new Hono<HonoConfig>()
   .use('/settings/*', requireAuth)
   .route('/settings', settingsRouter)
   .use('/stats/*', requireAuth)
-  .route('/stats', statsRouter);
+  .route('/stats', statsRouter)
+  .use('/profiles/*', requireAuth)
+  .route('/profiles', profilesRouter);
 
 export { ChatAgent }
 

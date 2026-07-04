@@ -4,6 +4,8 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import type { HonoConfig } from "../../index";
 import * as schema from "../../shared/database/schemas";
+import { requirePermission } from "../../shared/utils/permissions.middleware";
+import { MODULES } from "../../shared/constants/modules";
 
 const SINGLETON_ID = "singleton";
 
@@ -40,14 +42,7 @@ export const settingsRouter = new Hono<HonoConfig>()
     });
   })
 
-  .put("/profile", zValidator("json", profileSchema), async (c) => {
-    const session = c.get("session") as { user?: { role?: string } } | undefined;
-    const userRole = session?.user?.role ?? "user";
-
-    if (userRole !== "admin" && userRole !== "superadmin") {
-      return c.json({ message: "No autorizado" }, 403);
-    }
-
+  .put("/profile", requirePermission(MODULES.SETTINGS), zValidator("json", profileSchema), async (c) => {
     const body = c.req.valid("json");
     const db = c.get("db");
 

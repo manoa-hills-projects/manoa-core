@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
+import { requirePermission } from "../../shared/utils/permissions.middleware";
+import { MODULES } from "../../shared/constants";
 import { findAllLaws, findOneLaw, searchLaws } from "./laws.handler";
 import { lawsQueryDto, lawsSearchDto } from "./dto";
 
@@ -24,7 +26,7 @@ const lawsRouter = new Hono<HonoConfig>()
 		if (!result.data) return c.json({ error: "Ley no encontrada" }, 404);
 		return c.json(result, 200);
 	})
-	.post("/scrape", async (c) => {
+	.post("/scrape", requirePermission(MODULES.LAWS), async (c) => {
 		const env = c.env;
 		await env.LAWS_SCRAPE_QUEUE.send({ type: "scrape_laws" });
 		return c.json({ message: "Sincronización encolada. El proceso se ejecutará en segundo plano." }, 202);

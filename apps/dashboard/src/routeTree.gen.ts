@@ -25,8 +25,10 @@ import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
 import { Route as AuthenticatedAiAssistantRouteImport } from './routes/_authenticated/ai-assistant'
 import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authenticated/requests/index'
+import { Route as AuthenticatedProfilesIndexRouteImport } from './routes/_authenticated/profiles/index'
 import { Route as AuthenticatedRequestsSignatoriesRouteImport } from './routes/_authenticated/requests/signatories'
 import { Route as AuthenticatedRequestsAdminRouteImport } from './routes/_authenticated/requests/admin'
+import { Route as AuthenticatedProfilesProfileIdRouteImport } from './routes/_authenticated/profiles/$profileId'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -110,6 +112,12 @@ const AuthenticatedRequestsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedRequestsRoute,
   } as any)
+const AuthenticatedProfilesIndexRoute =
+  AuthenticatedProfilesIndexRouteImport.update({
+    id: '/profiles/',
+    path: '/profiles/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRequestsSignatoriesRoute =
   AuthenticatedRequestsSignatoriesRouteImport.update({
     id: '/signatories',
@@ -121,6 +129,12 @@ const AuthenticatedRequestsAdminRoute =
     id: '/admin',
     path: '/admin',
     getParentRoute: () => AuthenticatedRequestsRoute,
+  } as any)
+const AuthenticatedProfilesProfileIdRoute =
+  AuthenticatedProfilesProfileIdRouteImport.update({
+    id: '/profiles/$profileId',
+    path: '/profiles/$profileId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -138,8 +152,10 @@ export interface FileRoutesByFullPath {
   '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
   '/auth/': typeof AuthIndexRoute
+  '/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/profiles/': typeof AuthenticatedProfilesIndexRoute
   '/requests/': typeof AuthenticatedRequestsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -156,8 +172,10 @@ export interface FileRoutesByTo {
   '/verify/$id': typeof VerifyIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthIndexRoute
+  '/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/profiles': typeof AuthenticatedProfilesIndexRoute
   '/requests': typeof AuthenticatedRequestsIndexRoute
 }
 export interface FileRoutesById {
@@ -177,8 +195,10 @@ export interface FileRoutesById {
   '/verify/$id': typeof VerifyIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/auth/': typeof AuthIndexRoute
+  '/_authenticated/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/_authenticated/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/_authenticated/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/_authenticated/profiles/': typeof AuthenticatedProfilesIndexRoute
   '/_authenticated/requests/': typeof AuthenticatedRequestsIndexRoute
 }
 export interface FileRouteTypes {
@@ -198,8 +218,10 @@ export interface FileRouteTypes {
     | '/validations'
     | '/verify/$id'
     | '/auth/'
+    | '/profiles/$profileId'
     | '/requests/admin'
     | '/requests/signatories'
+    | '/profiles/'
     | '/requests/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -216,8 +238,10 @@ export interface FileRouteTypes {
     | '/verify/$id'
     | '/'
     | '/auth'
+    | '/profiles/$profileId'
     | '/requests/admin'
     | '/requests/signatories'
+    | '/profiles'
     | '/requests'
   id:
     | '__root__'
@@ -236,8 +260,10 @@ export interface FileRouteTypes {
     | '/verify/$id'
     | '/_authenticated/'
     | '/auth/'
+    | '/_authenticated/profiles/$profileId'
     | '/_authenticated/requests/admin'
     | '/_authenticated/requests/signatories'
+    | '/_authenticated/profiles/'
     | '/_authenticated/requests/'
   fileRoutesById: FileRoutesById
 }
@@ -361,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRequestsIndexRouteImport
       parentRoute: typeof AuthenticatedRequestsRoute
     }
+    '/_authenticated/profiles/': {
+      id: '/_authenticated/profiles/'
+      path: '/profiles'
+      fullPath: '/profiles/'
+      preLoaderRoute: typeof AuthenticatedProfilesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/requests/signatories': {
       id: '/_authenticated/requests/signatories'
       path: '/signatories'
@@ -374,6 +407,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/requests/admin'
       preLoaderRoute: typeof AuthenticatedRequestsAdminRouteImport
       parentRoute: typeof AuthenticatedRequestsRoute
+    }
+    '/_authenticated/profiles/$profileId': {
+      id: '/_authenticated/profiles/$profileId'
+      path: '/profiles/$profileId'
+      fullPath: '/profiles/$profileId'
+      preLoaderRoute: typeof AuthenticatedProfilesProfileIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -408,6 +448,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedValidationsRoute: typeof AuthenticatedValidationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedProfilesProfileIdRoute: typeof AuthenticatedProfilesProfileIdRoute
+  AuthenticatedProfilesIndexRoute: typeof AuthenticatedProfilesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -423,6 +465,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedValidationsRoute: AuthenticatedValidationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedProfilesProfileIdRoute: AuthenticatedProfilesProfileIdRoute,
+  AuthenticatedProfilesIndexRoute: AuthenticatedProfilesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { getConversations, getMessages, createConversation, deleteConversation } from "./ai.handler";
+import { getUserPermissions } from "@/shared/utils/permissions.middleware";
+import { SYSTEM_PROFILES } from "@/shared/constants/profiles";
 
 const aiRouter = new Hono<HonoConfig>()
   .get("/conversations", async (c) => {
@@ -24,9 +26,18 @@ const aiRouter = new Hono<HonoConfig>()
   })
   .get("/conversations/:id/messages", async (c) => {
     const db = c.get("db");
+    const session = c.get("session");
+    const user = session?.user;
     const id = c.req.param("id");
 
-    const result = await getMessages(db, id);
+    if (!user) return c.json({ message: "No autorizado" }, 401);
+
+    // Allow super_admin to view any conversation's messages (audit access)
+    const userPerms = await getUserPermissions(db, user.id);
+    const isSuperAdmin = userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN;
+
+    // If super_admin, skip ownership check; otherwise verify ownership
+    const result = await getMessages(db, id, isSuperAdmin ? undefined : user.id);
     return c.json(result, 200);
   })
   .delete("/conversations/:id", async (c) => {

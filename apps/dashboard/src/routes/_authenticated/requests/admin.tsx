@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/requests/admin")({
 
 function RouteComponent() {
 	return (
-		<ProtectedRoute permissions={{ requests: ["approve"] }}>
+		<ProtectedRoute module="requests">
 			<div className="space-y-6">
 				<div className="flex items-start justify-between gap-4">
 					<SectionHeader

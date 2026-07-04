@@ -4,6 +4,48 @@ import { count, eq, sql } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import type { CreatePollInput, PollQueryParams, UpdatePollStatusInput, VoteInput } from "./dto";
 
+export const findActivePolls = async (
+  db: DrizzleD1Database<typeof schema>,
+  userId?: string
+) => {
+  const pollsData = await db.query.polls.findMany({
+    where: eq(schema.polls.status, "open"),
+    orderBy: (polls, { desc }) => [desc(polls.createdAt)],
+    with: {
+      options: {
+        with: {
+          votes: true,
+        },
+      },
+      votes: true,
+    },
+  });
+
+  const mappedData = pollsData.map((poll) => {
+    const totalVotes = poll.votes.length;
+    const hasVoted = userId ? poll.votes.some((v) => v.userId === userId) : false;
+    const userVote = userId ? poll.votes.find((v) => v.userId === userId)?.optionId : null;
+
+    return {
+      id: poll.id,
+      title: poll.title,
+      description: poll.description,
+      status: poll.status,
+      createdAt: poll.createdAt,
+      totalVotes,
+      hasVoted,
+      userVote,
+      options: poll.options.map((opt) => ({
+        id: opt.id,
+        text: opt.text,
+        votesCount: opt.votes.length,
+      })),
+    };
+  });
+
+  return buildPaginatedData(mappedData, mappedData.length, 1, mappedData.length);
+};
+
 export const createPoll = async (
   db: DrizzleD1Database<typeof schema>,
   data: CreatePollInput

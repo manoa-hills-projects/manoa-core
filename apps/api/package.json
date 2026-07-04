@@ -27,13 +27,26 @@
     "auth:bootstrap": "node ./scripts/bootstrap-user.mjs",
     "seed": "tsx ./scripts/seed-super-admin.ts",
     "seed:census": "tsx ./scripts/seed-census.ts",
-    "admin:create": "node ./scripts/create-admin.mjs"
+    "admin:create": "node ./scripts/create-admin.mjs",
+    "admin:create-api": "node ./scripts/create-admin-api.mjs",
+    "admin:update-password": "node ./scripts/update-password.mjs",
+    "db:seed": "tsx ./src/shared/database/seeds/index.ts",
+    "db:seed:rbac": "tsx ./src/shared/database/seeds/index.ts -- --only rbac",
+    "db:seed:admin": "tsx ./src/shared/database/seeds/index.ts -- --only admin",
+    "db:seed:reset": "tsx ./src/shared/database/seeds/index.ts -- --reset",
+    "db:seed:remote": "tsx ./src/shared/database/seeds/remote.ts",
+    "db:seed:remote:dev": "tsx ./src/shared/database/seeds/remote.ts -- --env dev",
+    "db:seed:remote:prod": "tsx ./src/shared/database/seeds/remote.ts -- --env prod",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@cloudflare/ai-chat": "^0.1.8",
     "@hono/zod-validator": "^0.7.6",
     "agents": "^0.7.5",
     "ai": "^6.0.111",
+    "bcrypt": "^6.0.0",
     "better-auth": "^1.4.5",
     "better-sqlite3": "^12.6.2",
     "dayjs": "^1.11.19",
@@ -48,12 +61,17 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.15",
     "@cloudflare/workers-types": "^4.20260124.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/papaparse": "^5.3.16",
+    "@vitest/coverage-v8": "^4.1.8",
     "drizzle-kit": "^0.31.8",
+    "drizzle-seed": "^0.3.1",
     "tsx": "^4.19.2",
     "vite-tsconfig-paths": "^6.0.5",
+    "vitest": "^4.1.8",
     "wrangler": "^4.67.0"
   },
   "overrides": {

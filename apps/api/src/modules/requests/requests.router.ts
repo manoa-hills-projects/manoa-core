@@ -11,6 +11,8 @@ import {
 } from "./requests.handler";
 import { createRequestDto } from "./dto/create-request.dto";
 import { reviewRequestDto } from "./dto/review-request.dto";
+import { requirePermission } from "../../shared/utils/permissions.middleware";
+import { MODULES } from "../../shared/constants";
 
 const queryDto = z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -46,26 +48,31 @@ export const requestsRouter = new Hono<HonoConfig>()
         return c.json(result, 201);
     })
 
-    // GET /requests/:id
+    // GET /requests/:id — owner or admin
     .get("/:id", async (c) => {
         const db = c.get("db");
+        const session = c.get("session") as { user?: { id: string; role?: string } } | undefined;
         const id = c.req.param("id");
-        const result = await findOneRequest(db, id);
 
+        const result = await findOneRequest(db, id);
         if (!result.data) return c.json({ message: "No encontrado" }, 404);
+
+        const role = session?.user?.role ?? "user";
+        const isAdmin = role === "admin" || role === "superadmin";
+        const isOwner = session?.user?.id === result.data.userId;
+
+        if (!isOwner && !isAdmin) {
+            return c.json({ message: "No encontrado" }, 404);
+        }
+
         return c.json(result, 200);
     })
 
-    // PATCH /requests/:id/review — admin/superadmin only
-    .patch("/:id/review", zValidator("json", reviewRequestDto), async (c) => {
+    // PATCH /requests/:id/review — admin only (requirePermission)
+    .patch("/:id/review", zValidator("json", reviewRequestDto), requirePermission(MODULES.REQUESTS), async (c) => {
         const db = c.get("db");
-        const session = c.get("session") as { user?: { id: string; role?: string } } | undefined;
+        const session = c.get("session") as { user?: { id: string } } | undefined;
         const userId = session?.user?.id ?? "";
-        const role = session?.user?.role ?? "user";
-
-        if (role !== "admin" && role !== "superadmin") {
-            return c.json({ message: "No autorizado" }, 403);
-        }
 
         const id = c.req.param("id");
         const data = c.req.valid("json");
