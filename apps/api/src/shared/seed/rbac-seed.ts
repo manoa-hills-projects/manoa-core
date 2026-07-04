@@ -46,6 +46,7 @@ export interface SeedRbacResult {
   profileIds: {
     superAdmin: string;
     citizen: string;
+    treasurer: string;
   };
 }
 
@@ -78,6 +79,7 @@ export async function seedRbacProfiles(
     profileIds: {
       superAdmin: "",
       citizen: "",
+      treasurer: "",
     },
   };
 
@@ -172,6 +174,7 @@ export async function seedRbacProfiles(
     { module: "laws", action: "view" },
     { module: "ai", action: "view" },
     { module: "stats", action: "view" },
+    { module: "treasury", action: "view" },
   ];
 
   for (const perm of citizenViewPermissions) {
@@ -179,6 +182,64 @@ export async function seedRbacProfiles(
       .insert(profilePermissions)
       .values({
         profileId: citizenProfile.id,
+        module: perm.module,
+        action: perm.action,
+        allowed: true,
+      })
+      .onConflictDoNothing();
+  }
+
+  // ── 4. Perfil Tesorero (no-system, no-default, editable desde panel) ─
+  let treasurerProfile = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.key, "tesorero"))
+    .get();
+
+  if (!treasurerProfile) {
+    const [inserted] = await db
+      .insert(profiles)
+      .values({
+        key: "tesorero",
+        name: "Tesorero",
+        description:
+          "Gestiona la tesorería del consejo comunal: publica conceptos de cobro, tasa del día, revisa pagos de ciudadanos y registra egresos.",
+        isSystem: false,
+        isDefault: false,
+        isActive: true,
+      })
+      .returning();
+
+    treasurerProfile = inserted;
+    result.profilesCreated++;
+
+    await db.insert(auditLogs).values({
+      userId,
+      action: AUDIT_ACTIONS.PROFILE_CREATED,
+      entityType: "profile",
+      entityId: inserted.id,
+      changes: JSON.stringify({ key: "tesorero", name: "Tesorero" }),
+    });
+  } else {
+    result.profilesSkipped++;
+  }
+
+  result.profileIds.treasurer = treasurerProfile.id;
+
+  // Permisos del tesorero: gestión (zona 3) sobre treasury + payments.
+  // Se incluyen las filas de "view" también para coherencia con zonas 1/2.
+  const treasurerPermissions = [
+    { module: "treasury", action: "view" },
+    { module: "treasury", action: "manage" },
+    { module: "payments", action: "view" },
+    { module: "payments", action: "manage" },
+  ];
+
+  for (const perm of treasurerPermissions) {
+    await db
+      .insert(profilePermissions)
+      .values({
+        profileId: treasurerProfile.id,
         module: perm.module,
         action: perm.action,
         allowed: true,

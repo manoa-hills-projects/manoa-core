@@ -8,3 +8,4 @@ export * from "./requests.schema";
 export * from "./signatories.schema";
 export * from "./laws.schema";
 export * from "./settings.schema";
+export * from "./treasury.schema";

@@ -27,6 +27,7 @@ import { scrapeAndStoreLaws } from './modules/laws/laws.scraper';
 import { settingsRouter } from './modules/settings';
 import { statsRouter } from './modules/stats';
 import { profilesRouter } from './modules/profiles/profiles.router';
+import { treasuryRouter } from './modules/treasury/treasury.router';
 
 type Bindings = {
   DB: D1Database
@@ -48,6 +49,8 @@ type Bindings = {
   // Cache compartido de permisos (KV). Opcional en dev/test — el
   // middleware degrada a consulta directa a la DB si falta el binding.
   PERMISSIONS_CACHE?: KVNamespace;
+  // Bucket R2 para comprobantes de pago y egresos. Opcional en tests.
+  RECEIPTS_BUCKET?: R2Bucket;
 }
 
 type LawsScrapeMessage = {
@@ -281,7 +284,9 @@ const app = new Hono<HonoConfig>()
   .use('/stats/*', requireAuth)
   .route('/stats', statsRouter)
   .use('/profiles/*', requireAuth)
-  .route('/profiles', profilesRouter);
+  .route('/profiles', profilesRouter)
+  .use('/treasury/*', requireAuth)
+  .route('/treasury', treasuryRouter);
 
 export { ChatAgent }
 

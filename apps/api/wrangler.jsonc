@@ -81,6 +81,12 @@
           "id": "bc5d09eedaf0458db4d1c6fe1e95c9d1"
         }
       ],
+      "r2_buckets": [
+        {
+          "binding": "RECEIPTS_BUCKET",
+          "bucket_name": "manoa-receipts-dev"
+        }
+      ],
       "ai": {
         "binding": "AI"
       },
@@ -137,6 +143,12 @@
         {
           "binding": "PERMISSIONS_CACHE",
           "id": "bd05a749082c4e4893ec092985c3f8dc"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RECEIPTS_BUCKET",
+          "bucket_name": "manoa-receipts-prod"
         }
       ],
       "ai": {

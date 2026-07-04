@@ -16,6 +16,8 @@ export type Bindings = {
   RESEND_FROM_EMAIL?: string;
   // Optional: si falta el binding, el middleware cae al DB en cada request.
   PERMISSIONS_CACHE?: KVNamespace;
+  // Bucket R2 para comprobantes (pagos + egresos).
+  RECEIPTS_BUCKET?: R2Bucket;
 };
 
 export type Variables = {

@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as VerifyIdRouteImport } from './routes/verify/$id'
 import { Route as AuthenticatedValidationsRouteImport } from './routes/_authenticated/validations'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedTreasuryRouteImport } from './routes/_authenticated/treasury'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
 import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
@@ -26,6 +27,8 @@ import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAiAssistantRouteImport } from './routes/_authenticated/ai-assistant'
 import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authenticated/requests/index'
 import { Route as AuthenticatedProfilesIndexRouteImport } from './routes/_authenticated/profiles/index'
+import { Route as AuthenticatedTreasuryMyPaymentsRouteImport } from './routes/_authenticated/treasury/my-payments'
+import { Route as AuthenticatedTreasuryManageRouteImport } from './routes/_authenticated/treasury/manage'
 import { Route as AuthenticatedRequestsSignatoriesRouteImport } from './routes/_authenticated/requests/signatories'
 import { Route as AuthenticatedRequestsAdminRouteImport } from './routes/_authenticated/requests/admin'
 import { Route as AuthenticatedProfilesProfileIdRouteImport } from './routes/_authenticated/profiles/$profileId'
@@ -58,6 +61,11 @@ const AuthenticatedValidationsRoute =
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTreasuryRoute = AuthenticatedTreasuryRouteImport.update({
+  id: '/treasury',
+  path: '/treasury',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -118,6 +126,18 @@ const AuthenticatedProfilesIndexRoute =
     path: '/profiles/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTreasuryMyPaymentsRoute =
+  AuthenticatedTreasuryMyPaymentsRouteImport.update({
+    id: '/my-payments',
+    path: '/my-payments',
+    getParentRoute: () => AuthenticatedTreasuryRoute,
+  } as any)
+const AuthenticatedTreasuryManageRoute =
+  AuthenticatedTreasuryManageRouteImport.update({
+    id: '/manage',
+    path: '/manage',
+    getParentRoute: () => AuthenticatedTreasuryRoute,
+  } as any)
 const AuthenticatedRequestsSignatoriesRoute =
   AuthenticatedRequestsSignatoriesRouteImport.update({
     id: '/signatories',
@@ -148,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/polls': typeof AuthenticatedPollsRoute
   '/requests': typeof AuthenticatedRequestsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/treasury': typeof AuthenticatedTreasuryRouteWithChildren
   '/users': typeof AuthenticatedUsersRoute
   '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -155,6 +176,8 @@ export interface FileRoutesByFullPath {
   '/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/treasury/manage': typeof AuthenticatedTreasuryManageRoute
+  '/treasury/my-payments': typeof AuthenticatedTreasuryMyPaymentsRoute
   '/profiles/': typeof AuthenticatedProfilesIndexRoute
   '/requests/': typeof AuthenticatedRequestsIndexRoute
 }
@@ -167,6 +190,7 @@ export interface FileRoutesByTo {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/treasury': typeof AuthenticatedTreasuryRouteWithChildren
   '/users': typeof AuthenticatedUsersRoute
   '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -175,6 +199,8 @@ export interface FileRoutesByTo {
   '/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/treasury/manage': typeof AuthenticatedTreasuryManageRoute
+  '/treasury/my-payments': typeof AuthenticatedTreasuryMyPaymentsRoute
   '/profiles': typeof AuthenticatedProfilesIndexRoute
   '/requests': typeof AuthenticatedRequestsIndexRoute
 }
@@ -190,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/polls': typeof AuthenticatedPollsRoute
   '/_authenticated/requests': typeof AuthenticatedRequestsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/treasury': typeof AuthenticatedTreasuryRouteWithChildren
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -198,6 +225,8 @@ export interface FileRoutesById {
   '/_authenticated/profiles/$profileId': typeof AuthenticatedProfilesProfileIdRoute
   '/_authenticated/requests/admin': typeof AuthenticatedRequestsAdminRoute
   '/_authenticated/requests/signatories': typeof AuthenticatedRequestsSignatoriesRoute
+  '/_authenticated/treasury/manage': typeof AuthenticatedTreasuryManageRoute
+  '/_authenticated/treasury/my-payments': typeof AuthenticatedTreasuryMyPaymentsRoute
   '/_authenticated/profiles/': typeof AuthenticatedProfilesIndexRoute
   '/_authenticated/requests/': typeof AuthenticatedRequestsIndexRoute
 }
@@ -214,6 +243,7 @@ export interface FileRouteTypes {
     | '/polls'
     | '/requests'
     | '/settings'
+    | '/treasury'
     | '/users'
     | '/validations'
     | '/verify/$id'
@@ -221,6 +251,8 @@ export interface FileRouteTypes {
     | '/profiles/$profileId'
     | '/requests/admin'
     | '/requests/signatories'
+    | '/treasury/manage'
+    | '/treasury/my-payments'
     | '/profiles/'
     | '/requests/'
   fileRoutesByTo: FileRoutesByTo
@@ -233,6 +265,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/settings'
+    | '/treasury'
     | '/users'
     | '/validations'
     | '/verify/$id'
@@ -241,6 +274,8 @@ export interface FileRouteTypes {
     | '/profiles/$profileId'
     | '/requests/admin'
     | '/requests/signatories'
+    | '/treasury/manage'
+    | '/treasury/my-payments'
     | '/profiles'
     | '/requests'
   id:
@@ -255,6 +290,7 @@ export interface FileRouteTypes {
     | '/_authenticated/polls'
     | '/_authenticated/requests'
     | '/_authenticated/settings'
+    | '/_authenticated/treasury'
     | '/_authenticated/users'
     | '/_authenticated/validations'
     | '/verify/$id'
@@ -263,6 +299,8 @@ export interface FileRouteTypes {
     | '/_authenticated/profiles/$profileId'
     | '/_authenticated/requests/admin'
     | '/_authenticated/requests/signatories'
+    | '/_authenticated/treasury/manage'
+    | '/_authenticated/treasury/my-payments'
     | '/_authenticated/profiles/'
     | '/_authenticated/requests/'
   fileRoutesById: FileRoutesById
@@ -315,6 +353,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/treasury': {
+      id: '/_authenticated/treasury'
+      path: '/treasury'
+      fullPath: '/treasury'
+      preLoaderRoute: typeof AuthenticatedTreasuryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -394,6 +439,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfilesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/treasury/my-payments': {
+      id: '/_authenticated/treasury/my-payments'
+      path: '/my-payments'
+      fullPath: '/treasury/my-payments'
+      preLoaderRoute: typeof AuthenticatedTreasuryMyPaymentsRouteImport
+      parentRoute: typeof AuthenticatedTreasuryRoute
+    }
+    '/_authenticated/treasury/manage': {
+      id: '/_authenticated/treasury/manage'
+      path: '/manage'
+      fullPath: '/treasury/manage'
+      preLoaderRoute: typeof AuthenticatedTreasuryManageRouteImport
+      parentRoute: typeof AuthenticatedTreasuryRoute
+    }
     '/_authenticated/requests/signatories': {
       id: '/_authenticated/requests/signatories'
       path: '/signatories'
@@ -435,6 +494,21 @@ const AuthenticatedRequestsRouteWithChildren =
     AuthenticatedRequestsRouteChildren,
   )
 
+interface AuthenticatedTreasuryRouteChildren {
+  AuthenticatedTreasuryManageRoute: typeof AuthenticatedTreasuryManageRoute
+  AuthenticatedTreasuryMyPaymentsRoute: typeof AuthenticatedTreasuryMyPaymentsRoute
+}
+
+const AuthenticatedTreasuryRouteChildren: AuthenticatedTreasuryRouteChildren = {
+  AuthenticatedTreasuryManageRoute: AuthenticatedTreasuryManageRoute,
+  AuthenticatedTreasuryMyPaymentsRoute: AuthenticatedTreasuryMyPaymentsRoute,
+}
+
+const AuthenticatedTreasuryRouteWithChildren =
+  AuthenticatedTreasuryRoute._addFileChildren(
+    AuthenticatedTreasuryRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiAssistantRoute: typeof AuthenticatedAiAssistantRoute
   AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
@@ -445,6 +519,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPollsRoute: typeof AuthenticatedPollsRoute
   AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTreasuryRoute: typeof AuthenticatedTreasuryRouteWithChildren
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedValidationsRoute: typeof AuthenticatedValidationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -462,6 +537,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPollsRoute: AuthenticatedPollsRoute,
   AuthenticatedRequestsRoute: AuthenticatedRequestsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTreasuryRoute: AuthenticatedTreasuryRouteWithChildren,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedValidationsRoute: AuthenticatedValidationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,

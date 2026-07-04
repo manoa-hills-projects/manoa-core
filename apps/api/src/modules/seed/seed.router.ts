@@ -7,6 +7,7 @@ import { user as userTable } from "../../shared/database/schemas/auth.schema";
 import * as schema from "../../shared/database/schemas";
 import { CENSUS_HOUSES, CENSUS_CITIZENS } from "./census-data";
 import { seedRbacProfiles } from "../../shared/seed/rbac-seed";
+import { seedTreasury } from "../../shared/seed/treasury-seed";
 import type { HonoConfig } from "../../index";
 
 export const seedRouter = new Hono<HonoConfig>();
@@ -236,6 +237,54 @@ seedRouter.post("/seed-census", async (c) => {
 // Inicializa los perfiles y permisos del sistema RBAC
 // Idempotente: si ya existen, no los duplica
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// POST /api/seed/seed-treasury
+// Popula catálogo de tesorería (categorías, conceptos, tasa del día) y,
+// si hay usuarios ciudadanos, algunos pagos y egresos de muestra.
+// Idempotente en el catálogo. Los pagos/egresos solo se insertan si aún no hay.
+// ─────────────────────────────────────────────────────────────
+seedRouter.post("/seed-treasury", async (c) => {
+  try {
+    const db = c.get("db");
+
+    // Reutilizar (o crear) el usuario sistema para auditoría
+    let systemUser = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.email, "system@manoa.local"))
+      .get();
+
+    if (!systemUser) {
+      const now = new Date();
+      const [inserted] = await db
+        .insert(schema.user)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Sistema",
+          email: "system@manoa.local",
+          emailVerified: true,
+          role: "superadmin",
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+      systemUser = inserted;
+    }
+
+    const result = await seedTreasury(db, systemUser.id);
+
+    return c.json({
+      ok: true,
+      message: "Catálogo de tesorería inicializado",
+      result,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[seed-treasury] Error:", err);
+    return c.json({ error: message }, 500);
+  }
+});
+
 seedRouter.post("/seed-rbac", async (c) => {
   try {
     const db = c.get("db");
@@ -248,16 +297,17 @@ seedRouter.post("/seed-rbac", async (c) => {
       .get();
 
     if (!systemUser) {
+      const now = new Date();
       const [inserted] = await db
         .insert(schema.user)
         .values({
           id: crypto.randomUUID(),
           name: "Sistema",
           email: "system@manoa.local",
-          emailVerified: 1,
+          emailVerified: true,
           role: "superadmin",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          createdAt: now,
+          updatedAt: now,
         })
         .returning();
       systemUser = inserted;

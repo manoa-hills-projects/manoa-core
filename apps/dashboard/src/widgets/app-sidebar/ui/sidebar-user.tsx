@@ -30,7 +30,8 @@ export function SidebarUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
-	const { profileName, isSuperAdmin } = usePermissions();
+	const { profileName, isSuperAdmin, isLoading: isPermissionsLoading } =
+		usePermissions();
 
 	const initials = user.name
 		.split(" ")
@@ -57,7 +58,9 @@ export function SidebarUser({
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{user.name}</span>
 								<span className="truncate text-xs text-muted-foreground">
-									{profileName || "Cargando..."}
+									{isPermissionsLoading
+										? "Cargando..."
+										: profileName || "Sin perfil asignado"}
 								</span>
 							</div>
 							<ChevronsUpDown className="ml-auto size-4" />

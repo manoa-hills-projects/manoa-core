@@ -8,6 +8,7 @@
  */
 
 import {
+	IconCoin,
 	IconDashboard,
 	IconFileDescription,
 	IconFileText,
@@ -26,54 +27,58 @@ import type { NavigationItems } from "../model/types";
 /**
  * Items principales del menú
  *
- * permission = módulo requerido para ver el item en el sidebar.
- * Si se omite, el item es visible para todos los autenticados.
+ * `permission` = módulo que el usuario debe poder gestionar (`canManage`) para
+ * ver el item en el sidebar. Si se omite, el item es visible para todos los
+ * autenticados.
  *
- * Modelo de 3 zonas:
- * - Zona 1 (transparencia): houses, families, citizens, laws, polls, stats → visible para todos
- * - Zona 2 (mis datos): filtered by ownership
- * - Zona 3 (admin): requirePermission
+ * Regla: cada item debe declarar el mismo módulo que el `<ProtectedRoute
+ * module="X">` de su ruta destino. Sin `permission`, un ciudadano vería el
+ * item y tiraría "Acceso denegado" al hacer clic (mala UX).
  *
- * Para simplificar, solo las rutas de ZONA 3 (gestión) requieren permission.
- * Las rutas de zona 1 (transparencia) no requieren permission.
+ * Rutas sin gate (transparencia comunitaria): Dashboard, Asistente IA,
+ * Solicitudes (zona 2 filtrada por ownership), Asambleas, Tesorería (zona
+ * 1 con `treasury.view` para citizen).
  */
 export const NAV_ITEMS: NavigationItems[] = [
 	{
 		title: "Dashboard",
 		url: "/",
 		icon: IconDashboard,
-		// Dashboard siempre visible para todos los autenticados
 	},
 	{
 		title: "Asistente IA",
 		url: "/ai-assistant",
 		icon: IconSparkles,
-		// IA es comunidad: visible para todos los autenticados
 	},
 	{
 		title: "Viviendas",
 		url: "/houses",
 		icon: IconHome,
-		// Zona 1: visible para todos los autenticados (transparencia)
-		// La gestión (zona 3) requiere permission, pero ver es libre
+		permission: "houses",
 	},
 	{
 		title: "Familias",
 		url: "/families",
 		icon: IconUsers,
-		// Zona 1: visible para todos los autenticados
+		permission: "families",
 	},
 	{
 		title: "Ciudadanos",
 		url: "/citizens",
 		icon: IconUser,
-		// Zona 1: visible para todos los autenticados
+		permission: "citizens",
 	},
 	{
 		title: "Proyectos",
 		url: "/polls",
 		icon: IconSpeakerphone,
-		// Polls es comunidad: visible para todos los autenticados
+	},
+	{
+		title: "Tesorería",
+		url: "/treasury",
+		icon: IconCoin,
+		// Zona 1: transparencia visible para todos los autenticados
+		// El panel del tesorero (/treasury/manage) tiene su propio ProtectedRoute
 	},
 	{
 		title: "Solicitudes",
@@ -85,13 +90,12 @@ export const NAV_ITEMS: NavigationItems[] = [
 		title: "Leyes",
 		url: "/laws",
 		icon: IconFileText,
-		// Laws es zona 1: visible para todos los autenticados
+		permission: "laws",
 	},
 	{
 		title: "Asambleas",
 		url: "/meetings",
 		icon: IconVideo,
-		// Asambleas es comunidad: visible para todos los autenticados
 	},
 ];
 
