@@ -75,6 +75,12 @@
           "migrations_dir": "./src/shared/database/migrations"
         }
       ],
+      "kv_namespaces": [
+        {
+          "binding": "PERMISSIONS_CACHE",
+          "id": "bc5d09eedaf0458db4d1c6fe1e95c9d1"
+        }
+      ],
       "ai": {
         "binding": "AI"
       },
@@ -125,6 +131,12 @@
           "database_name": "manoa-db-master-prod",
           "database_id": "75d3724e-3718-4864-a859-e5ccebaa3be8",
           "migrations_dir": "./src/shared/database/migrations"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "PERMISSIONS_CACHE",
+          "id": "bd05a749082c4e4893ec092985c3f8dc"
         }
       ],
       "ai": {

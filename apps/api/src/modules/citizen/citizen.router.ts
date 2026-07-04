@@ -60,7 +60,7 @@ const citizensRouter = new Hono<HonoConfig>()
   }
 
   // Allow super_admin to view any citizen
-  const userPerms = await getUserPermissions(db, session.user.id);
+  const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, session.user.id);
   if (userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN) {
     return c.json(result, 200);
   }

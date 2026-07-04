@@ -53,7 +53,7 @@ const housesRouter = new Hono<HonoConfig>()
   }
 
   // Super admin has access to all houses
-  const userPerms = await getUserPermissions(db, userId);
+  const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, userId);
   const isSuperAdmin = userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN;
 
   if (isSuperAdmin) {

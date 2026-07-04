@@ -33,7 +33,7 @@ const aiRouter = new Hono<HonoConfig>()
     if (!user) return c.json({ message: "No autorizado" }, 401);
 
     // Allow super_admin to view any conversation's messages (audit access)
-    const userPerms = await getUserPermissions(db, user.id);
+    const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, user.id);
     const isSuperAdmin = userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN;
 
     // If super_admin, skip ownership check; otherwise verify ownership

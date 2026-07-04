@@ -14,6 +14,8 @@ export type Bindings = {
   DASHBOARD_ORIGIN?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  // Optional: si falta el binding, el middleware cae al DB en cada request.
+  PERMISSIONS_CACHE?: KVNamespace;
 };
 
 export type Variables = {

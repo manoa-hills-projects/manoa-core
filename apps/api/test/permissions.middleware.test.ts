@@ -16,11 +16,9 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
 import * as schema from "../src/shared/database/schemas";
-import {
-  requirePermission,
-  invalidateAllPermissionCache,
-} from "../src/shared/utils/permissions.middleware";
+import { requirePermission } from "../src/shared/utils/permissions.middleware";
 import { seedRbacProfiles } from "../src/shared/seed/rbac-seed";
 import { MODULES } from "../src/shared/constants";
 import {
@@ -29,9 +27,11 @@ import {
   clearUsersTable,
   disposeTestDB,
 } from "./helpers/d1-helper";
+import { createFakeKV, type FakeKV } from "./helpers/fake-kv";
 
 describe("Middleware requirePermission (modelo simplificado)", () => {
   let db: Awaited<ReturnType<typeof getTestDB>>["db"];
+  let kv: FakeKV;
   let superAdminUserId: string;
   let citizenUserId: string;
   let customProfileUserId: string;
@@ -40,6 +40,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
   beforeAll(async () => {
     const testEnv = await getTestDB();
     db = testEnv.db;
+    kv = createFakeKV();
 
     // Ejecutar seed de RBAC (crea super_admin y citizen sin filas de permisos)
     superAdminUserId = crypto.randomUUID();
@@ -128,8 +129,8 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
   });
 
   beforeEach(async () => {
-    // Invalidar cache antes de cada test
-    invalidateAllPermissionCache();
+    // Limpiar cache KV antes de cada test
+    kv.clear();
   });
 
   afterAll(async () => {
@@ -166,13 +167,21 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
     return app;
   }
 
+  function request(app: Hono) {
+    return app.request(
+      "/test",
+      {},
+      { PERMISSIONS_CACHE: kv } as unknown as Record<string, unknown>
+    );
+  }
+
   describe("Super Admin", () => {
     it("debe permitir acceso a cualquier módulo (short-circuit)", async () => {
       const app = createTestApp(MODULES.CITIZENS, {
         user: { id: superAdminUserId, role: "superadmin" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(200);
       const data = (await res.json()) as { success: boolean };
@@ -184,7 +193,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: superAdminUserId, role: "superadmin" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(200);
     });
@@ -194,7 +203,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: superAdminUserId, role: "superadmin" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(200);
     });
@@ -213,7 +222,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: citizenUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       // citizen tiene requests.view pero NO requests.manage → 403
       expect(res.status).toBe(403);
@@ -224,7 +233,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: citizenUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
     });
@@ -234,7 +243,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: citizenUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
       const data = (await res.json()) as { error: string };
@@ -246,7 +255,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: citizenUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
     });
@@ -256,7 +265,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: citizenUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
     });
@@ -270,7 +279,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: customProfileUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(200);
       const data = (await res.json()) as { success: boolean };
@@ -282,7 +291,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: customProfileUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(200);
     });
@@ -292,7 +301,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: customProfileUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
     });
@@ -302,7 +311,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: customProfileUserId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
     });
@@ -312,7 +321,7 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
     it("debe retornar 401 sin sesión", async () => {
       const app = createTestApp(MODULES.CITIZENS, null);
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(401);
       const data = (await res.json()) as { error: string };
@@ -338,11 +347,80 @@ describe("Middleware requirePermission (modelo simplificado)", () => {
         user: { id: userWithoutProfileId, role: "user" },
       });
 
-      const res = await app.request("/test");
+      const res = await request(app);
 
       expect(res.status).toBe(403);
       const data = (await res.json()) as { error: string };
       expect(data.error).toBe("Sin perfil asignado");
+    });
+  });
+
+  describe("Perfil desactivado (isActive = false)", () => {
+    // Regression: desactivar un perfil debe revocar acceso de sus usuarios.
+    // Antes del fix, getUserPermissions ignoraba isActive y el cache mantenía
+    // permisos hasta el TTL. Estos tests validan que ambos vectores están cerrados.
+
+    it("debe retornar 403 cuando el perfil del usuario está desactivado", async () => {
+      // Desactivar el perfil personalizado
+      await db
+        .update(schema.profiles)
+        .set({ isActive: false })
+        .where(eq(schema.profiles.id, customProfileId))
+        .run();
+
+      try {
+        const app = createTestApp(MODULES.TREASURY, {
+          user: { id: customProfileUserId, role: "user" },
+        });
+
+        const res = await request(app);
+
+        expect(res.status).toBe(403);
+        const data = (await res.json()) as { error: string };
+        expect(data.error).toBe("Sin perfil asignado");
+      } finally {
+        // Restaurar el perfil para no contaminar otros tests
+        await db
+          .update(schema.profiles)
+          .set({ isActive: true })
+          .where(eq(schema.profiles.id, customProfileId))
+          .run();
+      }
+    });
+
+    it("debe reflejar la desactivación aunque haya cache previo (invalidación por perfil)", async () => {
+      // 1. Warm-up: primera request cachea el permiso en KV
+      const app = createTestApp(MODULES.TREASURY, {
+        user: { id: customProfileUserId, role: "user" },
+      });
+      const first = await request(app);
+      expect(first.status).toBe(200);
+      expect(kv._size()).toBeGreaterThan(0);
+
+      // 2. Simular flujo de updateProfile con isActive=false:
+      //    desactivar el perfil + invalidar cache de sus usuarios.
+      await db
+        .update(schema.profiles)
+        .set({ isActive: false })
+        .where(eq(schema.profiles.id, customProfileId))
+        .run();
+
+      const { invalidatePermissionCacheForProfile } = await import(
+        "../src/shared/utils/permissions.middleware"
+      );
+      await invalidatePermissionCacheForProfile(db as any, kv, customProfileId);
+
+      try {
+        // 3. La siguiente request debe ver la desactivación de inmediato
+        const second = await request(app);
+        expect(second.status).toBe(403);
+      } finally {
+        await db
+          .update(schema.profiles)
+          .set({ isActive: true })
+          .where(eq(schema.profiles.id, customProfileId))
+          .run();
+      }
     });
   });
 });

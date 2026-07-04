@@ -18,7 +18,7 @@
  */
 
 import { createMiddleware } from "hono/factory";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { AppContext } from "./app-context";
 import {
   profiles,
@@ -29,20 +29,23 @@ import { SYSTEM_PROFILES } from "../constants/profiles";
 import type { Module } from "../constants/modules";
 
 /**
- * Cache en memoria para permisos de usuario
+ * Cache compartido de permisos por usuario, respaldado por Cloudflare KV.
+ *
+ * Cada key: `perms:{userId}` → JSON `{ profileKey, allowedModules, viewModules }`.
+ * TTL: 5 minutos (`expirationTtl` en KV). Si el binding `PERMISSIONS_CACHE`
+ * no está presente (ej: tests o dev sin KV), el middleware degrada a
+ * consulta directa a la base de datos en cada request.
  */
-const permissionCache = new Map<
-  string,
-  {
-    profileKey: string;
-    allowedModules: Set<string>; // permisos de gestión (zona 3)
-    viewModules: Set<string>; // permisos de vista (zonas 1/2)
-    expiresAt: number;
-  }
->();
+const CACHE_TTL_SECONDS = 5 * 60;
+const CACHE_KEY_PREFIX = "perms:";
 
-/** Duración del cache en ms (5 minutos) */
-const CACHE_TTL = 5 * 60 * 1000;
+interface CachedPermissions {
+  profileKey: string;
+  allowedModules: string[]; // gestión (zona 3)
+  viewModules: string[]; // vista (zonas 1/2)
+}
+
+const cacheKey = (userId: string) => `${CACHE_KEY_PREFIX}${userId}`;
 
 /**
  * Obtiene los módulos permitidos para un usuario.
@@ -51,29 +54,36 @@ const CACHE_TTL = 5 * 60 * 1000;
  * - Permisos de gestión: action != "view" → para requirePermission (zona 3)
  * - Permisos de vista: cualquier action → para acceso a zonas 1/2
  *
+ * Filtra por `profiles.isActive = true`: un perfil desactivado se
+ * comporta como "sin perfil asignado".
+ *
  * @param db - Conexión a la base de datos (inyectada)
+ * @param kv - Namespace KV para cache compartido (opcional; omitir en tests)
  * @param userId - ID del usuario autenticado
- * @returns `{ profileKey, allowedModules, viewModules }` o `null` si no tiene perfil
+ * @returns `{ profileKey, allowedModules, viewModules }` o `null` si no tiene perfil activo
  */
 export async function getUserPermissions(
   db: AppContext["Variables"]["db"],
+  kv: KVNamespace | undefined,
   userId: string
 ): Promise<{
   profileKey: string;
   allowedModules: Set<string>; // gestión (zona 3)
   viewModules: Set<string>; // vista (zonas 1/2)
 } | null> {
-  // 1. Revisar cache
-  const cached = permissionCache.get(userId);
-  if (cached && cached.expiresAt > Date.now()) {
-    return {
-      profileKey: cached.profileKey,
-      allowedModules: cached.allowedModules,
-      viewModules: cached.viewModules,
-    };
+  // 1. Revisar cache KV
+  if (kv) {
+    const cached = await kv.get<CachedPermissions>(cacheKey(userId), "json");
+    if (cached) {
+      return {
+        profileKey: cached.profileKey,
+        allowedModules: new Set(cached.allowedModules),
+        viewModules: new Set(cached.viewModules),
+      };
+    }
   }
 
-  // 2. Buscar el perfil asignado al usuario
+  // 2. Buscar el perfil asignado al usuario (solo si el perfil está activo)
   const userProfile = await db
     .select({
       profileId: userProfiles.profileId,
@@ -81,7 +91,9 @@ export async function getUserPermissions(
     })
     .from(userProfiles)
     .innerJoin(profiles, eq(userProfiles.profileId, profiles.id))
-    .where(eq(userProfiles.userId, userId))
+    .where(
+      and(eq(userProfiles.userId, userId), eq(profiles.isActive, true))
+    )
     .get();
 
   if (!userProfile) {
@@ -99,41 +111,59 @@ export async function getUserPermissions(
     .where(eq(profilePermissions.profileId, userProfile.profileId))
     .all();
 
-  // Permisos de gestión (para requirePermission en zona 3)
-  const manageModules = new Set(
-    perms.filter((p) => p.action !== "view").map((p) => p.module)
-  );
+  const manageModules = perms
+    .filter((p) => p.action !== "view")
+    .map((p) => p.module);
+  const viewModules = perms.map((p) => p.module);
 
-  // Permisos de vista (para zonas 1/2)
-  const viewModules = new Set(perms.map((p) => p.module));
-
-  // 4. Guardar en cache
-  permissionCache.set(userId, {
-    profileKey: userProfile.profileKey,
-    allowedModules: manageModules,
-    viewModules,
-    expiresAt: Date.now() + CACHE_TTL,
-  });
+  // 4. Guardar en cache KV con TTL
+  if (kv) {
+    const payload: CachedPermissions = {
+      profileKey: userProfile.profileKey,
+      allowedModules: manageModules,
+      viewModules,
+    };
+    await kv.put(cacheKey(userId), JSON.stringify(payload), {
+      expirationTtl: CACHE_TTL_SECONDS,
+    });
+  }
 
   return {
     profileKey: userProfile.profileKey,
-    allowedModules: manageModules,
-    viewModules,
+    allowedModules: new Set(manageModules),
+    viewModules: new Set(viewModules),
   };
 }
 
 /**
- * Invalida el cache de permisos para un usuario
+ * Invalida el cache de permisos para un usuario en KV.
+ * Coherente entre isolates: cualquier worker verá la revocación en
+ * la próxima lectura de esa key.
  */
-export function invalidatePermissionCache(userId: string): void {
-  permissionCache.delete(userId);
+export async function invalidatePermissionCache(
+  kv: KVNamespace | undefined,
+  userId: string
+): Promise<void> {
+  if (!kv) return;
+  await kv.delete(cacheKey(userId));
 }
 
 /**
- * Invalida todo el cache de permisos
+ * Invalida el cache de todos los usuarios asignados a un perfil dado.
+ * Usar cuando cambian los permisos del perfil o su `isActive`.
  */
-export function invalidateAllPermissionCache(): void {
-  permissionCache.clear();
+export async function invalidatePermissionCacheForProfile(
+  db: AppContext["Variables"]["db"],
+  kv: KVNamespace | undefined,
+  profileId: string
+): Promise<void> {
+  if (!kv) return;
+  const users = await db
+    .select({ userId: userProfiles.userId })
+    .from(userProfiles)
+    .where(eq(userProfiles.profileId, profileId))
+    .all();
+  await Promise.all(users.map((u) => kv.delete(cacheKey(u.userId))));
 }
 
 /**
@@ -169,9 +199,10 @@ export const requirePermission = (module: Module) => {
 
     const userId = session.user.id;
     const db = c.get("db");
+    const kv = c.env.PERMISSIONS_CACHE;
 
-    // 2. Obtener permisos del usuario (con cache)
-    const userPerms = await getUserPermissions(db, userId);
+    // 2. Obtener permisos del usuario (con cache KV compartido)
+    const userPerms = await getUserPermissions(db, kv, userId);
 
     if (!userPerms) {
       return c.json(
@@ -237,8 +268,9 @@ export const requireSuperAdmin = () => {
 
     const userId = session.user.id;
     const db = c.get("db");
+    const kv = c.env.PERMISSIONS_CACHE;
 
-    const userPerms = await getUserPermissions(db, userId);
+    const userPerms = await getUserPermissions(db, kv, userId);
 
     if (!userPerms || userPerms.profileKey !== SYSTEM_PROFILES.SUPER_ADMIN) {
       return c.json(

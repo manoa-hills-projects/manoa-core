@@ -166,7 +166,7 @@ profilesRouter.patch(
         return c.json({ error: "No autorizado" }, 401);
       }
 
-      const result = await updateProfile(db, id, data, session.user.id);
+      const result = await updateProfile(db, c.env.PERMISSIONS_CACHE, id, data, session.user.id);
 
       return c.json(result);
     } catch (error) {
@@ -267,7 +267,7 @@ profilesRouter.put(
         return c.json({ error: "No autorizado" }, 401);
       }
 
-      const result = await updatePermissions(db, id, data, session.user.id);
+      const result = await updatePermissions(db, c.env.PERMISSIONS_CACHE, id, data, session.user.id);
 
       return c.json(result);
     } catch (error) {
@@ -390,6 +390,7 @@ profilesRouter.put(
 
       const result = await assignProfileToUser(
         db,
+        c.env.PERMISSIONS_CACHE,
         userId,
         data,
         session.user.id

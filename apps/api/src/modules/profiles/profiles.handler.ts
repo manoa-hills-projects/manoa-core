@@ -23,7 +23,10 @@ import {
   SYSTEM_PROFILES,
 } from "../../shared/constants/profiles";
 import { AUDIT_ACTIONS } from "../../shared/types/rbac";
-import { invalidateAllPermissionCache } from "../../shared/utils/permissions.middleware";
+import {
+  invalidatePermissionCache,
+  invalidatePermissionCacheForProfile,
+} from "../../shared/utils/permissions.middleware";
 import type {
   CreateProfileDto,
   UpdateProfileDto,
@@ -320,6 +323,7 @@ export async function createProfile(
  */
 export async function updateProfile(
   db: Database,
+  kv: KVNamespace | undefined,
   profileId: string,
   data: UpdateProfileDto,
   userId: string
@@ -363,6 +367,12 @@ export async function updateProfile(
     })
     .where(eq(profiles.id, profileId))
     .returning();
+
+  // Invalidar cache si cambió isActive: los usuarios con este perfil deben
+  // re-evaluar acceso inmediatamente en vez de esperar el TTL.
+  if (data.isActive !== undefined && data.isActive !== profile.isActive) {
+    await invalidatePermissionCacheForProfile(db, kv, profileId);
+  }
 
   // Auditoría
   await db.insert(auditLogs).values({
@@ -450,6 +460,7 @@ export async function deleteProfile(
  */
 export async function updatePermissions(
   db: Database,
+  kv: KVNamespace | undefined,
   profileId: string,
   data: UpdatePermissionsDto,
   userId: string
@@ -493,8 +504,8 @@ export async function updatePermissions(
       .run();
   }
 
-  // Invalidar cache de permisos
-  invalidateAllPermissionCache();
+  // Invalidar cache de permisos (solo los usuarios de este perfil)
+  await invalidatePermissionCacheForProfile(db, kv, profileId);
 
   // Auditoría
   await db.insert(auditLogs).values({
@@ -520,6 +531,7 @@ export async function updatePermissions(
  */
 export async function assignProfileToUser(
   db: Database,
+  kv: KVNamespace | undefined,
   targetUserId: string,
   data: AssignProfileDto,
   operatorUserId: string
@@ -579,10 +591,7 @@ export async function assignProfileToUser(
   });
 
   // Invalidar cache del usuario
-  const { invalidatePermissionCache } = await import(
-    "../../shared/utils/permissions.middleware"
-  );
-  invalidatePermissionCache(targetUserId);
+  await invalidatePermissionCache(kv, targetUserId);
 
   // Auditoría
   await db.insert(auditLogs).values({

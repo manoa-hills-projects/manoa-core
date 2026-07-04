@@ -45,6 +45,9 @@ type Bindings = {
   RESEND_FROM_EMAIL?: string;
   ChatAgent: DurableObjectNamespace;
   LAWS_SCRAPE_QUEUE: Queue<LawsScrapeMessage>;
+  // Cache compartido de permisos (KV). Opcional en dev/test — el
+  // middleware degrada a consulta directa a la DB si falta el binding.
+  PERMISSIONS_CACHE?: KVNamespace;
 }
 
 type LawsScrapeMessage = {
