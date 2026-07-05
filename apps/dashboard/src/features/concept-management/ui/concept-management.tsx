@@ -2,12 +2,14 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+	bsCentsFromUsd,
 	formatBs,
 	formatUsd,
 	useCategories,
 	useConcepts,
 	useCreateConcept,
 	useDeleteConcept,
+	useTodayRate,
 } from "@/entities/treasury";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -27,11 +29,16 @@ import { Textarea } from "@/shared/ui/textarea";
 export function ConceptManagement() {
 	const { data: concepts } = useConcepts(false);
 	const { data: categories } = useCategories();
+	const { data: rate } = useTodayRate();
 	const del = useDeleteConcept();
 	const [sheetOpen, setSheetOpen] = useState(false);
 
 	const catName = (id: string) =>
 		categories?.find((c) => c.id === id)?.name ?? "—";
+
+	// Bs sugerido se recalcula contra la tasa vigente. USD es canonical.
+	const suggestedBsCents = (usdCents: number | null) =>
+		bsCentsFromUsd(usdCents, rate?.bsPerUsd);
 
 	const handleDelete = async (id: string, name: string) => {
 		if (!confirm(`¿Eliminar el concepto "${name}"?`)) return;
@@ -70,10 +77,15 @@ export function ConceptManagement() {
 								</div>
 								<p className="text-xs text-muted-foreground">
 									{catName(c.categoryId)}
-									{c.defaultBsCents != null &&
-										` · Sugerido: ${formatBs(c.defaultBsCents)}`}
-									{c.defaultUsdCents != null &&
-										` / ${formatUsd(c.defaultUsdCents)}`}
+									{c.defaultUsdCents != null && (
+										<>
+											{" · Sugerido: "}
+											{formatUsd(c.defaultUsdCents)}
+											{rate?.bsPerUsd
+												? ` ≈ ${formatBs(suggestedBsCents(c.defaultUsdCents))} (tasa hoy)`
+												: ""}
+										</>
+									)}
 								</p>
 							</div>
 							<Button

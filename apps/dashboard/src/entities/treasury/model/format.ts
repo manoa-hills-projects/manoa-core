@@ -52,3 +52,19 @@ export const PAYMENT_STATUS_LABELS: Record<
 	approved: "Aprobado",
 	rejected: "Rechazado",
 };
+
+/**
+ * Convierte USD (centavos) → Bs (centavos) usando una tasa dada.
+ * `bsPerUsd` viene como string decimal (ver schema `treasury_rates`).
+ * Devuelve null si falta la tasa o el input.
+ */
+export function bsCentsFromUsd(
+	usdCents: number | null | undefined,
+	bsPerUsd: string | null | undefined,
+): number | null {
+	if (usdCents == null || bsPerUsd == null) return null;
+	const rate = Number.parseFloat(bsPerUsd.replace(",", "."));
+	if (!Number.isFinite(rate) || rate <= 0) return null;
+	return Math.round(usdCents * rate);
+}
+

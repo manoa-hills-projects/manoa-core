@@ -358,7 +358,60 @@ const handler = {
         message.ack();
       }
     }
-  }
+  },
+
+  /**
+   * Cron: publica la tasa BCV del día. Configurado en wrangler.jsonc
+   * `triggers.crons`. Recuperamos el usuario "sistema" (o lo creamos si
+   * es la primera vez) para poder registrar `createdBy` de la fila de tasa.
+   */
+  async scheduled(
+    event: ScheduledEvent,
+    env: Bindings,
+    ctx: ExecutionContext
+  ): Promise<void> {
+    ctx.waitUntil((async () => {
+      const db = drizzle(env.DB, { schema });
+      const { user: userTable } = schema;
+      const { fetchAndPublishBcvRate } = await import(
+        "./modules/treasury/treasury.handler"
+      );
+      const { eq } = await import("drizzle-orm");
+
+      // Localizar (o crear) usuario sistema
+      let systemUser = await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, "system@manoa.local"))
+        .get();
+
+      if (!systemUser) {
+        const now = new Date();
+        const [inserted] = await db
+          .insert(userTable)
+          .values({
+            id: crypto.randomUUID(),
+            name: "Sistema",
+            email: "system@manoa.local",
+            emailVerified: true,
+            role: "superadmin",
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning();
+        systemUser = inserted;
+      }
+
+      try {
+        const result = await fetchAndPublishBcvRate(db, systemUser.id);
+        console.log(
+          `[cron:bcv-rate] cron=${event.cron} tasa publicada: ${result.rate.bsPerUsd} Bs/USD (fuente: ${result.source})`
+        );
+      } catch (err) {
+        console.error("[cron:bcv-rate] Error al publicar tasa:", err);
+      }
+    })());
+  },
 };
 
 export default handler

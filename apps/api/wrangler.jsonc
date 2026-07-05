@@ -119,6 +119,10 @@
         "DASHBOARD_ORIGIN": "https://manoa-backoffice-dev.pages.dev",
         "RESEND_FROM_EMAIL": "onboarding@resend.dev",
         "ENVIRONMENT": "development"
+      },
+      "triggers": {
+        // 13:00 UTC = 09:00 VET (UTC-4). Publica la tasa BCV cada mañana.
+        "crons": ["0 13 * * *"]
       }
     },
     "prod": {
@@ -183,6 +187,10 @@
         "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
         "RESEND_FROM_EMAIL": "onboarding@resend.dev",
         "ENVIRONMENT": "production"
+      },
+      "triggers": {
+        // 13:00 UTC = 09:00 VET (UTC-4). Publica la tasa BCV cada mañana.
+        "crons": ["0 13 * * *"]
       }
     },
     "ai-dev": {

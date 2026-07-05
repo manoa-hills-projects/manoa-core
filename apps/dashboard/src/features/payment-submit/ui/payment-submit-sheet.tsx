@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
+	bsCentsFromUsd,
 	centsToDecimalString,
 	type TreasuryPayment,
 	useConcepts,
@@ -57,14 +58,30 @@ export function PaymentSubmitSheet({
 
 	const selectedConcept = concepts?.find((c) => c.id === conceptId);
 
+	/**
+	 * Cuando el USD cambia (por selección de concepto o edición manual),
+	 * recomputamos el Bs contra la tasa vigente. Así lo que el ciudadano
+	 * ve corresponde a la tasa actual, no a la de cuando se creó el concepto.
+	 */
+	const setUsdAndRecalcBs = (usd: string) => {
+		setAmountUsd(usd);
+		if (!rate?.bsPerUsd) return;
+		const usdNum = Number.parseFloat(usd.replace(",", "."));
+		if (!Number.isFinite(usdNum) || usdNum <= 0) return;
+		const bsCents = bsCentsFromUsd(Math.round(usdNum * 100), rate.bsPerUsd);
+		if (bsCents != null) setAmountBs(centsToDecimalString(bsCents));
+	};
+
 	const applyConceptDefaults = (id: string) => {
 		setConceptId(id);
 		const c = concepts?.find((x) => x.id === id);
-		if (c) {
-			if (c.defaultBsCents != null && !amountBs)
-				setAmountBs(centsToDecimalString(c.defaultBsCents));
-			if (c.defaultUsdCents != null && !amountUsd)
-				setAmountUsd(centsToDecimalString(c.defaultUsdCents));
+		if (!c) return;
+		// USD es canonical: si el concepto lo tiene, lo cargamos y recomputamos Bs.
+		if (c.defaultUsdCents != null) {
+			setUsdAndRecalcBs(centsToDecimalString(c.defaultUsdCents));
+		} else if (c.defaultBsCents != null && !amountBs) {
+			// Legacy: concepto solo tiene Bs. Lo cargamos tal cual.
+			setAmountBs(centsToDecimalString(c.defaultBsCents));
 		}
 	};
 
@@ -164,7 +181,7 @@ export function PaymentSubmitSheet({
 							inputMode="decimal"
 							placeholder="50.00"
 							value={amountUsd}
-							onChange={(e) => setAmountUsd(e.target.value)}
+							onChange={(e) => setUsdAndRecalcBs(e.target.value)}
 							required
 						/>
 					</div>

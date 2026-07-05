@@ -176,6 +176,25 @@ export const useSetRate = () => {
 	});
 };
 
+interface FetchBcvResult {
+	rate: TreasuryRate;
+	source: "dolarapi" | "bcv-scrape";
+	fetchedAt: string;
+}
+
+export const useFetchBcvRate = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async () => {
+			const res = await api
+				.post("treasury/rates/fetch-bcv")
+				.json<Envelope<FetchBcvResult>>();
+			return res.data;
+		},
+		onSuccess: () => qc.invalidateQueries({ queryKey: treasuryKeys.all }),
+	});
+};
+
 // ═══════════════════════════════════════════════════════════════
 // PAGOS
 // ═══════════════════════════════════════════════════════════════

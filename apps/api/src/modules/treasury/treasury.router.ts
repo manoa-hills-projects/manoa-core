@@ -20,6 +20,7 @@ import type { HonoConfig } from "../../index";
 import { MODULES } from "../../shared/constants";
 import { requirePermission } from "../../shared/utils/permissions.middleware";
 import { buildPaginatedData, buildSingleData } from "../../shared/utils/api-reponse";
+import { BcvRateFetchError } from "../../shared/utils/bcv-rate.util";
 import {
   ReceiptStorageUnavailableError,
   ReceiptValidationError,
@@ -52,6 +53,7 @@ import {
   deleteCategory,
   deleteConcept,
   deleteExpense,
+  fetchAndPublishBcvRate,
   getPaymentById,
   getTodayRate,
   listCategories,
@@ -247,6 +249,22 @@ treasuryRouter.post(
       if (!userId) return c.json({ error: "No autorizado" }, 401);
       const row = await setRate(db, c.req.valid("json"), userId);
       return c.json(buildSingleData(row), 201);
+    } catch (error) {
+      return handleError(c, error);
+    }
+  }
+);
+
+treasuryRouter.post(
+  "/rates/fetch-bcv",
+  requirePermission(MODULES.TREASURY),
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const userId = getSessionUserId(c);
+      if (!userId) return c.json({ error: "No autorizado" }, 401);
+      const result = await fetchAndPublishBcvRate(db, userId);
+      return c.json(buildSingleData(result), 201);
     } catch (error) {
       return handleError(c, error);
     }
@@ -569,6 +587,9 @@ function handleError(c: any, error: unknown) {
   }
   if (error instanceof ReceiptStorageUnavailableError) {
     return c.json({ error: error.message }, 503);
+  }
+  if (error instanceof BcvRateFetchError) {
+    return c.json({ error: error.message }, 502);
   }
   if (error instanceof TreasuryError) {
     return c.json({ error: error.message }, error.status);

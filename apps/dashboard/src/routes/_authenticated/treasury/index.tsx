@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { IconArrowRight } from "@tabler/icons-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Button } from "@/shared/ui/button";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { TransparencyPanel } from "@/widgets/transparency-panel";
-import { Button } from "@/shared/ui/button";
-import { usePermissions } from "@/hooks/use-permissions";
 
-export const Route = createFileRoute("/_authenticated/treasury")({
+export const Route = createFileRoute("/_authenticated/treasury/")({
 	component: RouteComponent,
 	staticData: {
 		breadcrumb: "Tesorería",

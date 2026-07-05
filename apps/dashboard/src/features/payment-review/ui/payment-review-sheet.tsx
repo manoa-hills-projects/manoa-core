@@ -2,12 +2,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
 import {
+	bsCentsFromUsd,
 	formatBs,
 	formatUsd,
 	PAYMENT_STATUS_LABELS,
 	receiptUrl,
 	type TreasuryPayment,
 	useReviewPayment,
+	useTodayRate,
 } from "@/entities/treasury";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -38,11 +40,17 @@ export function PaymentReviewSheet({
 	payment,
 }: PaymentReviewSheetProps) {
 	const review = useReviewPayment();
+	const { data: rate } = useTodayRate();
 	const [notes, setNotes] = useState("");
 
 	if (!payment) return null;
 
 	const isPending = payment.status === "pending";
+
+	// Equivalente Bs de lo que el ciudadano declaró en USD, calculado a
+	// tasa de hoy. Sirve para que el tesorero detecte discrepancias entre
+	// lo que el ciudadano depositó y lo que hoy debería equivaler.
+	const bsAtTodayRate = bsCentsFromUsd(payment.amountUsdCents, rate?.bsPerUsd);
 
 	const handleAction = async (action: "approve" | "reject") => {
 		if (action === "reject" && notes.trim().length < 3) {
@@ -83,12 +91,19 @@ export function PaymentReviewSheet({
 
 				<div className="grid grid-cols-2 gap-4 text-sm">
 					<div>
-						<span className="text-muted-foreground">Monto Bs</span>
-						<p className="font-medium">{formatBs(payment.amountBsCents)}</p>
+						<span className="text-muted-foreground">Monto USD (declarado)</span>
+						<p className="font-medium">{formatUsd(payment.amountUsdCents)}</p>
 					</div>
 					<div>
-						<span className="text-muted-foreground">Monto USD</span>
-						<p className="font-medium">{formatUsd(payment.amountUsdCents)}</p>
+						<span className="text-muted-foreground">Monto Bs (declarado)</span>
+						<p className="font-medium">{formatBs(payment.amountBsCents)}</p>
+						{bsAtTodayRate != null &&
+							bsAtTodayRate !== payment.amountBsCents && (
+								<p className="text-xs text-muted-foreground mt-1">
+									Equivalente hoy: {formatBs(bsAtTodayRate)}
+									{rate?.bsPerUsd && ` (tasa ${rate.bsPerUsd})`}
+								</p>
+							)}
 					</div>
 					<div>
 						<span className="text-muted-foreground">Estado</span>

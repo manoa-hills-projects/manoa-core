@@ -18,6 +18,7 @@ import {
   treasuryPayments,
   treasuryExpenses,
 } from "../../shared/database/schemas/treasury.schema";
+import { fetchBcvRate } from "../../shared/utils/bcv-rate.util";
 import { toCents } from "../../shared/utils/money.util";
 import {
   deleteReceipt,
@@ -289,6 +290,24 @@ export async function setRate(
     .values({ date, bsPerUsd, createdBy })
     .returning();
   return row;
+}
+
+/**
+ * Descarga la tasa oficial del BCV y la publica como tasa del día vía upsert.
+ * Retorna la fila persistida junto con la fuente que respondió (`pydolarve`
+ * o `bcv-scrape`) y el timestamp del fetch.
+ */
+export async function fetchAndPublishBcvRate(
+  db: Database,
+  createdBy: string
+) {
+  const fetched = await fetchBcvRate();
+  const saved = await setRate(db, { bsPerUsd: fetched.bsPerUsd }, createdBy);
+  return {
+    rate: saved,
+    source: fetched.source,
+    fetchedAt: fetched.fetchedAt,
+  };
 }
 
 export async function getTodayRate(db: Database) {
