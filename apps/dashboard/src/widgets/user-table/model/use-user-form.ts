@@ -2,8 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { fetchCitizensOptions, useUpdateCitizen } from "@/entities/citizens";
-import { fetchProfilesOptions, useAssignProfile } from "@/entities/profiles";
+import { api } from "@/shared/api/api-client";
+import { useUpdateCitizen } from "@/entities/citizens";
+import { useAssignProfile } from "@/entities/profiles";
 import { type User, useCreateUser, useUpdateUser } from "@/entities/users";
 import { type UserFormValues, userFormSchema } from "./user-schema";
 
@@ -59,18 +60,14 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 				} else {
 					let passwordToUse = values.password;
 
-					// Si seleccionó ciudadano pero no puso contraseña, tratar de extraer la cédula
+					// Si seleccionó ciudadano pero no puso contraseña, obtener su cédula
 					if (values.citizen_id && !values.password) {
-						const options = await fetchCitizensOptions({
-							search: "",
-							limit: 100,
-						});
-						const selectedCitizen = options.find(
-							(c) => c.id === values.citizen_id,
-						);
-						if (selectedCitizen) {
-							passwordToUse = selectedCitizen.cedula;
-						} else {
+						try {
+							const citizen = await api
+								.get(`citizens/${values.citizen_id}`)
+								.json<{ data: { cedula: string } }>();
+							passwordToUse = citizen.data.cedula;
+						} catch {
 							toast.error(
 								"No se pudo obtener la cédula del ciudadano para la contraseña",
 							);
