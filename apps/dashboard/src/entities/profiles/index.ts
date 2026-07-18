@@ -19,6 +19,7 @@ export type {
 // Queries
 export {
   profileKeys,
+  fetchProfilesOptions,
   useProfiles,
   useProfile,
   useProfilePermissions,

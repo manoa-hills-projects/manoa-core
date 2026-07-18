@@ -29,6 +29,36 @@ export const profileKeys = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// OPTIONS FETCHER (para combobox)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Fetcher para el combobox de selección de perfiles.
+ * Usado en el formulario de usuarios para asignar perfil.
+ */
+export const fetchProfilesOptions = async ({
+	search,
+	limit,
+}: {
+	search: string;
+	limit: number;
+}) => {
+	const response = await api
+		.get("profiles?isActive=true")
+		.json<{ data: Profile[]; total: number }>();
+	const profiles = response.data;
+	if (!search) return profiles.slice(0, limit);
+	const q = search.toLowerCase();
+	return profiles
+		.filter(
+			(p) =>
+				p.name.toLowerCase().includes(q) ||
+				p.key.toLowerCase().includes(q),
+		)
+		.slice(0, limit);
+};
+
+// ═══════════════════════════════════════════════════════════════
 // QUERIES
 // ═══════════════════════════════════════════════════════════════
 

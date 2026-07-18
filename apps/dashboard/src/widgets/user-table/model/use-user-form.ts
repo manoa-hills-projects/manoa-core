@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { fetchCitizensOptions, useUpdateCitizen } from "@/entities/citizens";
+import { fetchProfilesOptions, useAssignProfile } from "@/entities/profiles";
 import { type User, useCreateUser, useUpdateUser } from "@/entities/users";
 import { type UserFormValues, userFormSchema } from "./user-schema";
 
@@ -15,6 +16,7 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 	const createMutation = useCreateUser();
 	const updateMutation = useUpdateUser();
 	const updateCitizenMutation = useUpdateCitizen();
+	const assignProfileMutation = useAssignProfile();
 
 	const isEditing = !!user?.id;
 
@@ -26,6 +28,7 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 			name: user?.name ?? "",
 			email: user?.email ?? "",
 			role: user?.role ?? "user",
+			profile_id: "",
 			citizen_id: "", // TODO: If user is bound to a citizen, fetch and set here
 			password: "",
 		},
@@ -34,6 +37,8 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 	const onSubmit = useCallback(
 		async (values: UserFormValues) => {
 			try {
+				let userId = user?.id;
+
 				if (isEditing && user) {
 					await updateMutation.mutateAsync({
 						id: user.id,
@@ -43,6 +48,15 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 							role: values.role as "user" | "admin" | "superadmin",
 						},
 					});
+
+					// Asignar perfil si cambió
+					if (values.profile_id) {
+						await assignProfileMutation.mutateAsync({
+							userId: user.id,
+							profileId: values.profile_id,
+						});
+					}
+
 					toast.success("Usuario actualizado exitosamente");
 				} else {
 					let passwordToUse = values.password;
@@ -73,11 +87,21 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 						role: values.role as "user" | "admin" | "superadmin",
 					});
 
+					const createdUserId = newUser?.user?.id;
+
 					// Si asoció a un ciudadano, actualizar el ciudadano con el nuevo user_id
-					if (values.citizen_id && newUser?.user?.id) {
+					if (values.citizen_id && createdUserId) {
 						await updateCitizenMutation.mutateAsync({
 							id: values.citizen_id,
-							data: { user_id: newUser.user.id },
+							data: { user_id: createdUserId },
+						});
+					}
+
+					// Asignar perfil
+					if (values.profile_id && createdUserId) {
+						await assignProfileMutation.mutateAsync({
+							userId: createdUserId,
+							profileId: values.profile_id,
 						});
 					}
 
@@ -95,6 +119,7 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 			createMutation,
 			updateMutation,
 			updateCitizenMutation,
+			assignProfileMutation,
 			onSuccess,
 			form,
 			isEditing,

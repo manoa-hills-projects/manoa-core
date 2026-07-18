@@ -5,6 +5,7 @@ export const userFormSchema = z
 		name: z.string().min(1, { message: "Requerido" }),
 		email: z.string().email({ message: "Correo inválido" }),
 		role: z.string().min(1, { message: "Requerido" }),
+		profile_id: z.string().optional(),
 		citizen_id: z.string().optional(),
 		password: z.string().optional(),
 	})

@@ -3,6 +3,7 @@ import {
 	citizenOptionAdapter,
 	fetchCitizensOptions,
 } from "@/entities/citizens";
+import { fetchProfilesOptions } from "@/entities/profiles";
 import type { User } from "@/entities/users";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form } from "@/shared/ui/form";
@@ -68,6 +69,24 @@ export function UserFormSheet({
 							{ label: "Administrador", value: "admin" },
 							{ label: "Súper Administrador", value: "superadmin" },
 						]}
+					/>
+
+					<FormCommandComboboxField
+						control={form.control}
+						name="profile_id"
+						label="Perfil"
+						placeholder="Buscar perfil..."
+						fetcher={fetchProfilesOptions}
+						getLabel={(p) => p.name}
+						getValue={(p) => p.id}
+						renderOption={(p) => (
+							<div className="flex items-center gap-2">
+								<span>{p.name}</span>
+								<span className="text-xs text-muted-foreground">
+									({p.key})
+								</span>
+							</div>
+						)}
 					/>
 
 					{!isEditing && (
