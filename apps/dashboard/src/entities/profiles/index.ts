@@ -34,12 +34,7 @@ export {
 // Constantes
 export {
   MODULES,
-  MODULE_LABELS,
-  MODULE_GROUPS,
   ACTIONS,
-  ACTION_LABELS,
-  COMMON_ACTIONS,
-  ALL_ACTIONS,
   SYSTEM_PROFILES,
   isSystemProfile,
 } from "./model/constants";
