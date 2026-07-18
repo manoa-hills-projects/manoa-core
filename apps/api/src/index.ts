@@ -28,6 +28,7 @@ import { settingsRouter } from './modules/settings';
 import { statsRouter } from './modules/stats';
 import { profilesRouter } from './modules/profiles/profiles.router';
 import { treasuryRouter } from './modules/treasury/treasury.router';
+import { modulesRouter } from './modules/modules/modules.router';
 
 type Bindings = {
   DB: D1Database
@@ -283,6 +284,7 @@ const app = new Hono<HonoConfig>()
   .route('/settings', settingsRouter)
   .use('/stats/*', requireAuth)
   .route('/stats', statsRouter)
+  .route('/modules', modulesRouter)
   .use('/profiles/*', requireAuth)
   .route('/profiles', profilesRouter)
   .use('/treasury/*', requireAuth)

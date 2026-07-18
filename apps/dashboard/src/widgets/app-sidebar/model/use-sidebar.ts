@@ -1,21 +1,54 @@
 /**
  * Hook para la navegación del sidebar
  *
- * Filtra los items del menú según los permisos del usuario
- * usando el sistema RBAC simplificado (canManage).
+ * Combina la configuración del menú (menu.ts) con los módulos dinámicos
+ * de la API, y filtra según los permisos del usuario.
  */
 
 import { useMemo } from "react";
-import { NAV_ITEMS, NAV_SECONDARY } from "@/entities/navigation/config/menu";
+import {
+	NAV_ITEMS,
+	NAV_SECONDARY,
+} from "@/entities/navigation/config/menu";
 import type { NavigationItems } from "@/entities/navigation/model/types";
+import { useModules } from "@/entities/modules";
 import { usePermissions } from "@/hooks/use-permissions";
 import { authClient } from "@/lib/auth-client";
+import { ICON_MAP } from "./icon-map";
+
+/**
+ * Construye un NavigationItems desde un NavigationConfig + módulo opcional
+ */
+function resolveNavItem(
+	config: (typeof NAV_ITEMS)[number],
+	moduleMap: Map<string, (typeof NAV_ITEMS)[number]>,
+): NavigationItems | null {
+	// Si el módulo existe en la DB, usar sus datos
+	const module = moduleMap.get(config.moduleKey);
+	if (module) {
+		return {
+			title: module.name,
+			url: module.route || config.url || "/",
+			icon: ICON_MAP[module.icon as keyof typeof ICON_MAP],
+			permission: config.permission,
+		};
+	}
+
+	// Si no está en DB pero tiene title/url hardcoded, usarlos
+	if (config.title || config.url) {
+		return {
+			title: config.title || config.moduleKey,
+			url: config.url || "/",
+			icon: ICON_MAP[config.moduleKey as keyof typeof ICON_MAP],
+			permission: config.permission,
+		};
+	}
+
+	return null;
+}
 
 /**
  * Verifica si el usuario tiene permisos para ver un item del menú
- *
- * Si el item no tiene permission definido, es visible para todos.
- * Si tiene permission, el usuario debe poder gestionar ese módulo.
  */
 const checkPermission = (
 	permission: string | undefined,
@@ -26,35 +59,39 @@ const checkPermission = (
 };
 
 /**
- * Filtra los items del menú según los permisos del usuario
- */
-const getFilteredMenu = (
-	items: typeof NAV_ITEMS,
-	canManage: (module: string) => boolean,
-): NavigationItems[] => {
-	return items.filter((item) => checkPermission(item.permission, canManage));
-};
-
-/**
  * Hook principal para la navegación del sidebar
  */
 export const useSidebarNav = () => {
 	const { data: session, isPending: isSessionLoading } =
 		authClient.useSession();
 	const { canManage, isLoading: isPermissionsLoading } = usePermissions();
+	const { modules, isLoading: isModulesLoading } = useModules();
 
 	const user = session?.user;
-	const isLoading = isSessionLoading || isPermissionsLoading;
+	const isLoading = isSessionLoading || isPermissionsLoading || isModulesLoading;
 
-	const filteredNav = useMemo(
-		() => getFilteredMenu(NAV_ITEMS, canManage),
-		[canManage],
-	);
+	// Mapa de moduleKey → módulo para lookup rápido
+	const moduleMap = useMemo(() => {
+		const map = new Map<string, (typeof modules)[number]>();
+		for (const mod of modules) {
+			map.set(mod.key, mod);
+		}
+		return map;
+	}, [modules]);
 
-	const filteredSecondary = useMemo(
-		() => getFilteredMenu(NAV_SECONDARY, canManage),
-		[canManage],
-	);
+	// Resolver items principales
+	const filteredNav = useMemo(() => {
+		return NAV_ITEMS.map((item) => resolveNavItem(item, moduleMap))
+			.filter((item): item is NavigationItems => item !== null)
+			.filter((item) => checkPermission(item.permission, canManage));
+	}, [moduleMap, canManage]);
+
+	// Resolver items secundarios
+	const filteredSecondary = useMemo(() => {
+		return NAV_SECONDARY.map((item) => resolveNavItem(item, moduleMap))
+			.filter((item): item is NavigationItems => item !== null)
+			.filter((item) => checkPermission(item.permission, canManage));
+	}, [moduleMap, canManage]);
 
 	return {
 		user,

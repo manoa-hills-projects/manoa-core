@@ -18,10 +18,8 @@ import {
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { Module } from "@/entities/profiles";
+import { useModules } from "@/entities/modules";
 import {
-	MODULE_GROUPS,
-	MODULE_LABELS,
 	useProfile,
 	useUpdatePermissions,
 	useUpdateProfile,
@@ -422,12 +420,24 @@ function ModulesList({
 	onToggleGroup,
 	disabled,
 }: ModulesListProps) {
+	const { modulesByGroup, isLoading } = useModules();
+
+	if (isLoading) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-8 w-48" />
+				<Skeleton className="h-8 w-48" />
+				<Skeleton className="h-8 w-48" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-6">
-			{Object.entries(MODULE_GROUPS).map(([groupKey, group]) => {
-				const modules = [...group.modules];
-				const allChecked = modules.every((m) => allowedModules.has(m));
-				const someChecked = modules.some((m) => allowedModules.has(m));
+			{modulesByGroup.map(({ key: groupKey, label, modules }) => {
+				const moduleKeys = modules.map((m) => m.key);
+				const allChecked = moduleKeys.every((m) => allowedModules.has(m));
+				const someChecked = moduleKeys.some((m) => allowedModules.has(m));
 
 				return (
 					<div key={groupKey} className="space-y-3">
@@ -435,11 +445,11 @@ function ModulesList({
 							<Checkbox
 								checked={allChecked}
 								onCheckedChange={(checked) =>
-									onToggleGroup(modules, !!checked)
+									onToggleGroup(moduleKeys, !!checked)
 								}
 								disabled={disabled}
 							/>
-							<h3 className="font-semibold text-base">{group.label}</h3>
+							<h3 className="font-semibold text-base">{label}</h3>
 							{someChecked && !allChecked && (
 								<Badge variant="secondary" className="text-xs">
 									Parcial
@@ -451,11 +461,11 @@ function ModulesList({
 						</div>
 						<Separator />
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 pl-6">
-							{modules.map((module) => {
-								const isChecked = allowedModules.has(module);
+							{modules.map((mod) => {
+								const isChecked = allowedModules.has(mod.key);
 								return (
 									<label
-										key={module}
+										key={mod.key}
 										className={`flex items-center gap-2.5 p-2.5 rounded-md cursor-pointer transition-colors
 											${
 												isChecked
@@ -467,12 +477,10 @@ function ModulesList({
 									>
 										<Checkbox
 											checked={isChecked}
-											onCheckedChange={() => onToggle(module)}
+											onCheckedChange={() => onToggle(mod.key)}
 											disabled={disabled}
 										/>
-										<span className="text-sm font-medium">
-											{MODULE_LABELS[module as Module]}
-										</span>
+										<span className="text-sm font-medium">{mod.name}</span>
 									</label>
 								);
 							})}
