@@ -17,7 +17,7 @@ import {
 	useUpdatePollStatus,
 	useVotePoll,
 } from "@/entities/polls";
-import { authClient } from "@/lib/auth-client";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -47,14 +47,10 @@ export function PollList() {
 		Record<string, string>
 	>({});
 
-	const { data: sessionData } = authClient.useSession();
-	const isAdmin = authClient.admin.checkRolePermission({
-		role:
-			(sessionData?.user?.role as "user" | "admin" | "superadmin") || "user",
-		permissions: { project: ["create"] },
-	});
+	const { canManage } = usePermissions();
+	const isAdmin = canManage("polls");
 
-	const { data, isLoading } = usePolls({ limit: 50 }); // Fetching enough for the demo
+	const { data, isLoading } = usePolls({ limit: 50 });
 	const { mutate: updateStatus, isPending: isUpdating } = useUpdatePollStatus();
 	const { mutate: deletePoll, isPending: isDeleting } = useDeletePoll();
 	const { mutate: vote, isPending: isVoting } = useVotePoll();
@@ -72,9 +68,9 @@ export function PollList() {
 			{ id: pollId, data: { status: newStatus } },
 			{
 				onSuccess: () => {
-					toast.success(
-						`Asamblea ${newStatus === "open" ? "abierta" : "cerrada"}`,
-					);
+						toast.success(
+							`Votación ${newStatus === "open" ? "abierta" : "cerrada"}`,
+						);
 				},
 				onError: () => {
 					toast.error("Error al actualizar el estado");
@@ -87,11 +83,11 @@ export function PollList() {
 		if (!pollToDelete) return;
 		deletePoll(pollToDelete.id, {
 			onSuccess: () => {
-				toast.success("Asamblea eliminada correctamente");
+				toast.success("Votación eliminada correctamente");
 				setPollToDelete(null);
 			},
 			onError: () => {
-				toast.error("No se pudo eliminar la asamblea");
+				toast.error("No se pudo eliminar la votación");
 			},
 		});
 	};
@@ -137,7 +133,7 @@ export function PollList() {
 					<CheckCircle2 className="h-6 w-6 text-primary" />
 				</div>
 				<div>
-					<h3 className="text-lg font-semibold">No hay asambleas activas</h3>
+					<h3 className="text-lg font-semibold">No hay votaciones activas</h3>
 					<p className="text-sm text-muted-foreground mt-1 max-w-sm">
 						Por el momento no hay proyectos o consultas disponibles para
 						votación.
@@ -146,7 +142,7 @@ export function PollList() {
 				{isAdmin && (
 					<Button onClick={handleCreate} className="mt-2">
 						<Plus className="mr-2 h-4 w-4" />
-						Crear Primera Asamblea
+						Crear primera votación
 					</Button>
 				)}
 				<PollFormSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
@@ -160,7 +156,7 @@ export function PollList() {
 				<div className="flex justify-end">
 					<Button onClick={handleCreate}>
 						<Plus className="mr-2 h-4 w-4" />
-						Nueva Asamblea
+						Nueva votación
 					</Button>
 				</div>
 			)}
@@ -210,14 +206,14 @@ export function PollList() {
 														}
 														disabled={isUpdating}
 													>
-														{isOpen ? "Cerrar Asamblea" : "Reabrir Asamblea"}
+														{isOpen ? "Cerrar votación" : "Reabrir votación"}
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														variant="destructive"
 														onClick={() => setPollToDelete(poll)}
 													>
 														<Trash2 className="h-4 w-4" />
-														Eliminar Asamblea
+														Eliminar votación
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
@@ -347,7 +343,7 @@ export function PollList() {
 										{isUpdating ? (
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 										) : null}
-										{isOpen ? "Cerrar Asamblea" : "Reabrir Asamblea"}
+										{isOpen ? "Cerrar votación" : "Reabrir votación"}
 									</Button>
 								)}
 							</CardFooter>
@@ -361,8 +357,8 @@ export function PollList() {
 			<ConfirmDialog
 				open={!!pollToDelete}
 				onOpenChange={(open) => !open && setPollToDelete(null)}
-				title="Eliminar asamblea"
-				description={`¿Está seguro de eliminar la asamblea "${pollToDelete?.title}"? Esta acción no se puede deshacer.`}
+				title="Eliminar votación"
+				description={`¿Está seguro de eliminar la votación "${pollToDelete?.title}"? Esta acción no se puede deshacer.`}
 				onConfirm={handleConfirmDelete}
 				confirmText="Eliminar"
 				isLoading={isDeleting}

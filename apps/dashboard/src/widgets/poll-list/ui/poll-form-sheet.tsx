@@ -27,7 +27,7 @@ export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
 		<DataSheet
 			open={open}
 			onOpenChange={onOpenChange}
-			title="Nueva Asamblea"
+			title="Nueva votación"
 			description="Cree un nuevo proyecto o consulta para que la comunidad vote."
 		>
 			<Form {...form}>
@@ -101,7 +101,7 @@ export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
 						isSubmitting={isSubmitting}
 						isDisabled={!form.formState.isValid}
 					>
-						Crear Asamblea
+						Crear votación
 					</FormSubmitButton>
 				</form>
 			</Form>
