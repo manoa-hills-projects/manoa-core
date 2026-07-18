@@ -25,7 +25,6 @@ import {
   profilePermissions,
   userProfiles,
 } from "../database/schemas/rbac.schema";
-import { SYSTEM_PROFILES } from "../constants/profiles";
 import type { Module } from "../constants/modules";
 
 /**
@@ -41,6 +40,7 @@ const CACHE_KEY_PREFIX = "perms:";
 
 interface CachedPermissions {
   profileKey: string;
+  bypassesRbac: boolean;
   allowedModules: string[]; // gestión (zona 3)
   viewModules: string[]; // vista (zonas 1/2)
 }
@@ -68,6 +68,7 @@ export async function getUserPermissions(
   userId: string
 ): Promise<{
   profileKey: string;
+  bypassesRbac: boolean;
   allowedModules: Set<string>; // gestión (zona 3)
   viewModules: Set<string>; // vista (zonas 1/2)
 } | null> {
@@ -77,6 +78,7 @@ export async function getUserPermissions(
     if (cached) {
       return {
         profileKey: cached.profileKey,
+        bypassesRbac: cached.bypassesRbac,
         allowedModules: new Set(cached.allowedModules),
         viewModules: new Set(cached.viewModules),
       };
@@ -88,6 +90,7 @@ export async function getUserPermissions(
     .select({
       profileId: userProfiles.profileId,
       profileKey: profiles.key,
+      bypassesRbac: profiles.bypassesRbac,
     })
     .from(userProfiles)
     .innerJoin(profiles, eq(userProfiles.profileId, profiles.id))
@@ -120,6 +123,7 @@ export async function getUserPermissions(
   if (kv) {
     const payload: CachedPermissions = {
       profileKey: userProfile.profileKey,
+      bypassesRbac: userProfile.bypassesRbac,
       allowedModules: manageModules,
       viewModules,
     };
@@ -130,6 +134,7 @@ export async function getUserPermissions(
 
   return {
     profileKey: userProfile.profileKey,
+    bypassesRbac: userProfile.bypassesRbac,
     allowedModules: new Set(manageModules),
     viewModules: new Set(viewModules),
   };
@@ -215,8 +220,8 @@ export const requirePermission = (module: Module) => {
       );
     }
 
-    // 3. Super Admin tiene acceso total
-    if (userPerms.profileKey === SYSTEM_PROFILES.SUPER_ADMIN) {
+    // 3. Si el perfil tiene bypass, acceso total
+    if (userPerms.bypassesRbac) {
       c.set("permissionContext", {
         userId,
         profileKey: userPerms.profileKey,
@@ -272,7 +277,7 @@ export const requireSuperAdmin = () => {
 
     const userPerms = await getUserPermissions(db, kv, userId);
 
-    if (!userPerms || userPerms.profileKey !== SYSTEM_PROFILES.SUPER_ADMIN) {
+    if (!userPerms || !userPerms.bypassesRbac) {
       return c.json(
         {
           error: "Acceso denegado",

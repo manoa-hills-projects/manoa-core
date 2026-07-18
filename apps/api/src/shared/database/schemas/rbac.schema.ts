@@ -51,6 +51,8 @@ export const profiles = sqliteTable("profiles", {
   isDefault: integer("is_default", { mode: "boolean" }).default(false).notNull(),
   /** Si es false, el perfil está desactivado temporalmente */
   isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
+  /** Si es true, el perfil se salta todas las validaciones de permisos (bypass total) */
+  bypassesRbac: integer("bypasses_rbac", { mode: "boolean" }).default(false).notNull(),
 });
 
 export const profilesRelations = relations(profiles, ({ many }) => ({

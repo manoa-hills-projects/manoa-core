@@ -74,6 +74,7 @@ export async function seedRbac(db: Database): Promise<RbacSeedResult> {
         isSystem: true,
         isDefault: false,
         isActive: true,
+        bypassesRbac: true,
       })
       .returning();
 

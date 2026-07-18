@@ -87,10 +87,10 @@ export const usePermissions = (): UsePermissionsResult => {
 		return new Set(userProfile.permissions.map((perm) => perm.module));
 	}, [userProfile]);
 
-	// canManage(module): true si super_admin (short-circuit) o si el módulo está en el perfil
+	// canManage(module): true si el perfil tiene bypass o si el módulo está en el perfil
 	const canManage = useMemo(() => {
 		return (module: string): boolean => {
-			if (userProfile?.profile?.key === "super_admin") return true;
+			if (userProfile?.profile?.bypassesRbac) return true;
 			return managedModules.has(module);
 		};
 	}, [userProfile, managedModules]);

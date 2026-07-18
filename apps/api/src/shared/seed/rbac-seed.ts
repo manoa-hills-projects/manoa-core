@@ -98,9 +98,10 @@ export async function seedRbacProfiles(
         name: "Super Administrador",
         description:
           "Acceso total al sistema. Puede gestionar perfiles, permisos y todos los módulos. No se puede eliminar.",
-        isSystem: true,
-        isDefault: false,
-        isActive: true,
+      isSystem: true,
+      isDefault: false,
+      isActive: true,
+      bypassesRbac: true,
       })
       .returning();
 

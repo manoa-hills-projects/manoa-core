@@ -10,6 +10,7 @@ export interface Profile {
   isSystem: boolean;
   isDefault: boolean;
   isActive: boolean;
+  bypassesRbac: boolean;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -24,11 +25,13 @@ export interface ProfilePermission {
 export interface ProfileWithPermissions extends Profile {
   permissions: ProfilePermission[];
   userCount: number;
+  bypassesRbac: boolean;
 }
 
 export interface ProfileListItem extends Profile {
   userCount: number;
   permissionsCount: number;
+  bypassesRbac: boolean;
 }
 
 export interface CreateProfileDto {
@@ -63,6 +66,7 @@ export interface UserProfile {
     key: string;
     name: string;
     description: string | null;
+    bypassesRbac: boolean;
   } | null;
   permissions: PermissionItem[];
 }

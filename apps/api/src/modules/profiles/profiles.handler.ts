@@ -20,7 +20,6 @@ import { user as userTable } from "../../shared/database/schemas/auth.schema";
 import {
   isSystemProfile,
   isProfileDeletable,
-  SYSTEM_PROFILES,
 } from "../../shared/constants/profiles";
 import { AUDIT_ACTIONS } from "../../shared/types/rbac";
 import {
@@ -94,6 +93,7 @@ export async function findAllProfiles(
     isSystem: boolean;
     isDefault: boolean;
     isActive: boolean;
+    bypassesRbac: boolean;
     permissions?: Array<{
       id: string;
       module: string;
@@ -171,6 +171,7 @@ export async function findAllProfiles(
     isSystem: p.isSystem,
     isDefault: p.isDefault,
     isActive: p.isActive,
+    bypassesRbac: p.bypassesRbac,
     permissions: permissionsMap.get(p.id),
     userCount: userCountMap.get(p.id) || 0,
   }));
@@ -199,6 +200,7 @@ export async function findProfileById(
   isSystem: boolean;
   isDefault: boolean;
   isActive: boolean;
+  bypassesRbac: boolean;
   permissions: Array<{
     id: string;
     module: string;
@@ -237,6 +239,7 @@ export async function findProfileById(
     isSystem: profile.isSystem,
     isDefault: profile.isDefault,
     isActive: profile.isActive,
+    bypassesRbac: profile.bypassesRbac,
     permissions: perms.map((p) => ({
       id: p.id,
       module: p.module,
@@ -478,8 +481,8 @@ export async function updatePermissions(
     throw new ProfileNotFoundError(profileId);
   }
 
-  // No permitir cambiar permisos del super admin (siempre tiene todo)
-  if (profile.key === SYSTEM_PROFILES.SUPER_ADMIN) {
+  // No permitir cambiar permisos de perfiles con bypass (siempre tienen todo)
+  if (profile.bypassesRbac) {
     throw new ProfileProtectedError("modificar permisos de");
   }
 
@@ -645,6 +648,7 @@ export async function getUserProfile(
       profileKey: profiles.key,
       profileName: profiles.name,
       profileDescription: profiles.description,
+      bypassesRbac: profiles.bypassesRbac,
     })
     .from(userProfiles)
     .innerJoin(profiles, eq(userProfiles.profileId, profiles.id))
@@ -672,6 +676,7 @@ export async function getUserProfile(
       key: userProfile.profileKey,
       name: userProfile.profileName,
       description: userProfile.profileDescription,
+      bypassesRbac: userProfile.bypassesRbac,
     },
     permissions: perms,
   };

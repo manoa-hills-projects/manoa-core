@@ -172,7 +172,7 @@ async function seedRbac(dbName: string, dbEnv: string): Promise<void> {
     executeD1Command(
       dbName,
       dbEnv,
-      `INSERT INTO profiles (id, key, name, description, is_system, is_default, is_active, created_at, updated_at) VALUES ('${superAdminId}', 'super_admin', 'Super Administrador', 'Acceso total al sistema. Puede gestionar perfiles, permisos y todos los módulos.', 1, 0, 1, ${now}, ${now})`
+      `INSERT INTO profiles (id, key, name, description, is_system, is_default, is_active, bypasses_rbac, created_at, updated_at) VALUES ('${superAdminId}', 'super_admin', 'Super Administrador', 'Acceso total al sistema. Puede gestionar perfiles, permisos y todos los módulos.', 1, 0, 1, 1, ${now}, ${now})`
     );
     console.log("   ✅ Perfil 'super_admin' creado");
   } catch (error: any) {
