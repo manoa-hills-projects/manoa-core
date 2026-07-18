@@ -10,7 +10,6 @@ import { Form } from "@/shared/ui/form";
 import {
 	FormCommandComboboxField,
 	FormInputField,
-	FormSelectField,
 } from "@/shared/ui/form-fields";
 import { FormSubmitButton } from "@/shared/ui/form-submit-button";
 import { useUserForm } from "../model/use-user-form";
@@ -58,17 +57,6 @@ export function UserFormSheet({
 						name="email"
 						label="Correo Electrónico"
 						type="email"
-					/>
-
-					<FormSelectField
-						control={form.control}
-						name="role"
-						label="Rol"
-						options={[
-							{ label: "Habitante", value: "user" },
-							{ label: "Administrador", value: "admin" },
-							{ label: "Súper Administrador", value: "superadmin" },
-						]}
 					/>
 
 					<FormCommandComboboxField

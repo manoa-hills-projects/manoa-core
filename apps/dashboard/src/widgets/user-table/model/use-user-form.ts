@@ -27,7 +27,6 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 		values: {
 			name: user?.name ?? "",
 			email: user?.email ?? "",
-			role: user?.role ?? "user",
 			profile_id: "",
 			citizen_id: "", // TODO: If user is bound to a citizen, fetch and set here
 			password: "",
@@ -45,7 +44,6 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 						data: {
 							name: values.name,
 							email: values.email,
-							role: values.role as "user" | "admin" | "superadmin",
 						},
 					});
 
@@ -84,7 +82,6 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 						email: values.email,
 						name: values.name,
 						password: passwordToUse!,
-						role: values.role as "user" | "admin" | "superadmin",
 					});
 
 					const createdUserId = newUser?.user?.id;
