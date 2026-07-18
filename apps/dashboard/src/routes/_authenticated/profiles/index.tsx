@@ -200,7 +200,7 @@ function ProfilesPage() {
 					const actions = useMemo<ActionItem<ProfileRow>[]>(
 						() => [
 							{
-								label: "Ver permisos",
+								label: "Editar",
 								icon: Eye,
 								onClick: () => {
 									navigate({

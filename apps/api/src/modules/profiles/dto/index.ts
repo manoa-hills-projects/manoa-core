@@ -94,7 +94,7 @@ export const permissionItemSchema = z.object({
  */
 export const updatePermissionsSchema = z.object({
   /** Lista de permisos a establecer */
-  permissions: z.array(permissionItemSchema).min(1, "Debe incluir al menos un permiso"),
+  permissions: z.array(permissionItemSchema),
 });
 
 export type UpdatePermissionsDto = z.infer<typeof updatePermissionsSchema>;
