@@ -118,15 +118,6 @@ function ProfileDetailContent() {
 		updateProfileMutation.isPending || updatePermissionsMutation.isPending;
 
 	// ── Handlers ──
-	const toggleModule = (module: string) => {
-		setAllowedModules((prev) => {
-			const next = new Set(prev);
-			if (next.has(module)) next.delete(module);
-			else next.add(module);
-			return next;
-		});
-	};
-
 	const toggleGroup = (modules: readonly string[], checked: boolean) => {
 		setAllowedModules((prev) => {
 			const next = new Set(prev);
@@ -368,7 +359,6 @@ function ProfileDetailContent() {
 					) : (
 						<ModulesList
 							allowedModules={allowedModules}
-							onToggle={toggleModule}
 							onToggleGroup={toggleGroup}
 							disabled={!isSuperAdmin}
 						/>
@@ -404,19 +394,17 @@ function ProfileDetailContent() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODULES LIST
+// MODULES LIST (agrupado por categoría, no por módulo individual)
 // ═══════════════════════════════════════════════════════════════
 
 interface ModulesListProps {
 	allowedModules: Set<string>;
-	onToggle: (module: string) => void;
 	onToggleGroup: (modules: readonly string[], checked: boolean) => void;
 	disabled?: boolean;
 }
 
 function ModulesList({
 	allowedModules,
-	onToggle,
 	onToggleGroup,
 	disabled,
 }: ModulesListProps) {
@@ -433,59 +421,46 @@ function ModulesList({
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{modulesByGroup.map(({ key: groupKey, label, modules }) => {
 				const moduleKeys = modules.map((m) => m.key);
 				const allChecked = moduleKeys.every((m) => allowedModules.has(m));
 				const someChecked = moduleKeys.some((m) => allowedModules.has(m));
 
 				return (
-					<div key={groupKey} className="space-y-3">
-						<div className="flex items-center gap-3">
-							<Checkbox
-								checked={allChecked}
-								onCheckedChange={(checked) =>
-									onToggleGroup(moduleKeys, !!checked)
-								}
-								disabled={disabled}
-							/>
-							<h3 className="font-semibold text-base">{label}</h3>
-							{someChecked && !allChecked && (
-								<Badge variant="secondary" className="text-xs">
-									Parcial
-								</Badge>
-							)}
-							<span className="text-xs text-muted-foreground">
-								({modules.length})
-							</span>
+					<label
+						key={groupKey}
+						className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors
+							${
+								allChecked
+									? "bg-primary/5 border-primary/30"
+									: "hover:bg-muted/50"
+							}
+							${disabled ? "opacity-60 cursor-not-allowed" : ""}
+						`}
+					>
+						<Checkbox
+							className="mt-0.5"
+							checked={allChecked}
+							onCheckedChange={(checked) =>
+								onToggleGroup(moduleKeys, !!checked)
+							}
+							disabled={disabled}
+						/>
+						<div className="flex-1">
+							<div className="flex items-center gap-2">
+								<h3 className="font-semibold">{label}</h3>
+								{someChecked && !allChecked && (
+									<Badge variant="secondary" className="text-xs">
+										Parcial
+									</Badge>
+								)}
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								{modules.map((m) => m.name).join(", ")}
+							</p>
 						</div>
-						<Separator />
-						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 pl-6">
-							{modules.map((mod) => {
-								const isChecked = allowedModules.has(mod.key);
-								return (
-									<label
-										key={mod.key}
-										className={`flex items-center gap-2.5 p-2.5 rounded-md cursor-pointer transition-colors
-											${
-												isChecked
-													? "bg-primary/5 hover:bg-primary/10"
-													: "hover:bg-muted/50"
-											}
-											${disabled ? "opacity-60 cursor-not-allowed" : ""}
-										`}
-									>
-										<Checkbox
-											checked={isChecked}
-											onCheckedChange={() => onToggle(mod.key)}
-											disabled={disabled}
-										/>
-										<span className="text-sm font-medium">{mod.name}</span>
-									</label>
-								);
-							})}
-						</div>
-					</div>
+					</label>
 				);
 			})}
 		</div>
