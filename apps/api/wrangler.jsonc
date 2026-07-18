@@ -116,7 +116,7 @@
       },
       "vars": {
         "BETTER_AUTH_URL": "https://manoa-api-dev.manoa-it.workers.dev",
-        "DASHBOARD_ORIGIN": "https://manoa-backoffice-dev.pages.dev",
+        "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
         "RESEND_FROM_EMAIL": "onboarding@resend.dev",
         "ENVIRONMENT": "development"
       },
