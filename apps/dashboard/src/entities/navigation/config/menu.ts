@@ -27,6 +27,7 @@ export const NAV_ITEMS: NavigationConfig[] = [
 	{ moduleKey: "families", permission: "families" },
 	{ moduleKey: "citizens", permission: "citizens" },
 	{ moduleKey: "laws", permission: "laws" },
+	{ moduleKey: "tickets", permission: "tickets" },
 ];
 
 /**
@@ -34,6 +35,8 @@ export const NAV_ITEMS: NavigationConfig[] = [
  */
 export const NAV_SECONDARY: NavigationConfig[] = [
 	{ moduleKey: "validations", title: "Validaciones", url: "/validations" },
+	{ moduleKey: "acts", title: "Libro de Actas", url: "/acts" },
+	{ moduleKey: "tickets", title: "Reportes", url: "/tickets" },
 	{ moduleKey: "users", permission: "users" },
 	{ moduleKey: "profiles", permission: "profiles" },
 	{ moduleKey: "settings", permission: "settings" },

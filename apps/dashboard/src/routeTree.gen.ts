@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as VerifyIdRouteImport } from './routes/verify/$id'
 import { Route as AuthenticatedValidationsRouteImport } from './routes/_authenticated/validations'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPollsRouteImport } from './routes/_authenticated/polls'
 import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticated/meetings'
@@ -23,6 +24,7 @@ import { Route as AuthenticatedHousesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFamiliesRouteImport } from './routes/_authenticated/families'
 import { Route as AuthenticatedCitizensRouteImport } from './routes/_authenticated/citizens'
 import { Route as AuthenticatedAiAssistantRouteImport } from './routes/_authenticated/ai-assistant'
+import { Route as AuthenticatedActsRouteImport } from './routes/_authenticated/acts'
 import { Route as AuthenticatedTreasuryIndexRouteImport } from './routes/_authenticated/treasury/index'
 import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authenticated/requests/index'
 import { Route as AuthenticatedProfilesIndexRouteImport } from './routes/_authenticated/profiles/index'
@@ -56,6 +58,11 @@ const AuthenticatedValidationsRoute =
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -99,6 +106,11 @@ const AuthenticatedAiAssistantRoute =
     path: '/ai-assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedActsRoute = AuthenticatedActsRouteImport.update({
+  id: '/acts',
+  path: '/acts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTreasuryIndexRoute =
   AuthenticatedTreasuryIndexRouteImport.update({
     id: '/treasury/',
@@ -126,6 +138,7 @@ const AuthenticatedProfilesProfileIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/acts': typeof AuthenticatedActsRoute
   '/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
@@ -134,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tickets': typeof AuthenticatedTicketsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -144,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/treasury/': typeof AuthenticatedTreasuryIndexRoute
 }
 export interface FileRoutesByTo {
+  '/acts': typeof AuthenticatedActsRoute
   '/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/citizens': typeof AuthenticatedCitizensRoute
   '/families': typeof AuthenticatedFamiliesRoute
@@ -152,6 +167,7 @@ export interface FileRoutesByTo {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/polls': typeof AuthenticatedPollsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tickets': typeof AuthenticatedTicketsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -165,6 +181,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/acts': typeof AuthenticatedActsRoute
   '/_authenticated/ai-assistant': typeof AuthenticatedAiAssistantRoute
   '/_authenticated/citizens': typeof AuthenticatedCitizensRoute
   '/_authenticated/families': typeof AuthenticatedFamiliesRoute
@@ -173,6 +190,7 @@ export interface FileRoutesById {
   '/_authenticated/meetings': typeof AuthenticatedMeetingsRoute
   '/_authenticated/polls': typeof AuthenticatedPollsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/validations': typeof AuthenticatedValidationsRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -187,6 +205,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acts'
     | '/ai-assistant'
     | '/citizens'
     | '/families'
@@ -195,6 +214,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/settings'
+    | '/tickets'
     | '/users'
     | '/validations'
     | '/verify/$id'
@@ -205,6 +225,7 @@ export interface FileRouteTypes {
     | '/treasury/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/acts'
     | '/ai-assistant'
     | '/citizens'
     | '/families'
@@ -213,6 +234,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/polls'
     | '/settings'
+    | '/tickets'
     | '/users'
     | '/validations'
     | '/verify/$id'
@@ -225,6 +247,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_authenticated/acts'
     | '/_authenticated/ai-assistant'
     | '/_authenticated/citizens'
     | '/_authenticated/families'
@@ -233,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meetings'
     | '/_authenticated/polls'
     | '/_authenticated/settings'
+    | '/_authenticated/tickets'
     | '/_authenticated/users'
     | '/_authenticated/validations'
     | '/verify/$id'
@@ -294,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tickets': {
+      id: '/_authenticated/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedTicketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -350,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/acts': {
+      id: '/_authenticated/acts'
+      path: '/acts'
+      fullPath: '/acts'
+      preLoaderRoute: typeof AuthenticatedActsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/treasury/': {
       id: '/_authenticated/treasury/'
       path: '/treasury'
@@ -382,6 +420,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActsRoute: typeof AuthenticatedActsRoute
   AuthenticatedAiAssistantRoute: typeof AuthenticatedAiAssistantRoute
   AuthenticatedCitizensRoute: typeof AuthenticatedCitizensRoute
   AuthenticatedFamiliesRoute: typeof AuthenticatedFamiliesRoute
@@ -390,6 +429,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
   AuthenticatedPollsRoute: typeof AuthenticatedPollsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedValidationsRoute: typeof AuthenticatedValidationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -400,6 +440,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActsRoute: AuthenticatedActsRoute,
   AuthenticatedAiAssistantRoute: AuthenticatedAiAssistantRoute,
   AuthenticatedCitizensRoute: AuthenticatedCitizensRoute,
   AuthenticatedFamiliesRoute: AuthenticatedFamiliesRoute,
@@ -408,6 +449,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMeetingsRoute: AuthenticatedMeetingsRoute,
   AuthenticatedPollsRoute: AuthenticatedPollsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedValidationsRoute: AuthenticatedValidationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,

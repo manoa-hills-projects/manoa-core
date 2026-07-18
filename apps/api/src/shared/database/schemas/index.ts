@@ -10,3 +10,5 @@ export * from "./laws.schema";
 export * from "./settings.schema";
 export * from "./treasury.schema";
 export * from "./modules.schema";
+export * from "./acts.schema";
+export * from "./tickets.schema";
