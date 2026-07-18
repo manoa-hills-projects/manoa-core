@@ -6,30 +6,42 @@
  */
 
 import { useMemo } from "react";
+import { Circle } from "lucide-react";
 import {
 	NAV_ITEMS,
 	NAV_SECONDARY,
 } from "@/entities/navigation/config/menu";
 import type { NavigationItems } from "@/entities/navigation/model/types";
+import type { Module } from "@/entities/modules";
 import { useModules } from "@/entities/modules";
 import { usePermissions } from "@/hooks/use-permissions";
 import { authClient } from "@/lib/auth-client";
 import { ICON_MAP } from "./icon-map";
 
 /**
+ * Resuelve el icono desde el mapa, con fallback a Circle si no existe
+ */
+function resolveIcon(iconName: string | null | undefined): NavigationItems["icon"] {
+	if (iconName && iconName in ICON_MAP) {
+		return ICON_MAP[iconName as keyof typeof ICON_MAP];
+	}
+	return Circle;
+}
+
+/**
  * Construye un NavigationItems desde un NavigationConfig + módulo opcional
  */
 function resolveNavItem(
 	config: (typeof NAV_ITEMS)[number],
-	moduleMap: Map<string, (typeof NAV_ITEMS)[number]>,
+	moduleMap: Map<string, Module>,
 ): NavigationItems | null {
 	// Si el módulo existe en la DB, usar sus datos
-	const module = moduleMap.get(config.moduleKey);
-	if (module) {
+	const mod = moduleMap.get(config.moduleKey);
+	if (mod) {
 		return {
-			title: module.name,
-			url: module.route || config.url || "/",
-			icon: ICON_MAP[module.icon as keyof typeof ICON_MAP],
+			title: mod.name,
+			url: mod.route || config.url || "/",
+			icon: resolveIcon(mod.icon),
 			permission: config.permission,
 		};
 	}
@@ -39,7 +51,7 @@ function resolveNavItem(
 		return {
 			title: config.title || config.moduleKey,
 			url: config.url || "/",
-			icon: ICON_MAP[config.moduleKey as keyof typeof ICON_MAP],
+			icon: resolveIcon(config.moduleKey),
 			permission: config.permission,
 		};
 	}
