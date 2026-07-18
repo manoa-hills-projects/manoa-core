@@ -77,10 +77,24 @@ function ProfilesPage() {
 	const [deleteDialog, setDeleteDialog] = useState<ProfileRow | null>(null);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [newProfile, setNewProfile] = useState({
-		key: "",
 		name: "",
 		description: "",
 	});
+
+	// Generar identificador automático desde el nombre
+	const generatedKey = useMemo(
+		() =>
+			newProfile.name
+				.toLowerCase()
+				.replace(/[^a-záéíóúüñ0-9\s]/g, "")
+				.replace(/[áéíóúüñ]/g, (c) =>
+					({ á: "a", é: "e", í: "i", ó: "o", ú: "u", ü: "u", ñ: "n" })[c] ?? c,
+				)
+				.trim()
+				.replace(/\s+/g, "_")
+				.slice(0, 50),
+		[newProfile.name],
+	);
 
 	const profiles = response?.data ?? [];
 
@@ -109,19 +123,23 @@ function ProfilesPage() {
 	};
 
 	const handleCreate = async () => {
-		if (!newProfile.key || !newProfile.name) {
-			toast.error("Clave y nombre son obligatorios");
+		if (!newProfile.name) {
+			toast.error("El nombre es obligatorio");
+			return;
+		}
+		if (!generatedKey) {
+			toast.error("El nombre no genera un identificador válido");
 			return;
 		}
 		try {
 			await createMutation.mutateAsync({
-				key: newProfile.key.toLowerCase().replace(/\s+/g, "_"),
+				key: generatedKey,
 				name: newProfile.name,
 				description: newProfile.description || undefined,
 			});
 			toast.success("Perfil creado");
 			setCreateOpen(false);
-			setNewProfile({ key: "", name: "", description: "" });
+			setNewProfile({ name: "", description: "" });
 		} catch (error: any) {
 			toast.error(error?.message || "Error al crear");
 		}
@@ -285,21 +303,6 @@ function ProfilesPage() {
 							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<Label htmlFor="key">Identificador</Label>
-								<Input
-									id="key"
-									placeholder="ej: tesorero"
-									value={newProfile.key}
-									onChange={(e) =>
-										setNewProfile({ ...newProfile, key: e.target.value })
-									}
-								/>
-								<p className="text-xs text-muted-foreground">
-									Usado internamente para referenciar el perfil. Solo minúsculas,
-									números y _
-								</p>
-							</div>
 							<div className="space-y-2">
 								<Label htmlFor="name">Nombre</Label>
 								<Input
