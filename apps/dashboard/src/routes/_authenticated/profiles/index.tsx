@@ -286,7 +286,7 @@ function ProfilesPage() {
 						</DialogHeader>
 						<div className="space-y-4 py-4">
 							<div className="space-y-2">
-								<Label htmlFor="key">Clave única</Label>
+								<Label htmlFor="key">Identificador</Label>
 								<Input
 									id="key"
 									placeholder="ej: tesorero"
@@ -296,7 +296,8 @@ function ProfilesPage() {
 									}
 								/>
 								<p className="text-xs text-muted-foreground">
-									Solo minúsculas, números y _
+									Usado internamente para referenciar el perfil. Solo minúsculas,
+									números y _
 								</p>
 							</div>
 							<div className="space-y-2">

@@ -292,7 +292,7 @@ function ProfileDetailContent() {
 							)}
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="key">Clave única</Label>
+							<Label htmlFor="key">Identificador</Label>
 							<Input
 								id="key"
 								value={profile.key}
