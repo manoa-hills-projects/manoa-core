@@ -11,10 +11,10 @@ function PollsPage() {
 		<ProtectedRoute>
 			<div className="flex flex-col gap-6">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Asambleas</h1>
+						<h1 className="text-3xl font-bold tracking-tight">Votaciones</h1>
 					<p className="text-muted-foreground">
-						Participe en las decisiones de la comunidad y consulte los proyectos
-						propuestos.
+						Propuestas y proyectos de la comunidad. Vote a favor o en contra y
+						consulte los resultados.
 					</p>
 				</div>
 

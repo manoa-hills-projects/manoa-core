@@ -1,19 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { FileText, History, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { requestsConfig } from "@/entities/requests";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { RequestFormDialog } from "@/features/requests-managment/ui/request-form-dialog";
 import { RequestHistoryTable } from "@/features/requests-managment/ui/request-history-table";
 import { RequestTypeCard } from "@/features/requests-managment/ui/request-type-card";
-import { usePermissions } from "@/hooks/use-permissions";
-import { Button } from "@/shared/ui/button";
-import { ProtectedRoute } from "@/shared/ui/protected-route";
-import { SectionHeader } from "@/widgets/section-header/ui/section-header";
 
 export const Route = createFileRoute("/_authenticated/requests/")({
 	component: RouteComponent,
 	staticData: {
-		breadcrumb: requestsConfig.entityName,
+		breadcrumb: "Solicitudes",
 	},
 });
 
@@ -23,47 +21,59 @@ function RouteComponent() {
 
 	return (
 		<ProtectedRoute>
-			<div className="space-y-8">
-				<div className="flex items-start justify-between gap-4">
-					<SectionHeader
-						name={requestsConfig.entityName}
-						description={requestsConfig.description}
-					/>
-					{canManage("requests") && (
-						<Button variant="outline" size="sm" asChild>
-							<Link to="/requests/admin">
-								<ShieldCheck className="mr-2 h-4 w-4" />
-								Vista admin
-							</Link>
-						</Button>
-					)}
+			<div className="flex flex-col gap-6">
+				{/* ═══ HEADER ═══ */}
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight">Solicitudes</h1>
+					<p className="text-muted-foreground">
+						Solicita documentos oficiales del consejo comunal.
+					</p>
 				</div>
 
-				{/* Document type cards */}
-				<div>
-					<h2 className="text-base font-semibold text-foreground mb-4">
-						Generar nueva solicitud
-					</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-						<RequestTypeCard
-							title="Carta de Residencia"
-							description="Solicita una constancia oficial de residencia emitida por el Consejo Comunal Manoa Bicentenario 10-20. Válida por 90 días."
-							icon={<FileText className="h-6 w-6" />}
-							onClick={() => setDialogOpen(true)}
-						/>
-					</div>
-				</div>
+				{/* ═══ ZONA 1/2: Solicitar documento ═══ */}
+				<Card>
+					<CardHeader>
+						<CardTitle>Generar nueva solicitud</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+							<RequestTypeCard
+								title="Carta de Residencia"
+								description="Solicita una constancia oficial de residencia emitida por el Consejo Comunal. Válida por 90 días."
+								icon={<FileText className="h-6 w-6" />}
+								onClick={() => setDialogOpen(true)}
+							/>
+						</div>
+					</CardContent>
+				</Card>
 
-				{/* History section */}
-				<div>
-					<div className="flex items-center gap-2 mb-4">
-						<History className="h-4 w-4 text-muted-foreground" />
-						<h2 className="text-base font-semibold text-foreground">
-							Historial de mis solicitudes
-						</h2>
-					</div>
-					<RequestHistoryTable mine />
-				</div>
+				{/* ═══ ZONA 1/2: Mi historial ═══ */}
+				<Card>
+					<CardHeader>
+						<div className="flex items-center gap-2">
+							<History className="h-4 w-4 text-muted-foreground" />
+							<CardTitle>Mis solicitudes</CardTitle>
+						</div>
+					</CardHeader>
+					<CardContent>
+						<RequestHistoryTable mine />
+					</CardContent>
+				</Card>
+
+				{/* ═══ ZONA 3: Admin gestiona (solo canManage) ═══ */}
+				{canManage("requests") && (
+					<Card>
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<ShieldCheck className="h-4 w-4 text-muted-foreground" />
+								<CardTitle>Gestión de solicitudes</CardTitle>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<RequestHistoryTable mine={false} />
+						</CardContent>
+					</Card>
+				)}
 			</div>
 
 			<RequestFormDialog
