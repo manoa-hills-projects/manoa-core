@@ -5,7 +5,6 @@ import { createCitizen, findAllCitizens, updateCitizen, findOneCitizen, deleteCi
 import { createCitizenDto, updateCitizenDto, citizenQueryDto } from "./dto";
 import { requirePermission, getUserPermissions } from "../../shared/utils/permissions.middleware";
 import { MODULES } from "../../shared/constants";
-import { SYSTEM_PROFILES } from "../../shared/constants/profiles";
 
 const citizensRouter = new Hono<HonoConfig>()
 
@@ -61,7 +60,7 @@ const citizensRouter = new Hono<HonoConfig>()
 
   // Allow super_admin to view any citizen
   const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, session.user.id);
-  if (userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN) {
+  if (userPerms?.bypassesRbac) {
     return c.json(result, 200);
   }
 

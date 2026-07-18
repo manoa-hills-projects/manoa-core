@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import type { HonoConfig } from "../../index";
 import { getConversations, getMessages, createConversation, deleteConversation } from "./ai.handler";
 import { getUserPermissions } from "@/shared/utils/permissions.middleware";
-import { SYSTEM_PROFILES } from "@/shared/constants/profiles";
 
 const aiRouter = new Hono<HonoConfig>()
   .get("/conversations", async (c) => {
@@ -34,7 +33,7 @@ const aiRouter = new Hono<HonoConfig>()
 
     // Allow super_admin to view any conversation's messages (audit access)
     const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, user.id);
-    const isSuperAdmin = userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN;
+    const isSuperAdmin = userPerms?.bypassesRbac;
 
     // If super_admin, skip ownership check; otherwise verify ownership
     const result = await getMessages(db, id, isSuperAdmin ? undefined : user.id);

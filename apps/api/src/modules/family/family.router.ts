@@ -5,7 +5,6 @@ import { createFamily, findAllFamilies, updateFamily, findOneFamily, deleteFamil
 import { createFamilyDto, updateFamilyDto, familyQueryDto } from "./dto";
 import { requirePermission, getUserPermissions } from "../../shared/utils/permissions.middleware";
 import { MODULES } from "../../shared/constants";
-import { SYSTEM_PROFILES } from "../../shared/constants/profiles";
 
 const familiesRouter = new Hono<HonoConfig>()
 
@@ -54,7 +53,7 @@ const familiesRouter = new Hono<HonoConfig>()
 
   // Allow super_admin to view any family
   const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, session.user.id);
-  if (userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN) {
+  if (userPerms?.bypassesRbac) {
     return c.json(result, 200);
   }
 

@@ -6,7 +6,6 @@ import { zValidator } from "@hono/zod-validator";
 import { createHouse, findAllHouses, findOneHouse, isHouseOwner, updateHouse, deleteHouse } from "./house.handler";
 import { houseQueryDto } from "./dto/find-all-houses.dto";
 import { getUserPermissions, requirePermission } from "@/shared/utils/permissions.middleware";
-import { SYSTEM_PROFILES } from "@/shared/constants/profiles";
 import { MODULES } from "@/shared/constants";
 
 const housesRouter = new Hono<HonoConfig>()
@@ -54,7 +53,7 @@ const housesRouter = new Hono<HonoConfig>()
 
   // Super admin has access to all houses
   const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, userId);
-  const isSuperAdmin = userPerms?.profileKey === SYSTEM_PROFILES.SUPER_ADMIN;
+  const isSuperAdmin = userPerms?.bypassesRbac;
 
   if (isSuperAdmin) {
     return c.json({ data: house }, 200);

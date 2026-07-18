@@ -544,7 +544,7 @@ treasuryRouter.get("/receipts/*", async (c) => {
         userId
       );
       const isTreasurer =
-        perms?.profileKey === "super_admin" ||
+        perms?.bypassesRbac ||
         perms?.allowedModules.has(MODULES.PAYMENTS) ||
         perms?.allowedModules.has(MODULES.TREASURY);
       if (!isTreasurer) {
