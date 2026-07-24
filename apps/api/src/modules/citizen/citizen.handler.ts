@@ -24,6 +24,7 @@ const insertDisabilities = async (
   if (disabilities.length === 0) return;
   await db.insert(schema.citizenDisabilities).values(
     disabilities.map((d) => ({
+      id: crypto.randomUUID(),
       citizenId,
       disabilityType: d.disability_type,
       description: d.description ?? null,
