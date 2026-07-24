@@ -69,27 +69,35 @@ export const createCitizen = async (
   db: DrizzleD1Database<typeof schema>,
   data: createCitizenInput,
 ) => {
-  const [result] = await db
-    .insert(schema.citizens)
-    .values({
-      dni: data.cedula,
-      dniType: data.dni_type ?? 'NATIONAL',
-      phone: data.phone ?? null,
-      firstName: data.names,
-      lastName: data.surnames,
-      birthDate: data.birth_date,
-      gender: data.gender,
-      isHeadOfHousehold: data.is_head_of_household,
-      familyId: data.family_id,
-      userId: data.user_id,
-    })
-    .returning();
+  try {
+    const [result] = await db
+      .insert(schema.citizens)
+      .values({
+        dni: data.cedula,
+        dniType: data.dni_type ?? 'NATIONAL',
+        phone: data.phone ?? null,
+        firstName: data.names,
+        lastName: data.surnames,
+        birthDate: data.birth_date,
+        gender: data.gender,
+        isHeadOfHousehold: data.is_head_of_household,
+        familyId: data.family_id,
+        userId: data.user_id,
+      })
+      .returning();
 
-  if (!result) return buildSingleData(null);
+    if (!result) return { error: "No se pudo crear el ciudadano", status: 500 };
 
-  await insertDisabilities(db, result.id, data.disabilities ?? []);
-  const response = await toCitizenResponse(db, result);
-  return buildSingleData(response);
+    await insertDisabilities(db, result.id, data.disabilities ?? []);
+    const response = await toCitizenResponse(db, result);
+    return buildSingleData(response);
+  } catch (err: any) {
+    const message = err?.message ?? "";
+    if (message.includes("UNIQUE constraint") && message.includes("citizens.dni")) {
+      return { error: `El documento ${data.cedula} ya está registrado`, status: 409 };
+    }
+    return { error: "Error al crear el ciudadano", status: 500 };
+  }
 }
 
 export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: string) => {

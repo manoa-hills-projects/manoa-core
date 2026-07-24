@@ -1,6 +1,9 @@
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 import type { HonoConfig } from "../../index";
 import { zValidator } from "@hono/zod-validator";
+import * as schema from "../../shared/database/schemas";
 import { createCitizen, findAllCitizens, updateCitizen, findOneCitizen, deleteCitizen } from "./citizen.handler";
 import { createCitizenDto, updateCitizenDto, citizenQueryDto } from "./dto";
 import { requirePermission, getUserPermissions } from "../../shared/utils/permissions.middleware";
@@ -14,6 +17,9 @@ const citizensRouter = new Hono<HonoConfig>()
 
   const result = await createCitizen(db, data);
 
+  if ("error" in result) {
+    return c.json({ message: result.error }, result.status as 400 | 409 | 500);
+  }
   return c.json(result, 201);
 })
 .get("/", zValidator("query", citizenQueryDto), async (c) => {
@@ -34,6 +40,19 @@ const citizensRouter = new Hono<HonoConfig>()
   // Zone 1: Public listing - no auth required, returns limited fields
   const result = await findAllCitizens(db, query);
   return c.json(result, 200);
+})
+.get("/check-dni", zValidator("query", z.object({ dni: z.string(), exclude_id: z.string().optional() })), async (c) => {
+  const db = c.get('db');
+  const { dni, exclude_id } = c.req.valid("query");
+
+  const result = await db
+    .select({ id: schema.citizens.id })
+    .from(schema.citizens)
+    .where(eq(schema.citizens.dni, dni))
+    .get();
+
+  const exists = result && result.id !== exclude_id;
+  return c.json({ exists: !!exists });
 })
 .get("/:id", async (c) => {
   const db = c.get('db');

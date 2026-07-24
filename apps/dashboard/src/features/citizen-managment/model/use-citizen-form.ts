@@ -8,7 +8,19 @@ import {
 	useCreateCitizen,
 	useUpdateCitizen,
 } from "@/entities/citizens";
+import { api } from "@/shared/api/api-client";
 import { type CitizenFormValues, citizenSchema } from "./citizen-schema";
+
+async function checkDniExists(dni: string, excludeId?: string): Promise<boolean> {
+	try {
+		const params = new URLSearchParams({ dni });
+		if (excludeId) params.set("exclude_id", excludeId);
+		const res = await api.get(`citizens/check-dni?${params}`).json<{ exists: boolean }>();
+		return res.exists;
+	} catch {
+		return false;
+	}
+}
 
 interface UseCitizenFormProps {
 	citizen?: Citizen | null;
@@ -48,6 +60,15 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 				family_id: values.family_id || undefined,
 			};
 
+			// Validate DNI uniqueness before submit
+			if (!isEditing && values.cedula) {
+				const exists = await checkDniExists(values.cedula);
+				if (exists) {
+					form.setError("cedula", { message: "Este documento ya está registrado" });
+					return;
+				}
+			}
+
 			try {
 				if (isEditing && citizen) {
 					await updateCitizen({ id: citizen.id, data: payload });
@@ -59,8 +80,13 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 
 				form.reset();
 				onSuccess?.();
-			} catch (error) {
-				toast.error("Error al guardar el ciudadano");
+			} catch (error: any) {
+				let msg = "Error al guardar el ciudadano";
+				try {
+					const body = await error.response?.json();
+					msg = body?.message ?? msg;
+				} catch {}
+				toast.error(msg);
 			}
 		},
 		[citizen, createCitizen, updateCitizen, onSuccess, form],
