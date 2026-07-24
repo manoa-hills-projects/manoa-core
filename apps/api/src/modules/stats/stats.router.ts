@@ -15,6 +15,8 @@ export const statsRouter = new Hono<HonoConfig>()
       housesBySector,
       citizensBySector,
       citizensComposition,
+      genderBreakdown,
+      ageBreakdown,
       requestsByStatus,
       requestsByMonth,
       pollsByStatus,
@@ -40,6 +42,19 @@ export const statsRouter = new Hono<HonoConfig>()
         .select({ isHead: schema.citizens.isHeadOfHousehold, count: count() })
         .from(schema.citizens)
         .groupBy(schema.citizens.isHeadOfHousehold)
+        .all(),
+      db
+        .select({ gender: schema.citizens.gender, count: count() })
+        .from(schema.citizens)
+        .groupBy(schema.citizens.gender)
+        .all(),
+      db
+        .select({
+          ageGroup: sql<string>`CASE WHEN CAST(strftime('%Y', 'now') - CAST(strftime('%Y', ${schema.citizens.birthDate}) AS INTEGER) AS INTEGER) < 18 THEN 'minor' ELSE 'adult' END`,
+          count: count(),
+        })
+        .from(schema.citizens)
+        .groupBy(sql`CASE WHEN CAST(strftime('%Y', 'now') - CAST(strftime('%Y', ${schema.citizens.birthDate}) AS INTEGER) AS INTEGER) < 18 THEN 'minor' ELSE 'adult' END`)
         .all(),
       db
         .select({ status: schema.documentRequests.status, count: count() })
@@ -87,6 +102,11 @@ export const statsRouter = new Hono<HonoConfig>()
     const pollOpen = pollsByStatus.find((p) => p.status === "open")?.count ?? 0;
     const pollClosed = pollsByStatus.find((p) => p.status === "closed")?.count ?? 0;
 
+    const maleCount = genderBreakdown.find((g) => g.gender === "M")?.count ?? 0;
+    const femaleCount = genderBreakdown.find((g) => g.gender === "F")?.count ?? 0;
+    const minorCount = ageBreakdown.find((a) => a.ageGroup === "minor")?.count ?? 0;
+    const adultCount = ageBreakdown.find((a) => a.ageGroup === "adult")?.count ?? 0;
+
     return c.json({
       census: {
         totals: {
@@ -98,6 +118,14 @@ export const statsRouter = new Hono<HonoConfig>()
         composition: {
           heads: headsCount,
           members: membersCount,
+        },
+        gender: {
+          male: maleCount,
+          female: femaleCount,
+        },
+        age: {
+          minors: minorCount,
+          adults: adultCount,
         },
       },
       requests: {

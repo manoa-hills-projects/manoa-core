@@ -26,6 +26,14 @@ export interface StatsOverview {
       heads: number;
       members: number;
     };
+    gender: {
+      male: number;
+      female: number;
+    };
+    age: {
+      minors: number;
+      adults: number;
+    };
   };
   requests: {
     total: number;

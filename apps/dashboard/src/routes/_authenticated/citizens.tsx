@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomeIcon, UserIcon, UsersIcon } from "lucide-react";
-import { useStatsOverview } from "@/entities/stats";
+import { type StatsOverview, useStatsOverview } from "@/entities/stats";
 import { CitizenTable } from "@/features/citizen-managment";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
@@ -15,39 +15,34 @@ export const Route = createFileRoute("/_authenticated/citizens")({
 
 const CITIZEN_STATS = [
 	{
-		key: "citizens" as const,
-		label: "Habitantes",
+		label: "Hombres",
 		icon: UserIcon,
-		color: "text-emerald-500",
-		bg: "bg-emerald-500/10",
-		border: "border-emerald-500/20",
-	},
-	{
-		key: "heads" as const,
-		label: "Jefes de Hogar",
-		icon: HomeIcon,
+		value: (s: StatsOverview) => s.census.gender.male,
 		color: "text-blue-500",
 		bg: "bg-blue-500/10",
 		border: "border-blue-500/20",
 	},
 	{
-		key: "members" as const,
-		label: "Miembros",
+		label: "Mujeres",
 		icon: UsersIcon,
-		color: "text-violet-500",
-		bg: "bg-violet-500/10",
-		border: "border-violet-500/20",
+		value: (s: StatsOverview) => s.census.gender.female,
+		color: "text-rose-500",
+		bg: "bg-rose-500/10",
+		border: "border-rose-500/20",
+	},
+	{
+		label: "Jefes de Hogar",
+		icon: HomeIcon,
+		value: (s: StatsOverview) => s.census.composition.heads,
+		color: "text-emerald-500",
+		bg: "bg-emerald-500/10",
+		border: "border-emerald-500/20",
 	},
 ] as const;
 
 function RouteComponent() {
 	const { data: stats, isLoading } = useStatsOverview();
-
-	const statValues: Record<string, number | undefined> = {
-		citizens: stats?.census.totals.citizens,
-		heads: stats?.census.composition.heads,
-		members: stats?.census.composition.members,
-	};
+	const s = stats as StatsOverview | undefined;
 
 	return (
 		<ProtectedRoute module="citizens">
@@ -61,8 +56,8 @@ function RouteComponent() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-				{CITIZEN_STATS.map(({ key, label, icon: Icon, color, bg, border }) => (
-					<Card key={key} className={`border ${border}`}>
+				{CITIZEN_STATS.map(({ label, icon: Icon, value, color, bg, border }) => (
+					<Card key={label} className={`border ${border}`}>
 						<CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
 							<CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 								{label}
@@ -72,16 +67,21 @@ function RouteComponent() {
 							</div>
 						</CardHeader>
 						<CardContent className="px-4 pb-4">
-							{isLoading ? (
+							{isLoading || !s ? (
 								<Skeleton className="h-8 w-16" />
 							) : (
 								<p className="text-3xl font-bold tracking-tight">
-									{(statValues[key] ?? 0).toLocaleString("es-VE")}
+									{value(s).toLocaleString("es-VE")}
 								</p>
 							)}
 						</CardContent>
 					</Card>
 				))}
+			</div>
+
+			<div className="flex gap-4 text-sm text-muted-foreground">
+				<span>👶 Menores: {(s?.census.age.minors ?? 0).toLocaleString("es-VE")}</span>
+				<span>🧑 Adultos: {(s?.census.age.adults ?? 0).toLocaleString("es-VE")}</span>
 			</div>
 
 			<CitizenTable />
