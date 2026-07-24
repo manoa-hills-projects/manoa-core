@@ -1,3 +1,13 @@
+# Deploy Dashboard to Production
+#
+# Triggers on every push to `main` that touches the dashboard.
+#
+# Required GitHub repository secrets:
+#   CF_API_TOKEN          - Cloudflare API token with Pages edit permissions.
+#
+# Required GitHub repository variables:
+#   CF_ACCOUNT_ID         - Cloudflare account ID.
+
 name: Deploy Dashboard - PROD
 
 on:
@@ -25,10 +35,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build:prod
@@ -37,8 +49,9 @@ jobs:
       - name: Deploy to Cloudflare Pages (PROD)
         uses: cloudflare/pages-action@v1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ vars.CF_ACCOUNT_ID }}
           projectName: manoa-backoffice
-          directory: apps/dashboard/dist
+          directory: dist
+          workingDirectory: apps/dashboard
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

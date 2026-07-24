@@ -6,27 +6,30 @@
 npm install
 ```
 
-## 2) Entorno local (seguro)
+## 2) Entorno local (contra producción)
 
-Sin `.env` ni `.dev.vars`.
+Este proyecto solo mantiene un entorno productivo. El desarrollo local se conecta directamente a los recursos de producción de Cloudflare.
 
-1. Crea el secreto en Secrets Store local (sin `--remote`):
+### Requisitos previos
 
-```txt
-npx wrangler secrets-store secret create <STORE_ID> --name BETTER_AUTH_SECRET --scopes workers
-```
+- Haber ejecutado `wrangler login` con una cuenta que tenga permisos sobre el Worker, D1, KV, R2 y Queues de producción.
+- Haber ejecutado `npm install` en la raíz del monorepo.
 
-2. Ejecuta la API en entorno local:
+### Advertencia
+
+> `npm run dev` usa `wrangler dev --remote --env prod`, por lo que la API local lee y escribe en la **base de datos de producción real**. Cualquier cambio de datos afecta a usuarios reales. No realices pruebas destructivas ni inserts masivos de prueba.
+
+### Levantar la API local
 
 ```txt
 npm run dev
 ```
 
-> `npm run dev` usa `wrangler dev --env local`.
+> `npm run dev` ejecuta `wrangler dev --remote --env prod`. Esto inicia el Worker localmente pero apunta a D1, KV, R2 y Queues del entorno `prod` definidos en [wrangler.jsonc](wrangler.jsonc).
 
 ## 3) Entorno producción
 
-Variables no sensibles (URLs públicas, etc.) viven en [wrangler.jsonc](wrangler.jsonc) bajo `env.production.vars`.
+Variables no sensibles (URLs públicas, etc.) viven en [wrangler.jsonc](wrangler.jsonc) bajo `env.prod.vars`.
 
 Secretos sensibles se cargan en Secrets Store (cuenta) y se enlazan al Worker:
 
@@ -43,7 +46,7 @@ Despliegue a producción:
 npm run deploy
 ```
 
-> `npm run deploy` usa `wrangler deploy --env production`.
+> `npm run deploy` usa `wrangler deploy --env prod`. Los secretos deben estar configurados directamente en Cloudflare (vía `wrangler secret put --env prod` o Secrets Store), no en un archivo `.dev.vars` local.
 
 ## 4) Secrets Store (nivel cuenta) en Cloudflare
 
@@ -57,7 +60,7 @@ Flujo recomendado:
 
 1. Crear cada secreto una sola vez en Secrets Store (nivel cuenta).
 2. Definir permisos RBAC (quién puede crear/rotar/eliminar).
-3. Asociar esos secretos al Worker `api` por entorno (`local`/`production`).
+3. Asociar esos secretos al Worker `api` por entorno (`prod`).
 4. Rotar periódicamente claves críticas (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `BOOTSTRAP_ADMIN_KEY`) sin exponer valores en repositorio.
 
 ### Comandos sugeridos (Wrangler)
@@ -91,19 +94,20 @@ Luego, declara los bindings `secrets_store_secrets` en [wrangler.jsonc](wrangler
 ## 5) Comandos útiles
 
 ```txt
-npm run dev
-npm run dev:remote
-npm run deploy
-npm run cf-typegen
+npm run dev              # wrangler dev --remote --env prod
+npm run deploy           # wrangler deploy --env prod
+npm run db:push          # aplicar migraciones pendientes a D1 de prod
+npm run secrets:set:prod # rotar o agregar un secret en prod
+npm run cf-typegen       # regenerar tipos de Cloudflare
 ```
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+[Para generar o sincronizar tipos basados en la configuración del Worker](https://developers.cloudflare.com/workers/wrangler/commands/#types):
 
 ```txt
 npm run cf-typegen
 ```
 
-Pass `CloudflareBindings` as generics when instantiating `Hono`:
+Pasa `CloudflareBindings` como genérico al instanciar `Hono`:
 
 ```ts
 // src/index.ts

@@ -1,3 +1,19 @@
+# Deploy API + AI Worker to Production
+#
+# Triggers on every push to `main` that touches the API or infrastructure.
+# This workflow also applies Terraform for D1 / Queues.
+#
+# Required GitHub repository secrets:
+#   CF_API_TOKEN          - Cloudflare API token with Workers, D1, Queues edit permissions.
+#   PROD_BETTER_AUTH_SECRET
+#   PROD_RESEND_API_KEY
+#   PROD_TURNSTILE_SECRET_KEY
+#   PROD_CF_BR_API_TOKEN
+#   PROD_BOOTSTRAP_ADMIN_KEY
+#
+# Required GitHub repository variables:
+#   CF_ACCOUNT_ID         - Cloudflare account ID.
+
 name: Deploy API - PROD
 
 on:
@@ -12,7 +28,6 @@ on:
 env:
   ENVIRONMENT: prod
   API_WORKER_NAME: manoa-api
-  ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
 
 jobs:
   deploy-api:
@@ -25,13 +40,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
-        working-directory: apps/api
 
       - name: Build Worker
         run: npm run build
@@ -82,13 +96,14 @@ jobs:
           TF_VAR_bootstrap_admin_key: ${{ secrets.PROD_BOOTSTRAP_ADMIN_KEY }}
 
       - name: Deploy Worker
-        run: npx wrangler deploy --env ${{ env.ENVIRONMENT }} --secrets-file .dev.vars.prod --minify
+        run: npm run deploy
         working-directory: apps/api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
   deploy-ai:
     name: Deploy AI Worker (PROD)
+    needs: deploy-api
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -97,11 +112,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Deploy AI Worker
-        run: |
-          cd apps/api
-          npx wrangler deploy --env ai-prod --secrets-file .dev.vars.prod
+        run: npm run deploy:ai:prod
+        working-directory: apps/api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
