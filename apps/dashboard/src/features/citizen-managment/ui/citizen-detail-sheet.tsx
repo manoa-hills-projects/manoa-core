@@ -1,4 +1,5 @@
 import type { Citizen } from "@/entities/citizens/model/types";
+import { formatDocumentId } from "@/entities/citizens/lib/format-document-id";
 import {
 	Sheet,
 	SheetContent,
@@ -20,6 +21,8 @@ export function CitizenDetailSheet({
 }: CitizenDetailSheetProps) {
 	if (!citizen) return null;
 
+	const documento = formatDocumentId(citizen.dni_type, citizen.cedula);
+
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
@@ -37,7 +40,7 @@ export function CitizenDetailSheet({
 										<b>Nombre Completo:</b> {citizen.names} {citizen.surnames}
 									</div>
 									<div>
-										<b>Cédula:</b> {citizen.cedula}
+										<b>Documento:</b> {documento || "Sin documento"}
 									</div>
 									<div>
 										<b>Fecha de Nacimiento:</b> {citizen.birth_date}

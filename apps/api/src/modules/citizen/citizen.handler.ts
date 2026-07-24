@@ -10,6 +10,7 @@ import type { CitizenQueryParams, createCitizenInput, updateCitizenInput } from 
 const toCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
   id: citizen.id,
   cedula: citizen.dni,
+  dni_type: citizen.dniType,
   names: citizen.firstName,
   surnames: citizen.lastName,
   birth_date: citizen.birthDate,
@@ -36,6 +37,7 @@ export const createCitizen = async (
     .insert(schema.citizens)
     .values({
       dni: data.cedula,
+      dniType: data.dni_type ?? 'NATIONAL',
       firstName: data.names,
       lastName: data.surnames,
       birthDate: data.birth_date,
@@ -65,6 +67,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     .select({
       id: schema.citizens.id,
       dni: schema.citizens.dni,
+      dniType: schema.citizens.dniType,
       firstName: schema.citizens.firstName,
       lastName: schema.citizens.lastName,
       birthDate: schema.citizens.birthDate,
@@ -114,6 +117,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       return {
         id: row.id,
         cedula: row.dni,
+        dni_type: row.dniType,
         names: row.firstName,
         surnames: row.lastName,
         birth_date: row.birthDate,
@@ -145,6 +149,7 @@ export const updateCitizen = async (
   const updateData: Partial<typeof schema.citizens.$inferInsert> = {};
 
   if (data.cedula !== undefined) updateData.dni = data.cedula;
+  if (data.dni_type !== undefined) updateData.dniType = data.dni_type;
   if (data.names !== undefined) updateData.firstName = data.names;
   if (data.surnames !== undefined) updateData.lastName = data.surnames;
   if (data.birth_date !== undefined) updateData.birthDate = data.birth_date;

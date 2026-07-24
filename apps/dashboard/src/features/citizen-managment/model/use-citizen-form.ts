@@ -24,6 +24,7 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 		mode: "onChange",
 		reValidateMode: "onChange",
 		values: {
+			dni_type: citizen?.dni_type ?? "NATIONAL",
 			cedula: citizen?.cedula || "",
 			names: citizen?.names || "",
 			surnames: citizen?.surnames || "",

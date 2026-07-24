@@ -1,0 +1,1 @@
+ALTER TABLE citizens ADD COLUMN dni_type text NOT NULL DEFAULT 'NATIONAL';

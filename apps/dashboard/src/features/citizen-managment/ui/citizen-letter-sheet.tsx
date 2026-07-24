@@ -164,7 +164,7 @@ export function CitizenLetterSheet({
 									<Button asChild>
 										<a
 											href={instance.url}
-											download={`CartaRecidencia_${citizen.cedula}.pdf`}
+											download={`CartaRecidencia_${citizen.id}.pdf`}
 										>
 											<Download className="mr-2 h-4 w-4" />
 											Descargar PDF

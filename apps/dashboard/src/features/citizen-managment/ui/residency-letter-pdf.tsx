@@ -157,19 +157,17 @@ export const ResidencyLetterPDF = ({
 
 	const voceraIdRaw = loggedInCitizen?.cedula;
 
-	// Format document ID to include dots if possible, otherwise use raw
-	const formatDocumentId = (docId: string | undefined | null) => {
-		if (!docId) return "N/A";
-		// Simple heuristic: if it contains a dash, keep it, otherwise format
-		if (docId.includes("-")) return docId;
-		// Typical 12345678 format
-		if (docId.length >= 6 && !isNaN(Number(docId))) {
-			return `V-${docId.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
-		}
-		return `V-${docId}`;
+	// Format document ID based on dni_type
+	const formatDocumentId = (dni_type: string | undefined | null, docId: string | undefined | null) => {
+		if (!dni_type || !docId || dni_type === "SYNTHETIC") return null;
+		const prefix = dni_type === "NATIONAL" ? "V" : dni_type === "FOREIGN" ? "E" : "";
+		if (!prefix) return null;
+		// Add thousand separators
+		const formatted = docId.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+		return `${prefix}-${formatted}`;
 	};
 
-	const voceraId = voceraIdRaw ? formatDocumentId(voceraIdRaw) : null;
+	const voceraId = voceraIdRaw ? formatDocumentId(loggedInCitizen?.dni_type, voceraIdRaw) : null;
 	const voceraCedulaText = voceraId
 		? `, portador(a) de la cédula de identidad No. `
 		: "";
@@ -182,7 +180,7 @@ export const ResidencyLetterPDF = ({
 	const currentYear = new Date().getFullYear();
 
 	const citizenName = `${citizen.names} ${citizen.surnames}`.toUpperCase();
-	const citizenId = formatDocumentId(citizen.cedula);
+	const citizenId = formatDocumentId(citizen.dni_type, citizen.cedula);
 
 	return (
 		<Document>

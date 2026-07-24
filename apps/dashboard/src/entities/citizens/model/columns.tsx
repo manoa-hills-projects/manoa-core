@@ -1,13 +1,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard, Star, User, Users } from "lucide-react";
 import type { Citizen } from "./types";
+import { formatDocumentId } from "../lib/format-document-id";
 
 export const citizenColumns: ColumnDef<Citizen>[] = [
 	{
-		accessorKey: "cedula",
+		id: "documento",
+		accessorFn: (row) => formatDocumentId(row.dni_type, row.cedula),
 		header: () => (
 			<div className="flex flex-row items-center gap-1">
-				<CreditCard className="size-3.5" /> Cédula
+				<CreditCard className="size-3.5" /> Documento
 			</div>
 		),
 	},

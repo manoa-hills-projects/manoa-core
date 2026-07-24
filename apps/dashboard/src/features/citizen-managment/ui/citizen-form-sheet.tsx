@@ -41,7 +41,27 @@ export function CitizenFormSheet({
 					onSubmit={onSubmit}
 					className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto px-1"
 				>
-					<FormInputField control={form.control} name="cedula" label="Cédula" />
+					<div className="grid grid-cols-3 gap-4">
+						<FormSelectField
+							control={form.control}
+							name="dni_type"
+							label="Tipo Doc."
+							placeholder="Seleccione"
+							options={[
+								{ label: "V (Venezolano)", value: "NATIONAL" },
+								{ label: "E (Extranjero)", value: "FOREIGN" },
+								{ label: "Sin DNI", value: "SYNTHETIC" },
+							]}
+						/>
+						<div className="col-span-2">
+							<FormInputField
+								control={form.control}
+								name="cedula"
+								label="Número de Documento"
+								placeholder="12345678"
+							/>
+						</div>
+					</div>
 					<div className="grid grid-cols-2 gap-4">
 						<FormInputField
 							control={form.control}

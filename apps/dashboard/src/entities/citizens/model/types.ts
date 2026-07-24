@@ -1,6 +1,9 @@
+export type DniType = 'NATIONAL' | 'FOREIGN' | 'SYNTHETIC';
+
 export interface Citizen {
 	id: string;
 	cedula: string;
+	dni_type: DniType;
 	names: string;
 	surnames: string;
 	gender: string;
