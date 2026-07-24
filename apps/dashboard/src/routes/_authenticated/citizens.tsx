@@ -17,7 +17,7 @@ const CITIZEN_STATS = [
 	{
 		label: "Hombres",
 		icon: UserIcon,
-		value: (s: StatsOverview) => s.census.gender.male,
+		value: (s: StatsOverview) => s.census.gender?.male ?? 0,
 		color: "text-blue-500",
 		bg: "bg-blue-500/10",
 		border: "border-blue-500/20",
@@ -25,7 +25,7 @@ const CITIZEN_STATS = [
 	{
 		label: "Mujeres",
 		icon: UsersIcon,
-		value: (s: StatsOverview) => s.census.gender.female,
+		value: (s: StatsOverview) => s.census.gender?.female ?? 0,
 		color: "text-rose-500",
 		bg: "bg-rose-500/10",
 		border: "border-rose-500/20",
@@ -33,7 +33,7 @@ const CITIZEN_STATS = [
 	{
 		label: "Jefes de Hogar",
 		icon: HomeIcon,
-		value: (s: StatsOverview) => s.census.composition.heads,
+		value: (s: StatsOverview) => s.census.composition?.heads ?? 0,
 		color: "text-emerald-500",
 		bg: "bg-emerald-500/10",
 		border: "border-emerald-500/20",
@@ -80,8 +80,8 @@ function RouteComponent() {
 			</div>
 
 			<div className="flex gap-4 text-sm text-muted-foreground">
-				<span>👶 Menores: {(s?.census.age.minors ?? 0).toLocaleString("es-VE")}</span>
-				<span>🧑 Adultos: {(s?.census.age.adults ?? 0).toLocaleString("es-VE")}</span>
+				<span>👶 Menores: {(s?.census.age?.minors ?? 0).toLocaleString("es-VE")}</span>
+				<span>🧑 Adultos: {(s?.census.age?.adults ?? 0).toLocaleString("es-VE")}</span>
 			</div>
 
 			<CitizenTable />
