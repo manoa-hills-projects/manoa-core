@@ -18,6 +18,69 @@ Antes de levantar el entorno local asegúrate de tener:
 
 > `wrangler login` es obligatorio para desarrollo local contra D1 remoto. Sin autenticación, `wrangler dev --remote --env prod` no puede leer ni escribir en la base de datos de producción.
 
+## Checklist de configuración inicial de credenciales
+
+Usa esta lista la primera vez que configures el proyecto o cuando agregues un nuevo desarrollador.
+
+### 1. Tu máquina local
+
+- [ ] Ejecutar `npx wrangler login` y confirmar con `npx wrangler whoami`.
+- [ ] Crear `apps/api/.dev.vars.prod` a partir de `apps/api/.dev.vars.example`.
+- [ ] Llenar los valores reales de cada secreto.
+- [ ] Crear `infrastructure/.env.local` a partir de `infrastructure/.env.example` (solo si usas Terraform localmente).
+
+### 2. Subir secretos del Worker a Cloudflare
+
+Existen dos formas. Elige la que prefieras:
+
+**Opción A — script automático (recomendado):**
+
+```bash
+cd apps/api
+node ./scripts/setup-secrets.mjs
+```
+
+El script lee `apps/api/.dev.vars.prod` y sube cada secreto a Cloudflare usando `wrangler secret bulk`.
+
+**Opción B — manual:**
+
+```bash
+cd apps/api
+npx wrangler secret put BETTER_AUTH_SECRET --env prod
+npx wrangler secret put RESEND_API_KEY --env prod
+npx wrangler secret put TURNSTILE_SECRET_KEY --env prod
+npx wrangler secret put CF_BR_API_TOKEN --env prod
+npx wrangler secret put BOOTSTRAP_ADMIN_KEY --env prod
+```
+
+### 3. Verificar secretos en Cloudflare
+
+```bash
+cd apps/api
+npx wrangler secret list --env prod
+```
+
+Deberías ver: `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `CF_BR_API_TOKEN`, `BOOTSTRAP_ADMIN_KEY`.
+
+### 4. Configurar GitHub (Settings > Secrets and variables > Actions)
+
+**Repository secrets** (`Secrets and variables > Actions > Repository secrets`):
+
+- `CF_API_TOKEN` — token de Cloudflare con permisos para Workers y Pages.
+
+> Terraform no se ejecuta en CI/CD, así que no necesitas los secretos `PROD_*` en GitHub.
+
+**Repository variables** (`Secrets and variables > Actions > Variables > Repository variables`):
+
+- `CF_ACCOUNT_ID` — ID público de la cuenta de Cloudflare.
+
+### 5. Probar CI/CD
+
+- [ ] Hacer un cambio pequeño en una rama feature.
+- [ ] Abrir PR a `main` y mergear.
+- [ ] Revisar la pestaña **Actions** de GitHub.
+- [ ] Confirmar que `deploy-prod.yml` y/o `deploy-dashboard-prod.yml` terminan en verde.
+
 ## Cómo levantar local
 
 Desde la raíz del monorepo:
@@ -70,15 +133,10 @@ Los workflows usan los siguientes secretos/variables del repositorio (configurar
 
 | Tipo | Nombre | Uso |
 |------|--------|-----|
-| Secret | `CF_API_TOKEN` | Token de Cloudflare con permisos para Workers, D1, Queues y Pages. |
+| Secret | `CF_API_TOKEN` | Token de Cloudflare con permisos para Workers y Pages. |
 | Variable | `CF_ACCOUNT_ID` | ID de la cuenta de Cloudflare. |
-| Secret | `PROD_BETTER_AUTH_SECRET` | Secrets para Terraform (`infrastructure/`). |
-| Secret | `PROD_RESEND_API_KEY` | Secrets para Terraform. |
-| Secret | `PROD_TURNSTILE_SECRET_KEY` | Secrets para Terraform. |
-| Secret | `PROD_CF_BR_API_TOKEN` | Secrets para Terraform. |
-| Secret | `PROD_BOOTSTRAP_ADMIN_KEY` | Secrets para Terraform. |
 
-> Nota: los secretos sensibles del Worker (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, etc.) deben estar configurados directamente en Cloudflare (vía `wrangler secret put --env prod` o Secrets Store). Los workflows no usan archivos `.dev.vars` porque estos no están en el repositorio.
+> Nota: los secretos sensibles del Worker (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, etc.) deben estar configurados directamente en Cloudflare (vía `wrangler secret put --env prod` o Secrets Store). Los workflows no usan archivos `.dev.vars` porque estos no están en el repositorio. Terraform tampoco se ejecuta en CI/CD.
 
 <div style="border: 2px solid #d32f2f; padding: 16px; background-color: #ffebee; color: #000;">
 
@@ -127,7 +185,8 @@ Al desarrollar localmente se lee y se escribe en la **base de datos de producci�
 
 6. **CI/CD despliega automáticamente a producción.**
 
-   - `.github/workflows/deploy-prod.yml` se ejecuta cuando un push a `main` modifica `apps/api/**` o `infrastructure/**`. Construye el worker, aplica Terraform (D1, Queues) y despliega la API y el AI worker a `prod`.
+   - `.github/workflows/deploy-prod.yml` se ejecuta cuando un push a `main` modifica `apps/api/**`. Despliega la API y el AI worker a `prod` usando `wrangler deploy`.
+   - Terraform (`infrastructure/`) **no se ejecuta en CI/CD**. Solo se usa localmente para crear/modificar D1 y Queues cuando sea necesario.
    - `.github/workflows/deploy-dashboard-prod.yml` se ejecuta cuando un push a `main` modifica `apps/dashboard/**`. Construye el dashboard con `npm run build:prod` y lo despliega a Cloudflare Pages (`manoa-backoffice`).
    - Ninguno de los workflows aplica migraciones de base de datos automáticamente.
 

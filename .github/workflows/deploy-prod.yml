@@ -1,18 +1,13 @@
 # Deploy API + AI Worker to Production
 #
-# Triggers on every push to `main` that touches the API or infrastructure.
-# This workflow also applies Terraform for D1 / Queues.
+# Triggers on every push to `main` that touches the API.
+# Terraform is NOT run here; it is only used locally/manualy in infrastructure/.
 #
 # Required GitHub repository secrets:
-#   CF_API_TOKEN          - Cloudflare API token with Workers, D1, Queues edit permissions.
-#   PROD_BETTER_AUTH_SECRET
-#   PROD_RESEND_API_KEY
-#   PROD_TURNSTILE_SECRET_KEY
-#   PROD_CF_BR_API_TOKEN
-#   PROD_BOOTSTRAP_ADMIN_KEY
+#   CF_API_TOKEN - Cloudflare API token with Workers edit permissions.
 #
 # Required GitHub repository variables:
-#   CF_ACCOUNT_ID         - Cloudflare account ID.
+#   CF_ACCOUNT_ID - Cloudflare account ID.
 
 name: Deploy API - PROD
 
@@ -23,11 +18,9 @@ on:
       - main
     paths:
       - 'apps/api/**'
-      - 'infrastructure/**'
 
 env:
   ENVIRONMENT: prod
-  API_WORKER_NAME: manoa-api
 
 jobs:
   deploy-api:
@@ -47,55 +40,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Worker
-        run: npm run build
-        working-directory: apps/api
-
-      - name: Terraform Init
-        run: |
-          terraform init
-          terraform validate
-        working-directory: infrastructure
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
-          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_environment: ${{ env.ENVIRONMENT }}
-          TF_VAR_better_auth_secret: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
-          TF_VAR_resend_api_key: ${{ secrets.PROD_RESEND_API_KEY }}
-          TF_VAR_turnstile_secret_key: ${{ secrets.PROD_TURNSTILE_SECRET_KEY }}
-          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_cf_br_api_token: ${{ secrets.PROD_CF_BR_API_TOKEN }}
-          TF_VAR_bootstrap_admin_key: ${{ secrets.PROD_BOOTSTRAP_ADMIN_KEY }}
-
-      - name: Terraform Plan
-        run: terraform plan -var-file="environments/prod/terraform.tfvars"
-        working-directory: infrastructure
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
-          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_environment: ${{ env.ENVIRONMENT }}
-          TF_VAR_better_auth_secret: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
-          TF_VAR_resend_api_key: ${{ secrets.PROD_RESEND_API_KEY }}
-          TF_VAR_turnstile_secret_key: ${{ secrets.PROD_TURNSTILE_SECRET_KEY }}
-          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_cf_br_api_token: ${{ secrets.PROD_CF_BR_API_TOKEN }}
-          TF_VAR_bootstrap_admin_key: ${{ secrets.PROD_BOOTSTRAP_ADMIN_KEY }}
-
-      - name: Terraform Apply
-        run: terraform apply -var-file="environments/prod/terraform.tfvars" -auto-approve
-        working-directory: infrastructure
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
-          TF_VAR_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_environment: ${{ env.ENVIRONMENT }}
-          TF_VAR_better_auth_secret: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
-          TF_VAR_resend_api_key: ${{ secrets.PROD_RESEND_API_KEY }}
-          TF_VAR_turnstile_secret_key: ${{ secrets.PROD_TURNSTILE_SECRET_KEY }}
-          TF_VAR_cf_account_id: ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_cf_br_api_token: ${{ secrets.PROD_CF_BR_API_TOKEN }}
-          TF_VAR_bootstrap_admin_key: ${{ secrets.PROD_BOOTSTRAP_ADMIN_KEY }}
-
-      - name: Deploy Worker
+      - name: Deploy API Worker
         run: npm run deploy
         working-directory: apps/api
         env:

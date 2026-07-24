@@ -14,6 +14,7 @@
     "secrets:store:create:prod": "wrangler secrets-store store create manoa-core-prod --remote",
     "secrets:set": "wrangler secret put",
     "secrets:set:prod": "wrangler secret put --env prod",
+    "secrets:setup": "node ./scripts/setup-secrets.mjs",
     "auth:bootstrap": "node ./scripts/bootstrap-user.mjs",
     "seed": "tsx ./scripts/seed-super-admin.ts",
     "seed:census": "tsx ./scripts/seed-census.ts",

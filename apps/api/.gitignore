@@ -20,9 +20,9 @@ node_modules/
 .env.production
 .env.*
 .dev.vars
-.dev.vars.*
 .dev.vars.dev
 .dev.vars.prod
+!.dev.vars.example
 
 # logs
 logs/
@@ -32,6 +32,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# generated types
+worker-configuration.d.ts
 
 # misc
 .DS_Store

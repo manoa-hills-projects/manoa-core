@@ -1,0 +1,30 @@
+# =============================================================================
+# Secrets Configuration Template (PROD only)
+# =============================================================================
+# Este archivo es un EXAMPLE - NO contiene valores reales.
+# Copia este archivo a `.dev.vars.prod` y llena los valores para desarrollo local.
+# Los valores también deben subirse a Cloudflare con:
+#   npx wrangler secret put NOMBRE --env prod
+# o ejecutando: node ./scripts/setup-secrets.mjs
+#
+# NUNCA comitees `.dev.vars.prod` ni este archivo con valores reales.
+
+# Auth secret - genera uno fuerte con:
+# macOS: openssl rand -base64 32
+# Linux: head -c 32 /dev/urandom | base64
+BETTER_AUTH_SECRET=
+
+# Resend API Key - obtenido de https://resend.com/api-keys
+RESEND_API_KEY=re_
+
+# Cloudflare Account ID
+CF_ACCOUNT_ID=46e017a62f6f151d50ad96ec5543d39b
+
+# Cloudflare Browser Rendering API Token (para PDF, scraping, etc)
+CF_BR_API_TOKEN=cfbr_
+
+# Cloudflare Turnstile secret key (para verificación anti-bot)
+TURNSTILE_SECRET_KEY=0x4AAAAAA...
+
+# Key usada para bootstrapping del superadmin inicial
+BOOTSTRAP_ADMIN_KEY=mk_

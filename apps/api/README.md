@@ -40,6 +40,14 @@ npx wrangler secrets-store secret create <STORE_ID> --name TURNSTILE_SECRET_KEY 
 npx wrangler secrets-store secret create <STORE_ID> --name BOOTSTRAP_ADMIN_KEY --scopes workers --remote
 ```
 
+O usa el script helper para subir desde tu `.dev.vars.prod` local:
+
+```txt
+npm run secrets:setup
+```
+
+> El script lee `apps/api/.dev.vars.prod` y sube los secretos a Cloudflare via `wrangler secret bulk`. No commitea valores.
+
 Despliegue a producción:
 
 ```txt

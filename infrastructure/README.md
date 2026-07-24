@@ -22,7 +22,7 @@ infrastructure/
 ├── outputs.tf                 # Outputs útiles
 ├── .gitignore                  # Archivos ignorados
 ├── .env.local                  # Credenciales (NO comittear)
-├── .env.example                # Template de .env.local
+├── .env.example                # Template de .env.local (ya existe en el repo)
 ├── .terraform/                 # Estado del provider (generado)
 ├── environments/
 │   ├── dev/terraform.tfvars    # Variables para entorno DEV
@@ -144,12 +144,28 @@ cloudflare_d1_database.master: manoa-db-master-prod
 cloudflare_queue.laws_scrape: manoa-laws-scrape-prod
 ```
 
+## Uso de Terraform
+
+Terraform en este proyecto se usa **solo de forma local/manual** para crear o modificar recursos de infraestructura (D1 y Queues). No se ejecuta en CI/CD.
+
+Para usarlo localmente:
+
+```bash
+cd infrastructure
+cp .env.example .env.local
+# completa .env.local
+source .env.local
+terraform init
+terraform workspace select prod
+terraform apply -var-file="environments/prod/terraform.tfvars"
+```
+
 ## Próximos Pasos
 
-1. Configurar `wrangler.jsonc` con los nuevos database IDs
-2. Configurar secrets via `wrangler secret put`
-3. Crear el worker de IA (`src/ai/index.ts`)
-4. Configurar GitHub Actions con los workflows de CI/CD
+1. Configurar `wrangler.jsonc` con los nuevos database IDs (ya configurado).
+2. Configurar secrets via `wrangler secret put` o Secrets Store (ver `apps/api/scripts/setup-secrets.mjs`).
+3. Configurar los secretos/variables de GitHub Actions (ver `docs/workflow.md`).
+4. Los workflows de CI/CD ya están en `.github/workflows/`. Solo falta configurar `CF_API_TOKEN` y `CF_ACCOUNT_ID` en GitHub.
 
 ## Troubleshooting
 
