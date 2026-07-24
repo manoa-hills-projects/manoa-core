@@ -8,8 +8,8 @@ Este directorio contiene la configuración Terraform para gestionar la infraestr
 |---------|-------------|----------------|
 | D1 Database | Bases de datos SQL | Terraform |
 | Queues | Sistema de colas para procesamiento async | Terraform |
-| Workers | API y AI workers | Wrangler (via CI/CD) |
-| Secrets | Variables sensibles | Wrangler secret |
+| Workers | API y AI workers | Wrangler / Cloudflare Workers Builds |
+| Secrets | Variables sensibles | Wrangler secret / Secrets Store |
 
 ## Estructura
 
@@ -164,8 +164,7 @@ terraform apply -var-file="environments/prod/terraform.tfvars"
 
 1. Configurar `wrangler.jsonc` con los nuevos database IDs (ya configurado).
 2. Configurar secrets via `wrangler secret put` o Secrets Store (ver `apps/api/scripts/setup-secrets.mjs`).
-3. Configurar los secretos/variables de GitHub Actions (ver `docs/workflow.md`).
-4. Los workflows de CI/CD ya están en `.github/workflows/`. Solo falta configurar `CF_API_TOKEN` y `CF_ACCOUNT_ID` en GitHub.
+3. El CI/CD es nativo de Cloudflare (Workers Builds + Pages Git integration), no requiere configuración en GitHub Actions.
 
 ## Troubleshooting
 

@@ -55,6 +55,8 @@ npm run deploy
 ```
 
 > `npm run deploy` usa `wrangler deploy --env prod`. Los secretos deben estar configurados directamente en Cloudflare (vía `wrangler secret put --env prod` o Secrets Store), no en un archivo `.dev.vars` local.
+>
+> El deploy a producción se realiza automáticamente mediante **Cloudflare Workers Builds** en cada push a `main`.
 
 ## 4) Secrets Store (nivel cuenta) en Cloudflare
 

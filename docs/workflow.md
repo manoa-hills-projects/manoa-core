@@ -62,24 +62,13 @@ npx wrangler secret list --env prod
 
 Deberías ver: `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `CF_BR_API_TOKEN`, `BOOTSTRAP_ADMIN_KEY`.
 
-### 4. Configurar GitHub (Settings > Secrets and variables > Actions)
+### 4. Probar CI/CD nativo
 
-**Repository secrets** (`Secrets and variables > Actions > Repository secrets`):
-
-- `CF_API_TOKEN` — token de Cloudflare con permisos para Workers y Pages.
-
-> Terraform no se ejecuta en CI/CD, así que no necesitas los secretos `PROD_*` en GitHub.
-
-**Repository variables** (`Secrets and variables > Actions > Variables > Repository variables`):
-
-- `CF_ACCOUNT_ID` — ID público de la cuenta de Cloudflare.
-
-### 5. Probar CI/CD
-
-- [ ] Hacer un cambio pequeño en una rama feature.
-- [ ] Abrir PR a `main` y mergear.
-- [ ] Revisar la pestaña **Actions** de GitHub.
-- [ ] Confirmar que `deploy-prod.yml` y/o `deploy-dashboard-prod.yml` terminan en verde.
+- [ ] Hacer un cambio pequeño y subirlo a `main`.
+- [ ] Revisar en Cloudflare Dashboard:
+  - **Workers & Pages → manoa-api → Builds** para ver el build de la API.
+  - **Workers & Pages → manoa-backoffice → Builds** para ver el build del dashboard.
+- [ ] Confirmar que ambos builds terminan en verde.
 
 ## Cómo levantar local
 
@@ -100,43 +89,36 @@ El dashboard en `localhost:3000` apunta a la API productiva remota (`https://man
 
 El repositorio es un monorepo npm workspaces gestionado con Turborepo. Tiene dos aplicaciones principales bajo `apps/`:
 
-| App | Directorio | Tecnología | Despliegue | Workflow |
-|-----|------------|------------|------------|----------|
-| API | `apps/api` | Hono + Cloudflare Workers | Cloudflare Workers (`manoa-api-prod`) + AI worker (`manoa-ai-prod`) | `.github/workflows/deploy-prod.yml` |
-| Dashboard | `apps/dashboard` | React + Vite + TanStack Router | Cloudflare Pages (`manoa-backoffice`) | `.github/workflows/deploy-dashboard-prod.yml` |
+| App | Directorio | Tecnología | Despliegue | CI/CD |
+|-----|------------|------------|------------|-------|
+| API | `apps/api` | Hono + Cloudflare Workers | Cloudflare Workers (`manoa-api-prod`) + AI worker (`manoa-ai-prod`) | Cloudflare Workers Builds |
+| Dashboard | `apps/dashboard` | React + Vite + TanStack Router | Cloudflare Pages (`manoa-backoffice`) | Cloudflare Pages Git integration |
 
-### Cómo se instalan las dependencias en CI
+### CI/CD nativo de Cloudflare
 
-El `package.json` raíz define `workspaces: ["apps/*"]`, lo que permite que `npm ci` en la raíz instale las dependencias de todas las apps compartidas. Los workflows ejecutan `npm ci` desde la raíz del repositorio y luego usan `working-directory` para los pasos específicos de cada app.
+No usamos GitHub Actions manuales. Cloudflare se conecta directamente al repo:
 
-```bash
-# Raíz: instala todo el monorepo
-npm ci
+- **Workers Builds** (API):
+  - Repo: `manoa-hills-projects/manoa-core`
+  - Root directory: `/apps/api`
+  - Deploy command: `npm run deploy`
+  - Rama de producción: `main`
 
-# Después, cada job cambia al workspace que necesita
-cd apps/api && npm run build
-cd apps/dashboard && npm run build:prod
-```
+- **Pages Git integration** (Dashboard):
+  - Repo: `manoa-hills-projects/manoa-core`
+  - Root directory: `apps/dashboard`
+  - Build command: `npm run build`
+  - Build output: `dist`
+  - Rama de producción: `main`
 
-### Filtros por path
+En cada push a `main`, Cloudflare construye y despliega automáticamente ambas apps.
 
-Cada workflow tiene un filtro `paths` para evitar deploys innecesarios:
+### Secretos y variables
 
-- `deploy-prod.yml` solo corre si cambian archivos en `apps/api/**` o `infrastructure/**`.
-- `deploy-dashboard-prod.yml` solo corre si cambian archivos en `apps/dashboard/**`.
+- **API**: los secretos sensibles (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, etc.) se leen desde **Cloudflare Secrets Store** mediante el binding configurado en `wrangler.jsonc`.
+- **Dashboard**: las variables de build (`VITE_API_URL`, `VITE_API_ORIGIN`, etc.) se configuran en el dashboard de Cloudflare Pages.
 
-Esto permite que un cambio exclusivo del dashboard no redepliegue la API y viceversa.
-
-### Secretos y variables de GitHub
-
-Los workflows usan los siguientes secretos/variables del repositorio (configurar en `Settings > Secrets and variables > Actions`):
-
-| Tipo | Nombre | Uso |
-|------|--------|-----|
-| Secret | `CF_API_TOKEN` | Token de Cloudflare con permisos para Workers y Pages. |
-| Variable | `CF_ACCOUNT_ID` | ID de la cuenta de Cloudflare. |
-
-> Nota: los secretos sensibles del Worker (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, etc.) deben estar configurados directamente en Cloudflare (vía `wrangler secret put --env prod` o Secrets Store). Los workflows no usan archivos `.dev.vars` porque estos no están en el repositorio. Terraform tampoco se ejecuta en CI/CD.
+> No se necesitan secrets ni variables en GitHub Actions. Terraform tampoco se ejecuta en CI/CD.
 
 <div style="border: 2px solid #d32f2f; padding: 16px; background-color: #ffebee; color: #000;">
 
