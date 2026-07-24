@@ -9,6 +9,7 @@ import {
 	FormCommandComboboxField,
 	FormInputField,
 	FormSelectField,
+	FormSwitchField,
 } from "@/shared/ui/form-fields";
 import { Input } from "@/shared/ui/input";
 import {
@@ -49,6 +50,9 @@ export function CitizenFormSheet({
 		citizen,
 		onSuccess: () => onOpenChange(false),
 	});
+
+	const selectedFamilyId = form.watch("family_id");
+	const hasFamily = !!selectedFamilyId;
 
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
@@ -269,6 +273,14 @@ export function CitizenFormSheet({
 							<div>{familyOptionAdapter.renderOption(item)}</div>
 						)}
 					/>
+
+					{hasFamily && (
+						<FormSwitchField
+							control={form.control}
+							name="is_head_of_household"
+							label="Jefe de Hogar"
+						/>
+					)}
 
 					<FormSubmitButton
 						className="mt-4"

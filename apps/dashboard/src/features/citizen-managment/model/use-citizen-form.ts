@@ -31,6 +31,7 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 			surnames: citizen?.surnames || "",
 			gender: citizen?.gender || "",
 			birth_date: citizen?.birth_date || "",
+			is_head_of_household: citizen?.is_head_of_household || false,
 			family_id: citizen?.family_id || "",
 			disabilities: citizen?.disabilities?.map((d) => ({
 				disability_type: d.disability_type,

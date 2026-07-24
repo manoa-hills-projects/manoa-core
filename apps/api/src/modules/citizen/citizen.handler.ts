@@ -44,20 +44,8 @@ const replaceDisabilities = async (
 
 // ── Response builders ─────────────────────────────────
 
-const isHeadOfHousehold = async (db: DrizzleD1Database<typeof schema>, citizenId: string) => {
-  const result = await db
-    .select({ count: count() })
-    .from(schema.families)
-    .where(eq(schema.families.headId, citizenId))
-    .get();
-  return (result?.count ?? 0) > 0;
-};
-
 const toCitizenResponse = async (db: DrizzleD1Database<typeof schema>, citizen: typeof schema.citizens.$inferSelect) => {
-  const [disabilities, isHead] = await Promise.all([
-    fetchDisabilities(db, citizen.id),
-    isHeadOfHousehold(db, citizen.id),
-  ]);
+  const disabilities = await fetchDisabilities(db, citizen.id);
   return {
     id: citizen.id,
     cedula: citizen.dni,
@@ -67,7 +55,7 @@ const toCitizenResponse = async (db: DrizzleD1Database<typeof schema>, citizen: 
     surnames: citizen.lastName,
     birth_date: citizen.birthDate,
     gender: citizen.gender,
-    is_head_of_household: isHead,
+    is_head_of_household: citizen.isHeadOfHousehold,
     family_id: citizen.familyId,
     user_id: citizen.userId,
     disabilities,
@@ -127,7 +115,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       lastName: schema.citizens.lastName,
       birthDate: schema.citizens.birthDate,
       gender: schema.citizens.gender,
-      isHeadOfHousehold: sql<boolean>`(SELECT COUNT(*) FROM ${schema.families} WHERE ${schema.families.headId} = ${schema.citizens.id}) > 0`,
+      isHeadOfHousehold: schema.citizens.isHeadOfHousehold,
       familyId: schema.citizens.familyId,
       userId: schema.citizens.userId,
       familyName: schema.families.name,
@@ -175,7 +163,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       surnames: row.lastName,
       birth_date: row.birthDate,
       gender: row.gender,
-      is_head_of_household: row.isHeadOfHousehold ?? false,
+      is_head_of_household: row.isHeadOfHousehold,
       family_id: row.familyId,
       user_id: row.userId,
       has_disability: (row.disabilityCount ?? 0) > 0,
