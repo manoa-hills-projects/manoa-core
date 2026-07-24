@@ -13,6 +13,9 @@ export const houseSchema = z.object({
 		.string()
 		.min(1, "El número de casa es requerido")
 		.max(100, "El número de casa no puede exceder 100 caracteres"),
+	phone: z.string().optional(),
+	type: z.string().optional(),
+	tenure: z.string().optional(),
 });
 
 export type HouseFormValues = z.infer<typeof houseSchema>;

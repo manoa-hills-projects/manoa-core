@@ -43,17 +43,25 @@ export function FamilyDetailSheet({
 				<SheetHeader>
 					<SheetTitle>Detalles de la Familia</SheetTitle>
 					<SheetDescription>
-						<div className="mb-4">
-							<div>
+						<div className="mb-4 space-y-1.5">
+							<p>
 								<b>Nombre de Familia:</b> {family.family_name}
-							</div>
-							<div className="mt-2">
+							</p>
+							<p>
+								<b>Teléfono:</b> {family.phone || "—"}
+							</p>
+							<p>
 								<b>Vivienda:</b> {family.house_label || "No especificada"}
-							</div>
-							<div className="mt-2">
+							</p>
+							<p>
 								<b>Jefe de Hogar:</b>{" "}
 								{family.head_of_household_label || "No asignado"}
-							</div>
+							</p>
+							{family.observations && (
+								<p>
+									<b>Observaciones:</b> {family.observations}
+								</p>
+							)}
 						</div>
 
 						<div className="mt-8">

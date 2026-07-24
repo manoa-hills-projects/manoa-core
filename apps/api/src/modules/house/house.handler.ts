@@ -77,6 +77,9 @@ export const findAllHouses = async (
         address: schema.houses.address,
         sector: schema.houses.sector,
         number: schema.houses.number,
+        phone: schema.houses.phone,
+        type: schema.houses.type,
+        tenure: schema.houses.tenure,
         createdAt: schema.houses.createdAt,
       })
       .from(schema.houses);

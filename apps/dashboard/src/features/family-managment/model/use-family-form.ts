@@ -21,9 +21,11 @@ export function useFamilyForm({ family, onSuccess }: UseFamilyFormProps) {
 
 	const form = useForm<FamilyFormValues>({
 		resolver: zodResolver(familySchema),
-		defaultValues: {
+		values: {
 			family_name: family?.family_name || "",
 			house_id: family?.house_id || "",
+			phone: family?.phone || "",
+			observations: family?.observations || "",
 		},
 	});
 

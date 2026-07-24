@@ -23,6 +23,9 @@ export function useHouseForm({ house, onSuccess }: UseHouseFormProps) {
 			address: house?.address ?? "",
 			sector: house?.sector ?? "",
 			number: house?.number ?? "",
+			phone: house?.phone ?? "",
+			type: house?.type ?? "",
+			tenure: house?.tenure ?? "",
 		},
 	});
 
@@ -33,6 +36,9 @@ export function useHouseForm({ house, onSuccess }: UseHouseFormProps) {
 				address: values.address,
 				sector: values.sector,
 				number: values.number,
+				phone: values.phone || null,
+				type: values.type || null,
+				tenure: values.tenure || null,
 			};
 
 			try {

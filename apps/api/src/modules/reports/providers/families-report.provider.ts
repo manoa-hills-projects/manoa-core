@@ -32,14 +32,18 @@ export const familiesReportProvider: ReportProvider = {
   columns: [
     { key: "id", header: "ID" },
     { key: "family_name", header: "Nombre de familia" },
+    { key: "phone", header: "Teléfono" },
     { key: "house_label", header: "Vivienda" },
     { key: "head_of_household_label", header: "Jefe de hogar" },
+    { key: "observations", header: "Observaciones" },
   ],
   getRows: async ({ db, search }) => {
     const query = db
       .select({
         id: schema.families.id,
         name: schema.families.name,
+        phone: schema.families.phone,
+        observations: schema.families.observations,
         houseAddress: schema.houses.address,
         houseSector: schema.houses.sector,
         houseNumber: schema.houses.number,
@@ -60,6 +64,7 @@ export const familiesReportProvider: ReportProvider = {
     return rows.map((row) => ({
       id: row.id,
       family_name: row.name,
+      phone: row.phone ?? "",
       house_label: formatHouseLabel({
         address: row.houseAddress,
         sector: row.houseSector,
@@ -70,6 +75,7 @@ export const familiesReportProvider: ReportProvider = {
         lastName: row.headLastName,
         dni: row.headDni,
       }),
+      observations: row.observations ?? "",
     }));
   },
 };

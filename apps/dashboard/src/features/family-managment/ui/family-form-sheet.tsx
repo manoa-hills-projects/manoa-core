@@ -8,6 +8,7 @@ import { Form } from "@/shared/ui/form";
 import {
 	FormCommandComboboxField,
 	FormInputField,
+	FormTextareaField,
 } from "@/shared/ui/form-fields";
 import { useFamilyForm } from "../model/use-family-form";
 
@@ -34,6 +35,8 @@ export function FamilyFormSheet({
 			form.reset({
 				family_name: family?.family_name || "",
 				house_id: family?.house_id || "",
+				phone: family?.phone || "",
+				observations: family?.observations || "",
 			});
 		}
 	}, [family, open, form]);
@@ -55,6 +58,14 @@ export function FamilyFormSheet({
 						control={form.control}
 						name="family_name"
 						label="Nombre de Familia"
+						placeholder="Ej: Familia Pérez"
+					/>
+
+					<FormInputField
+						control={form.control}
+						name="phone"
+						label="Teléfono"
+						placeholder="04121234567"
 					/>
 
 					<FormCommandComboboxField
@@ -69,6 +80,14 @@ export function FamilyFormSheet({
 						renderOption={(item) => (
 							<div>{houseOptionAdapter.renderOption(item)}</div>
 						)}
+					/>
+
+					<FormTextareaField
+						control={form.control}
+						name="observations"
+						label="Observaciones"
+						placeholder="Información adicional sobre la familia..."
+						rows={3}
 					/>
 
 					<Button type="submit" disabled={isSubmitting} className="mt-4">

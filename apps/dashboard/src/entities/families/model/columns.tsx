@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Home, Star, Users } from "lucide-react";
+import { Home, Phone, Star, Users } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import type { Family } from "./types";
@@ -12,6 +12,16 @@ export const familyColumns: ColumnDef<Family>[] = [
 				<Users className="size-3.5" /> Nombre de la Familia
 			</div>
 		),
+	},
+	{
+		id: "phone",
+		accessorKey: "phone",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<Phone className="size-3.5" /> Teléfono
+			</div>
+		),
+		cell: ({ row }) => row.original.phone || "-",
 	},
 	{
 		accessorKey: "head_of_household_label",

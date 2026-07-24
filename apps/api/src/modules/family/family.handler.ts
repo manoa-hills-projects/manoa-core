@@ -10,6 +10,8 @@ const toFamilyResponse = (family: typeof schema.families.$inferSelect) => ({
   family_name: family.name,
   house_id: family.houseId,
   head_of_household_id: family.headId,
+  phone: family.phone,
+  observations: family.observations,
 });
 
 const formatHouseLabel = (house: {
@@ -46,6 +48,8 @@ export const createFamily = async (
       name: data.family_name,
       houseId: data.house_id,
       headId: data.head_of_household_id ?? null,
+      phone: data.phone ?? null,
+      observations: data.observations ?? null,
     })
     .returning();
 
@@ -69,6 +73,8 @@ export const findAllFamilies = async (
       id: schema.families.id,
       name: schema.families.name,
       houseId: schema.families.houseId,
+      phone: schema.families.phone,
+      observations: schema.families.observations,
       headId: schema.citizens.id,
       houseAddress: schema.houses.address,
       houseSector: schema.houses.sector,
@@ -123,6 +129,8 @@ export const findAllFamilies = async (
     id: row.id,
     family_name: row.name,
     house_id: row.houseId,
+    phone: row.phone,
+    observations: row.observations,
     head_of_household_id: row.headId,
     head_of_household_label: formatHeadOfHouseholdLabel({
       firstName: row.headFirstName,
@@ -148,6 +156,8 @@ export const updateFamily = async (
 
   if (data.family_name !== undefined) updateData.name = data.family_name;
   if (data.house_id !== undefined) updateData.houseId = data.house_id;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.observations !== undefined) updateData.observations = data.observations;
   if (data.head_of_household_id !== undefined) {
     updateData.headId = data.head_of_household_id;
   }

@@ -8,6 +8,9 @@ export const houses = sqliteTable('houses', {
   address: text('address').notNull(),
   sector: text('sector').notNull(),
   number: text('number').notNull(),
+  phone: text('phone'),
+  type: text('type'),
+  tenure: text('tenure'),
   latitude: real('latitude'),
   longitude: real('longitude'),
 });
@@ -16,7 +19,9 @@ export const families = sqliteTable('families', {
   ...baseColumns,
   name: text('name').notNull().unique(),
   houseId: text('house_id').references(() => houses.id, { onDelete: 'set null' }),
-  headId: text('head_id')
+  headId: text('head_id'),
+  phone: text('phone'),
+  observations: text('observations'),
 });
 
 export const citizens = sqliteTable('citizens', {

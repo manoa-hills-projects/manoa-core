@@ -5,6 +5,9 @@ export const createHouseDto = z.object({
   address: z.string().min(2).max(100),
   sector: z.string().min(2).max(100),
   number: z.string().min(1).max(100),
+  phone: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  tenure: z.string().optional().nullable(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 });
