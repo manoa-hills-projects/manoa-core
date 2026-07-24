@@ -9,7 +9,6 @@ import {
 	FormCommandComboboxField,
 	FormInputField,
 	FormSelectField,
-	FormSwitchField,
 } from "@/shared/ui/form-fields";
 import { Input } from "@/shared/ui/input";
 import {
@@ -269,12 +268,6 @@ export function CitizenFormSheet({
 						renderOption={(item) => (
 							<div>{familyOptionAdapter.renderOption(item)}</div>
 						)}
-					/>
-
-					<FormSwitchField
-						control={form.control}
-						name="is_head_of_household"
-						label="Jefe de Hogar"
 					/>
 
 					<FormSubmitButton
