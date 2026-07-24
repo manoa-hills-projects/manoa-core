@@ -26,6 +26,7 @@ export function useCitizenForm({ citizen, onSuccess }: UseCitizenFormProps) {
 		values: {
 			dni_type: citizen?.dni_type ?? "NATIONAL",
 			cedula: citizen?.cedula || "",
+			phone: citizen?.phone || "",
 			names: citizen?.names || "",
 			surnames: citizen?.surnames || "",
 			gender: citizen?.gender || "",

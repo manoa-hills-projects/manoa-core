@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { CreditCard, Star, User, Users } from "lucide-react";
+import { CreditCard, Phone, Star, User, Users } from "lucide-react";
 import type { Citizen } from "./types";
 import { formatDocumentId } from "../lib/format-document-id";
 
@@ -12,6 +12,16 @@ export const citizenColumns: ColumnDef<Citizen>[] = [
 				<CreditCard className="size-3.5" /> Documento
 			</div>
 		),
+	},
+	{
+		id: "phone",
+		accessorKey: "phone",
+		header: () => (
+			<div className="flex flex-row items-center gap-1">
+				<Phone className="size-3.5" /> Teléfono
+			</div>
+		),
+		cell: ({ row }) => row.original.phone || "-",
 	},
 	{
 		accessorKey: "names",

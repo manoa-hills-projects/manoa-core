@@ -3,6 +3,7 @@ import * as z from "zod";
 export const createCitizenDto = z.object({
   dni_type: z.enum(['NATIONAL', 'FOREIGN', 'SYNTHETIC']).default('NATIONAL'),
   cedula: z.string().min(6).max(20),
+  phone: z.string().optional().nullable(),
   names: z.string().min(2).max(100),
   surnames: z.string().min(2).max(100),
   gender: z.string().min(1).max(20),

@@ -23,6 +23,7 @@ export const citizens = sqliteTable('citizens', {
   ...baseColumns,
   dni: text('dni').notNull().unique(),
   dniType: text('dni_type').notNull().default('NATIONAL'),
+  phone: text('phone'),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   birthDate: text('birth_date').notNull(),

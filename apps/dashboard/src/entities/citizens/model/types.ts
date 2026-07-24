@@ -4,6 +4,7 @@ export interface Citizen {
 	id: string;
 	cedula: string;
 	dni_type: DniType;
+	phone: string | null;
 	names: string;
 	surnames: string;
 	gender: string;

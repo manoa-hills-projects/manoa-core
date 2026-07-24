@@ -161,7 +161,7 @@ export function FormSwitchField<T extends FieldValues>({
 			render={({ field }) => (
 				<FormItem
 					className={
-						"flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm " +
+						"flex flex-row items-center justify-between rounded-lg border p-3 pb-1 shadow-sm " +
 						className
 					}
 				>

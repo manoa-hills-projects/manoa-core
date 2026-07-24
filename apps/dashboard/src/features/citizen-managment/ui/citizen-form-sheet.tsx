@@ -125,6 +125,51 @@ export function CitizenFormSheet({
 						</div>
 					</div>
 
+					<FormField
+						control={form.control}
+						name="phone"
+						render={({ field }) => {
+							const prefix = field.value?.startsWith("0") ? field.value.slice(0, 4) : "0412";
+							const number = field.value?.slice(4) || "";
+							return (
+								<FormItem className="space-y-2">
+									<FormLabel>Teléfono</FormLabel>
+									<div className="flex gap-0">
+										<Select
+											value={prefix}
+											onValueChange={(p) => {
+												field.onChange(number ? `${p}${number}` : p);
+											}}
+										>
+											<FormControl>
+												<SelectTrigger className="rounded-r-none border-r-0 w-auto min-w-[80px]">
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem value="0412">0412</SelectItem>
+												<SelectItem value="0414">0414</SelectItem>
+												<SelectItem value="0416">0416</SelectItem>
+												<SelectItem value="0424">0424</SelectItem>
+												<SelectItem value="0426">0426</SelectItem>
+											</SelectContent>
+										</Select>
+										<Input
+											value={number}
+											onChange={(e) => {
+												const digits = e.target.value.replace(/\D/g, "").slice(0, 7);
+												field.onChange(digits ? `${prefix}${digits}` : "");
+											}}
+											placeholder="1234567"
+											className="rounded-l-none flex-1 min-w-0"
+										/>
+									</div>
+									<FormMessage />
+								</FormItem>
+							);
+						}}
+					/>
+
 					<FormCommandComboboxField
 						control={form.control}
 						name="family_id"

@@ -42,6 +42,9 @@ export function CitizenDetailSheet({
 									<b>Documento:</b> {documento || "Sin documento"}
 								</p>
 								<p>
+									<b>Teléfono:</b> {citizen.phone || "—"}
+								</p>
+								<p>
 									<b>Fecha de Nacimiento:</b> {citizen.birth_date}
 								</p>
 								<p>

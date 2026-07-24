@@ -3,6 +3,7 @@ import { z } from "zod";
 export const citizenSchema = z.object({
 	dni_type: z.enum(["NATIONAL", "FOREIGN", "SYNTHETIC"]),
 	cedula: z.string().min(1, { message: "Requerido" }),
+	phone: z.string().optional(),
 	names: z.string().min(1, { message: "Requerido" }),
 	surnames: z.string().min(1, { message: "Requerido" }),
 	gender: z.string().min(1, { message: "Requerido" }),
