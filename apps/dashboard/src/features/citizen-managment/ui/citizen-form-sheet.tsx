@@ -279,7 +279,7 @@ export function CitizenFormSheet({
 						name="family_id"
 						label="Familia"
 						placeholder="Buscar familia..."
-						initialLabel={citizen?.family_label}
+						initialLabel={(fullCitizen ?? initialCitizen)?.family_label}
 						fetcher={fetchFamiliesOptions}
 						getLabel={familyOptionAdapter.getLabel}
 						getValue={familyOptionAdapter.getValue}
