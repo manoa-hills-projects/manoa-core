@@ -3,6 +3,12 @@ import { count, desc, eq, sql } from "drizzle-orm";
 import type { HonoConfig } from "../../index";
 import * as schema from "../../shared/database/schemas";
 
+// Tipos de discapacidad
+const DISABILITY_TYPES = [
+  "visual", "auditiva", "fisica", "intelectual",
+  "psicosocial", "multiple", "otra",
+] as const;
+
 export const statsRouter = new Hono<HonoConfig>()
 
   .get("/overview", async (c) => {
@@ -102,8 +108,8 @@ export const statsRouter = new Hono<HonoConfig>()
     const pollOpen = pollsByStatus.find((p) => p.status === "open")?.count ?? 0;
     const pollClosed = pollsByStatus.find((p) => p.status === "closed")?.count ?? 0;
 
-    const maleCount = genderBreakdown.find((g) => g.gender === "M")?.count ?? 0;
-    const femaleCount = genderBreakdown.find((g) => g.gender === "F")?.count ?? 0;
+    const maleCount = genderBreakdown.find((g) => g.gender === "MASCULINO" || g.gender === "M")?.count ?? 0;
+    const femaleCount = genderBreakdown.find((g) => g.gender === "FEMENINO" || g.gender === "F")?.count ?? 0;
     const minorCount = ageBreakdown.find((a) => a.ageGroup === "minor")?.count ?? 0;
     const adultCount = ageBreakdown.find((a) => a.ageGroup === "adult")?.count ?? 0;
 
@@ -137,6 +143,53 @@ export const statsRouter = new Hono<HonoConfig>()
         total: pollOpen + pollClosed,
         open: pollOpen,
         closed: pollClosed,
+      },
+    });
+  })
+
+  .get("/citizens", async (c) => {
+    const db = c.get("db");
+
+    const [total, headsResult, genderData, disabilityData] = await Promise.all([
+      db.select({ count: count() }).from(schema.citizens).get(),
+      db
+        .select({ count: count() })
+        .from(schema.citizens)
+        .where(eq(schema.citizens.isHeadOfHousehold, true))
+        .get(),
+      db
+        .select({ gender: schema.citizens.gender, count: count() })
+        .from(schema.citizens)
+        .groupBy(schema.citizens.gender)
+        .all(),
+      db
+        .select({ type: schema.citizenDisabilities.disabilityType, count: count() })
+        .from(schema.citizenDisabilities)
+        .groupBy(schema.citizenDisabilities.disabilityType)
+        .all(),
+    ]);
+
+    const maleCount = genderData.find((g) => g.gender === "MASCULINO" || g.gender === "M")?.count ?? 0;
+    const femaleCount = genderData.find((g) => g.gender === "FEMENINO" || g.gender === "F")?.count ?? 0;
+    const totalCitizens = total?.count ?? 0;
+    const headsCount = headsResult?.count ?? 0;
+    const disabledTotal = disabilityData.reduce((s, d) => s + d.count, 0);
+
+    const byType: Record<string, number> = {};
+    for (const d of disabilityData) {
+      byType[d.type] = d.count;
+    }
+
+    return c.json({
+      total: totalCitizens,
+      gender: {
+        male: maleCount,
+        female: femaleCount,
+      },
+      headsOfHousehold: headsCount,
+      disabilities: {
+        total: disabledTotal,
+        byType,
       },
     });
   });

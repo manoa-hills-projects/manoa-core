@@ -45,9 +45,25 @@ export const familiesRelations = relations(families, ({ one, many }) => ({
   citizens: many(citizens),
 }));
 
-export const citizensRelations = relations(citizens, ({ one }) => ({
+export const citizenDisabilities = sqliteTable('citizen_disabilities', {
+  id: text('id').primaryKey(),
+  citizenId: text('citizen_id').notNull().references(() => citizens.id, { onDelete: 'cascade' }),
+  disabilityType: text('disability_type').notNull(),
+  description: text('description'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+export const citizensRelations = relations(citizens, ({ one, many }) => ({
   family: one(families, {
     fields: [citizens.familyId],
     references: [families.id],
+  }),
+  disabilities: many(citizenDisabilities),
+}));
+
+export const citizenDisabilitiesRelations = relations(citizenDisabilities, ({ one }) => ({
+  citizen: one(citizens, {
+    fields: [citizenDisabilities.citizenId],
+    references: [citizens.id],
   }),
 }));

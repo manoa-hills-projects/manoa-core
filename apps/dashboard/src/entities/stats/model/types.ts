@@ -46,3 +46,16 @@ export interface StatsOverview {
     closed: number;
   };
 }
+
+export interface CitizenStats {
+  total: number;
+  gender: {
+    male: number;
+    female: number;
+  };
+  headsOfHousehold: number;
+  disabilities: {
+    total: number;
+    byType: Record<string, number>;
+  };
+}
