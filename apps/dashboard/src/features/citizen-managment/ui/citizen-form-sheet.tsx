@@ -1,7 +1,9 @@
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import type { Citizen } from "@/entities/citizens";
 import { familyOptionAdapter, fetchFamiliesOptions } from "@/entities/families";
+import { api } from "@/shared/api/api-client";
 import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
@@ -42,12 +44,24 @@ interface CitizenFormSheetProps {
 export function CitizenFormSheet({
 	open,
 	onOpenChange,
-	citizen,
+	citizen: initialCitizen,
 }: CitizenFormSheetProps) {
-	const isEditing = !!citizen;
+	const isEditing = !!initialCitizen;
+	const [fullCitizen, setFullCitizen] = useState<Citizen | undefined>(initialCitizen ?? undefined);
+
+	// Fetch full citizen data (including disabilities) when editing
+	useEffect(() => {
+		if (open && initialCitizen?.id) {
+			api.get(`citizens/${initialCitizen.id}`).json<{ data: Citizen }>()
+				.then((res) => setFullCitizen(res.data))
+				.catch(() => setFullCitizen(initialCitizen));
+		} else if (!open) {
+			setFullCitizen(undefined);
+		}
+	}, [open, initialCitizen]);
 
 	const { form, onSubmit, isSubmitting } = useCitizenForm({
-		citizen,
+		citizen: fullCitizen ?? initialCitizen,
 		onSuccess: () => onOpenChange(false),
 	});
 
