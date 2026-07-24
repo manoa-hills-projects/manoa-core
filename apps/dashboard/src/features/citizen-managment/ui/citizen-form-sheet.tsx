@@ -93,11 +93,13 @@ export function CitizenFormSheet({
 							control={form.control}
 							name="names"
 							label="Nombres"
+							placeholder="Ej: María"
 						/>
 						<FormInputField
 							control={form.control}
 							name="surnames"
 							label="Apellidos"
+							placeholder="Ej: Pérez"
 						/>
 					</div>
 					<div className="flex items-start gap-4">
