@@ -6,6 +6,8 @@ import "./styles.css";
 
 const router = getRouter();
 
+// Hello world
+
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
 	const root = ReactDOM.createRoot(rootElement);
