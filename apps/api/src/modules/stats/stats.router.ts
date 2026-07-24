@@ -108,8 +108,12 @@ export const statsRouter = new Hono<HonoConfig>()
     const pollOpen = pollsByStatus.find((p) => p.status === "open")?.count ?? 0;
     const pollClosed = pollsByStatus.find((p) => p.status === "closed")?.count ?? 0;
 
-    const maleCount = genderBreakdown.find((g) => g.gender === "MASCULINO" || g.gender === "M")?.count ?? 0;
-    const femaleCount = genderBreakdown.find((g) => g.gender === "FEMENINO" || g.gender === "F")?.count ?? 0;
+    const maleCount = genderBreakdown
+      .filter((g) => g.gender === "MASCULINO" || g.gender === "M")
+      .reduce((s, g) => s + g.count, 0);
+    const femaleCount = genderBreakdown
+      .filter((g) => g.gender === "FEMENINO" || g.gender === "F")
+      .reduce((s, g) => s + g.count, 0);
     const minorCount = ageBreakdown.find((a) => a.ageGroup === "minor")?.count ?? 0;
     const adultCount = ageBreakdown.find((a) => a.ageGroup === "adult")?.count ?? 0;
 
@@ -169,8 +173,12 @@ export const statsRouter = new Hono<HonoConfig>()
         .all(),
     ]);
 
-    const maleCount = genderData.find((g) => g.gender === "MASCULINO" || g.gender === "M")?.count ?? 0;
-    const femaleCount = genderData.find((g) => g.gender === "FEMENINO" || g.gender === "F")?.count ?? 0;
+    const maleCount = genderData
+      .filter((g) => g.gender === "MASCULINO" || g.gender === "M")
+      .reduce((s, g) => s + g.count, 0);
+    const femaleCount = genderData
+      .filter((g) => g.gender === "FEMENINO" || g.gender === "F")
+      .reduce((s, g) => s + g.count, 0);
     const totalCitizens = total?.count ?? 0;
     const headsCount = headsResult?.count ?? 0;
     const disabledTotal = disabilityData.reduce((s, d) => s + d.count, 0);
