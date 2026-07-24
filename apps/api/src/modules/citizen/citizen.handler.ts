@@ -109,33 +109,32 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     db.select({ total: count() }).from(schema.citizens),
   ]);
 
-  // Public listing: limited fields (no sensitive PII)
-  // Private listing (mine=true or explicit query): full data with family/house info
+  // All citizen routes require auth, so we always return full data.
+  // isMine only determines whether to include family/house labels.
   const data = rows.map((row) => {
+    const base = {
+      id: row.id,
+      cedula: row.dni,
+      dni_type: row.dniType,
+      names: row.firstName,
+      surnames: row.lastName,
+      birth_date: row.birthDate,
+      gender: row.gender,
+      is_head_of_household: row.isHeadOfHousehold,
+      family_id: row.familyId,
+      user_id: row.userId,
+    };
+
     if (isMine) {
-      // Private listing - full data
       return {
-        id: row.id,
-        cedula: row.dni,
-        dni_type: row.dniType,
-        names: row.firstName,
-        surnames: row.lastName,
-        birth_date: row.birthDate,
-        gender: row.gender,
-        is_head_of_household: row.isHeadOfHousehold,
-        family_id: row.familyId,
-        user_id: row.userId,
+        ...base,
         family_label: row.familyName,
         house_label: (!row.houseAddress && !row.houseSector && !row.houseNumber) ? null :
           [row.houseSector, row.houseNumber, row.houseAddress].filter(Boolean).join(" · "),
       };
     }
-    // Public listing - limited fields
-    return {
-      id: row.id,
-      names: row.firstName,
-      surnames: row.lastName,
-    };
+
+    return base;
   });
 
   return buildPaginatedData(data, total, page, limit);
