@@ -30,47 +30,45 @@ export function CitizenDetailSheet({
 				showCloseButton
 				className="sm:max-w-md outline-none overflow-y-auto"
 			>
-				<SheetHeader>
+				<SheetHeader className="pb-0">
 					<SheetTitle>Detalles del Ciudadano</SheetTitle>
 					<SheetDescription asChild>
-						<div className="flex flex-col gap-6 mt-4">
-							<div>
-								<div className="mb-2">
-									<div>
-										<b>Nombre Completo:</b> {citizen.names} {citizen.surnames}
-									</div>
-									<div>
-										<b>Documento:</b> {documento || "Sin documento"}
-									</div>
-									<div>
-										<b>Fecha de Nacimiento:</b> {citizen.birth_date}
-									</div>
-									<div>
-										<b>Género:</b>{" "}
-										{citizen.gender === "M" ? "Masculino" : "Femenino"}
-									</div>
-								</div>
+						<div className="space-y-5 mt-3 pb-2">
+							<div className="space-y-1.5">
+								<p>
+									<b>Nombre Completo:</b> {citizen.names} {citizen.surnames}
+								</p>
+								<p>
+									<b>Documento:</b> {documento || "Sin documento"}
+								</p>
+								<p>
+									<b>Fecha de Nacimiento:</b> {citizen.birth_date}
+								</p>
+								<p>
+									<b>Género:</b>{" "}
+									{citizen.gender === "M" ? "Masculino" : "Femenino"}
+								</p>
+							</div>
 
-								<div className="mt-4 pt-4 border-t">
-									<h3 className="text-sm font-semibold mb-2">
-										Información de Residencia
-									</h3>
-									<div>
-										<b>Sede Familiar:</b>{" "}
-										{citizen.family_label || "Sin familia asignada"}
-									</div>
-									{citizen.house_label && (
-										<div className="mt-1">
-											<b>Vivienda:</b> {citizen.house_label}
-										</div>
-									)}
-									<div className="mt-1">
-										<b>Rol:</b>{" "}
-										{citizen.is_head_of_household
-											? "Jefe de Hogar"
-											: "Miembro de la Familia"}
-									</div>
-								</div>
+							<div className="pt-4 border-t space-y-1.5">
+								<h3 className="text-sm font-semibold">
+									Información de Residencia
+								</h3>
+								<p>
+									<b>Sede Familiar:</b>{" "}
+									{citizen.family_label || "Sin familia asignada"}
+								</p>
+								{citizen.house_label && (
+									<p>
+										<b>Vivienda:</b> {citizen.house_label}
+									</p>
+								)}
+								<p>
+									<b>Rol:</b>{" "}
+									{citizen.is_head_of_household
+										? "Jefe de Hogar"
+										: "Miembro de la Familia"}
+								</p>
 							</div>
 						</div>
 					</SheetDescription>

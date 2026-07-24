@@ -39,21 +39,23 @@ export function CitizenFormSheet({
 			<Form {...form}>
 				<form
 					onSubmit={onSubmit}
-					className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto px-1"
+					className="flex flex-col gap-5 max-h-[80vh] overflow-y-auto px-1 pb-1"
 				>
-					<div className="grid grid-cols-3 gap-4">
-						<FormSelectField
-							control={form.control}
-							name="dni_type"
-							label="Tipo Doc."
-							placeholder="Seleccione"
-							options={[
-								{ label: "V (Venezolano)", value: "NATIONAL" },
-								{ label: "E (Extranjero)", value: "FOREIGN" },
-								{ label: "Sin DNI", value: "SYNTHETIC" },
-							]}
-						/>
-						<div className="col-span-2">
+					<div className="flex items-start gap-3">
+						<div className="w-28 shrink-0">
+							<FormSelectField
+								control={form.control}
+								name="dni_type"
+								label="Tipo Doc."
+								placeholder="..."
+								options={[
+									{ label: "V (Venezolano)", value: "NATIONAL" },
+									{ label: "E (Extranjero)", value: "FOREIGN" },
+									{ label: "Sin DNI", value: "SYNTHETIC" },
+								]}
+							/>
+						</div>
+						<div className="flex-1 min-w-0">
 							<FormInputField
 								control={form.control}
 								name="cedula"
@@ -74,23 +76,27 @@ export function CitizenFormSheet({
 							label="Apellidos"
 						/>
 					</div>
-					<div className="grid grid-cols-2 gap-4">
-						<FormSelectField
-							control={form.control}
-							name="gender"
-							label="Género"
-							placeholder="Seleccione"
-							options={[
-								{ label: "Masculino", value: "M" },
-								{ label: "Femenino", value: "F" },
-							]}
-						/>
-						<FormInputField
-							control={form.control}
-							name="birth_date"
-							label="Fecha de Nacimiento"
-							type="date"
-						/>
+					<div className="flex items-start gap-4">
+						<div className="w-36 shrink-0">
+							<FormSelectField
+								control={form.control}
+								name="gender"
+								label="Género"
+								placeholder="..."
+								options={[
+									{ label: "Masculino", value: "M" },
+									{ label: "Femenino", value: "F" },
+								]}
+							/>
+						</div>
+						<div className="flex-1 min-w-0">
+							<FormInputField
+								control={form.control}
+								name="birth_date"
+								label="Fecha de Nacimiento"
+								type="date"
+							/>
+						</div>
 					</div>
 
 					<FormCommandComboboxField
