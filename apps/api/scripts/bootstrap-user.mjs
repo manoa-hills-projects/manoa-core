@@ -1,5 +1,5 @@
 
-const API_BASE_URL = process.env.API_BASE_URL ?? "https://manoa-api-production.manoa-it.workers.dev";
+const API_BASE_URL = process.env.API_BASE_URL ?? "https://manoa-api.manoa-it.workers.dev";
 const BOOTSTRAP_ADMIN_KEY = process.env.BOOTSTRAP_ADMIN_KEY;
 const ADMIN_NAME = process.env.ADMIN_NAME ?? "Administrador";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;

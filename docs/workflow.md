@@ -83,7 +83,7 @@ Turborepo ejecuta simultáneamente:
 - API (`apps/api`): `wrangler dev --remote --env prod` en `http://localhost:8787`.
 - Dashboard (`apps/dashboard`): `vite dev --port 3000` en `http://localhost:3000`.
 
-El dashboard en `localhost:3000` apunta a la API productiva remota (`https://manoa-api-prod.manoa-it.workers.dev/api`) incluso en modo desarrollo, tal como se define en `apps/dashboard/.env.development`.
+El dashboard en `localhost:3000` apunta a la API productiva remota (`https://manoa-api.manoa-it.workers.dev/api`) incluso en modo desarrollo, tal como se define en `apps/dashboard/.env.development`.
 
 ## Estructura del monorepo y cómo funciona CI/CD
 
@@ -267,7 +267,7 @@ Al ejecutar `npm run dev` Wrangler puede quedar en un ciclo de "Inicie sesión e
 ### El dashboard local apunta a localhost en lugar de a prod
 
 - Verifica `apps/dashboard/.env.development`.
-- Debe contener `VITE_API_URL="https://manoa-api-prod.manoa-it.workers.dev/api"` y `VITE_API_ORIGIN="https://manoa-api-prod.manoa-it.workers.dev"`.
+- Debe contener `VITE_API_URL="https://manoa-api.manoa-it.workers.dev/api"` y `VITE_API_ORIGIN="https://manoa-api.manoa-it.workers.dev"`.
 
 ## Referencias
 

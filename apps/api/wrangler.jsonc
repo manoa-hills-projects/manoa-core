@@ -51,7 +51,7 @@
     ]
   },
   "vars": {
-    "BETTER_AUTH_URL": "https://manoa-api-prod.manoa-it.workers.dev",
+    "BETTER_AUTH_URL": "https://manoa-api.manoa-it.workers.dev",
     "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
     "RESEND_FROM_EMAIL": "onboarding@resend.dev",
     "ENVIRONMENT": "production"
@@ -126,7 +126,7 @@
       }
     },
     "prod": {
-      "name": "manoa-api-prod",
+      "name": "manoa-api",
       "migrations": [
         {
           "tag": "v1",
@@ -183,7 +183,7 @@
         ]
       },
       "vars": {
-        "BETTER_AUTH_URL": "https://manoa-api-prod.manoa-it.workers.dev",
+        "BETTER_AUTH_URL": "https://manoa-api.manoa-it.workers.dev",
         "DASHBOARD_ORIGIN": "https://manoa-backoffice.pages.dev",
         "RESEND_FROM_EMAIL": "onboarding@resend.dev",
         "ENVIRONMENT": "production"
@@ -243,7 +243,7 @@
       }
     },
     "ai-prod": {
-      "name": "manoa-ai-prod",
+      "name": "manoa-ai",
       "main": "src/ai/index.ts",
       "d1_databases": [
         {
