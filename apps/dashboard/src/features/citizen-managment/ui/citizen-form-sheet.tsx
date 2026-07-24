@@ -1,13 +1,21 @@
 import type { Citizen } from "@/entities/citizens";
 import { familyOptionAdapter, fetchFamiliesOptions } from "@/entities/families";
 import { DataSheet } from "@/shared/ui/data-sheet";
-import { Form } from "@/shared/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import {
 	FormCommandComboboxField,
 	FormInputField,
 	FormSelectField,
 	FormSwitchField,
 } from "@/shared/ui/form-fields";
+import { Input } from "@/shared/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/shared/ui/select";
 import { FormSubmitButton } from "@/shared/ui/form-submit-button";
 import { useCitizenForm } from "../model/use-citizen-form";
 
@@ -41,29 +49,45 @@ export function CitizenFormSheet({
 					onSubmit={onSubmit}
 					className="flex flex-col gap-5 max-h-[80vh] overflow-y-auto px-1 pb-1"
 				>
-					<div className="flex items-start gap-3">
-						<div className="w-28 shrink-0">
-							<FormSelectField
-								control={form.control}
-								name="dni_type"
-								label="Tipo Doc."
-								placeholder="..."
-								options={[
-									{ label: "V (Venezolano)", value: "NATIONAL" },
-									{ label: "E (Extranjero)", value: "FOREIGN" },
-									{ label: "Sin DNI", value: "SYNTHETIC" },
-								]}
-							/>
-						</div>
-						<div className="flex-1 min-w-0">
-							<FormInputField
+					<FormField
+						control={form.control}
+						name="dni_type"
+						render={({ field: dtField }) => (
+							<FormField
 								control={form.control}
 								name="cedula"
-								label="Número de Documento"
-								placeholder="12345678"
+								render={({ field: cField }) => (
+									<FormItem className="space-y-2">
+										<FormLabel>Documento</FormLabel>
+										<div className="flex gap-0">
+											<Select
+												onValueChange={dtField.onChange}
+												value={dtField.value}
+											>
+												<FormControl>
+													<SelectTrigger className="rounded-r-none border-r-0 w-auto min-w-[72px]">
+														<SelectValue placeholder="..." />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="NATIONAL">V</SelectItem>
+													<SelectItem value="FOREIGN">E</SelectItem>
+													<SelectItem value="SYNTHETIC">—</SelectItem>
+												</SelectContent>
+											</Select>
+											<Input
+												{...cField}
+												value={cField.value ?? ""}
+												placeholder="12345678"
+												className="rounded-l-none flex-1 min-w-0"
+											/>
+										</div>
+										<FormMessage />
+									</FormItem>
+								)}
 							/>
-						</div>
-					</div>
+						)}
+					/>
 					<div className="grid grid-cols-2 gap-4">
 						<FormInputField
 							control={form.control}
