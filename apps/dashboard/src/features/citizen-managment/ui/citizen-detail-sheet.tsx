@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import type { Citizen } from "@/entities/citizens/model/types";
 import { formatDocumentId } from "@/entities/citizens/lib/format-document-id";
+import { api } from "@/shared/api/api-client";
 import {
 	Sheet,
 	SheetContent,
@@ -23,8 +25,21 @@ interface CitizenDetailSheetProps {
 export function CitizenDetailSheet({
 	open,
 	onOpenChange,
-	citizen,
+	citizen: initialCitizen,
 }: CitizenDetailSheetProps) {
+	const [fullCitizen, setFullCitizen] = useState<Citizen | null>(initialCitizen);
+
+	useEffect(() => {
+		if (open && initialCitizen?.id) {
+			api.get(`citizens/${initialCitizen.id}`).json<{ data: Citizen }>()
+				.then((res) => setFullCitizen(res.data))
+				.catch(() => setFullCitizen(initialCitizen));
+		} else if (!open) {
+			setFullCitizen(null);
+		}
+	}, [open, initialCitizen]);
+
+	const citizen = fullCitizen ?? initialCitizen;
 	if (!citizen) return null;
 
 	const documento = formatDocumentId(citizen.dni_type, citizen.cedula);

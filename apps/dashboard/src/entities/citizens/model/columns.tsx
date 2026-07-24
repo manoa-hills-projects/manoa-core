@@ -58,17 +58,9 @@ export const citizenColumns: ColumnDef<Citizen>[] = [
 			</div>
 		),
 		cell: ({ row }) => {
-			const d = row.original.disabilities ?? [];
-			if (d.length === 0) return <span className="text-muted-foreground">—</span>;
-			return (
-				<div className="flex flex-wrap gap-1">
-					{d.map((dis, i) => (
-						<span key={i} className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700">
-							{DISABILITY_LABELS[dis.disability_type] ?? dis.disability_type}
-						</span>
-					))}
-				</div>
-			);
+			return row.original.has_disability
+				? <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700">Sí</span>
+				: <span className="text-muted-foreground">—</span>;
 		},
 	},
 	{
