@@ -1,34 +1,68 @@
+import type { drizzle as drizzleType } from "drizzle-orm/d1";
 import * as schema from "@/shared/database/schemas"
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { count, eq, sql, and } from "drizzle-orm";
+import { count, eq, sql, and, inArray } from "drizzle-orm";
 import { buildPaginatedData, buildSingleData } from "@/shared/utils/api-reponse";
 import type { CitizenQueryParams, createCitizenInput, updateCitizenInput } from "./dto";
 
-/**
- * Full citizen response (private - for ownership/mine=true)
- */
-const toCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
-  id: citizen.id,
-  cedula: citizen.dni,
-  dni_type: citizen.dniType,
-  phone: citizen.phone,
-  names: citizen.firstName,
-  surnames: citizen.lastName,
-  birth_date: citizen.birthDate,
-  gender: citizen.gender,
-  is_head_of_household: citizen.isHeadOfHousehold,
-  family_id: citizen.familyId,
-  user_id: citizen.userId,
-});
 
-/**
- * Public citizen response (limited fields - no sensitive PII)
- */
-const toPublicCitizenResponse = (citizen: typeof schema.citizens.$inferSelect) => ({
-  id: citizen.id,
-  names: citizen.firstName,
-  surnames: citizen.lastName,
-});
+// ── Helpers ──────────────────────────────────────────
+
+const fetchDisabilities = async (db: DrizzleD1Database<typeof schema>, citizenId: string) => {
+  return db
+    .select({ disability_type: schema.citizenDisabilities.disabilityType, description: schema.citizenDisabilities.description })
+    .from(schema.citizenDisabilities)
+    .where(eq(schema.citizenDisabilities.citizenId, citizenId))
+    .all();
+};
+
+const insertDisabilities = async (
+  db: DrizzleD1Database<typeof schema>,
+  citizenId: string,
+  disabilities: { disability_type: string; description?: string }[],
+) => {
+  if (disabilities.length === 0) return;
+  await db.insert(schema.citizenDisabilities).values(
+    disabilities.map((d) => ({
+      citizenId,
+      disabilityType: d.disability_type,
+      description: d.description ?? null,
+    }))
+  ).run();
+};
+
+const replaceDisabilities = async (
+  db: DrizzleD1Database<typeof schema>,
+  citizenId: string,
+  disabilities: { disability_type: string; description?: string }[],
+) => {
+  await db.delete(schema.citizenDisabilities).where(eq(schema.citizenDisabilities.citizenId, citizenId)).run();
+  await insertDisabilities(db, citizenId, disabilities);
+};
+
+
+// ── Response builders ─────────────────────────────────
+
+const toCitizenResponse = async (db: DrizzleD1Database<typeof schema>, citizen: typeof schema.citizens.$inferSelect) => {
+  const disabilities = await fetchDisabilities(db, citizen.id);
+  return {
+    id: citizen.id,
+    cedula: citizen.dni,
+    dni_type: citizen.dniType,
+    phone: citizen.phone,
+    names: citizen.firstName,
+    surnames: citizen.lastName,
+    birth_date: citizen.birthDate,
+    gender: citizen.gender,
+    is_head_of_household: citizen.isHeadOfHousehold,
+    family_id: citizen.familyId,
+    user_id: citizen.userId,
+    disabilities,
+  };
+};
+
+
+// ── CRUD ──────────────────────────────────────────────
 
 export const createCitizen = async (
   db: DrizzleD1Database<typeof schema>,
@@ -50,18 +84,23 @@ export const createCitizen = async (
     })
     .returning();
 
-  return buildSingleData(result ? toCitizenResponse(result) : null);
+  if (!result) return buildSingleData(null);
+
+  await insertDisabilities(db, result.id, data.disabilities ?? []);
+  const response = await toCitizenResponse(db, result);
+  return buildSingleData(response);
 }
 
 export const findOneCitizen = async (db: DrizzleD1Database<typeof schema>, id: string) => {
   const result = await db.select().from(schema.citizens).where(eq(schema.citizens.id, id)).get();
-  return { data: result ? toCitizenResponse(result) : null };
+  if (!result) return { data: null };
+  const response = await toCitizenResponse(db, result);
+  return { data: response };
 }
 
 export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, queryParams: CitizenQueryParams) => {
   const { limit, page, search, family_id, user_id, mine } = queryParams;
 
-  // If mine=true, filter by user_id from session (passed via query params or override)
   const isMine = mine === "true";
   const effectiveUserId = user_id;
 
@@ -82,6 +121,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       houseAddress: schema.houses.address,
       houseSector: schema.houses.sector,
       houseNumber: schema.houses.number,
+      disabilityCount: sql<number>`(SELECT COUNT(*) FROM ${schema.citizenDisabilities} WHERE ${schema.citizenDisabilities.citizenId} = ${schema.citizens.id})`,
     })
     .from(schema.citizens)
     .leftJoin(schema.families, eq(schema.families.id, schema.citizens.familyId))
@@ -112,8 +152,6 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
     db.select({ total: count() }).from(schema.citizens),
   ]);
 
-  // All citizen routes require auth, so we always return full data.
-  // isMine only determines whether to include family/house labels.
   const data = rows.map((row) => {
     const base = {
       id: row.id,
@@ -127,6 +165,7 @@ export const findAllCitizens = async (db: DrizzleD1Database<typeof schema>, quer
       is_head_of_household: row.isHeadOfHousehold,
       family_id: row.familyId,
       user_id: row.userId,
+      has_disability: (row.disabilityCount ?? 0) > 0,
     };
 
     if (isMine) {
@@ -170,8 +209,16 @@ export const updateCitizen = async (
     .where(eq(schema.citizens.id, id))
     .returning();
 
-  return buildSingleData(result ? toCitizenResponse(result) : null);
+  if (!result) return buildSingleData(null);
+
+  if (data.disabilities !== undefined) {
+    await replaceDisabilities(db, result.id, data.disabilities ?? []);
+  }
+
+  const response = await toCitizenResponse(db, result);
+  return buildSingleData(response);
 };
+
 export const deleteCitizen = async (
   db: DrizzleD1Database<typeof schema>,
   id: string,

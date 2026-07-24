@@ -1,5 +1,8 @@
+import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useFieldArray } from "react-hook-form";
 import type { Citizen } from "@/entities/citizens";
 import { familyOptionAdapter, fetchFamiliesOptions } from "@/entities/families";
+import { Button } from "@/shared/ui/button";
 import { DataSheet } from "@/shared/ui/data-sheet";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import {
@@ -17,7 +20,18 @@ import {
 	SelectValue,
 } from "@/shared/ui/select";
 import { FormSubmitButton } from "@/shared/ui/form-submit-button";
+import { Textarea } from "@/shared/ui/textarea";
 import { useCitizenForm } from "../model/use-citizen-form";
+
+const DISABILITY_OPTIONS = [
+	{ label: "Visual", value: "visual" },
+	{ label: "Auditiva", value: "auditiva" },
+	{ label: "Física", value: "fisica" },
+	{ label: "Intelectual", value: "intelectual" },
+	{ label: "Psicosocial", value: "psicosocial" },
+	{ label: "Múltiple", value: "multiple" },
+	{ label: "Otra", value: "otra" },
+];
 
 interface CitizenFormSheetProps {
 	open: boolean;
@@ -35,6 +49,11 @@ export function CitizenFormSheet({
 	const { form, onSubmit, isSubmitting } = useCitizenForm({
 		citizen,
 		onSuccess: () => onOpenChange(false),
+	});
+
+	const { fields, append, remove } = useFieldArray({
+		control: form.control,
+		name: "disabilities",
 	});
 
 	return (
@@ -169,6 +188,74 @@ export function CitizenFormSheet({
 							);
 						}}
 					/>
+
+					<FormItem>
+						<FormLabel>Discapacidades</FormLabel>
+						<div className="space-y-3">
+							{fields.map((field, index) => (
+								<div key={field.id} className="flex flex-col gap-2 rounded-lg border p-3">
+									<div className="flex items-start gap-2">
+										<div className="flex-1">
+											<FormField
+												control={form.control}
+												name={`disabilities.${index}.disability_type`}
+												render={({ field: f }) => (
+													<Select onValueChange={f.onChange} value={f.value}>
+														<FormControl>
+															<SelectTrigger>
+																<SelectValue placeholder="Tipo de discapacidad" />
+															</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+															{DISABILITY_OPTIONS.map((opt) => (
+																<SelectItem key={opt.value} value={opt.value}>
+																	{opt.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												)}
+											/>
+										</div>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											className="size-8 shrink-0 text-destructive"
+											onClick={() => remove(index)}
+										>
+											<Trash2Icon className="size-4" />
+										</Button>
+									</div>
+									<FormField
+										control={form.control}
+										name={`disabilities.${index}.description`}
+										render={({ field: f }) => (
+											<FormControl>
+												<Textarea
+													{...f}
+													value={f.value ?? ""}
+													placeholder="Descripción (opcional)"
+													rows={2}
+												/>
+											</FormControl>
+										)}
+									/>
+								</div>
+							))}
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="w-full gap-2"
+								onClick={() => append({ disability_type: "", description: "" })}
+							>
+								<PlusIcon className="size-4" />
+								Agregar discapacidad
+							</Button>
+						</div>
+						<FormMessage />
+					</FormItem>
 
 					<FormCommandComboboxField
 						control={form.control}

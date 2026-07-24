@@ -8,6 +8,12 @@ import {
 	SheetTitle,
 } from "@/shared/ui/sheet";
 
+const DISABILITY_LABELS: Record<string, string> = {
+	visual: "Visual", auditiva: "Auditiva", fisica: "Física",
+	intelectual: "Intelectual", psicosocial: "Psicosocial",
+	multiple: "Múltiple", otra: "Otra",
+};
+
 interface CitizenDetailSheetProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -22,6 +28,8 @@ export function CitizenDetailSheet({
 	if (!citizen) return null;
 
 	const documento = formatDocumentId(citizen.dni_type, citizen.cedula);
+	const genderLabel = citizen.gender === "MASCULINO" || citizen.gender === "M" ? "Masculino" : "Femenino";
+	const disabilities = citizen.disabilities ?? [];
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -48,10 +56,21 @@ export function CitizenDetailSheet({
 									<b>Fecha de Nacimiento:</b> {citizen.birth_date}
 								</p>
 								<p>
-									<b>Género:</b>{" "}
-									{citizen.gender === "M" ? "Masculino" : "Femenino"}
+									<b>Género:</b> {genderLabel}
 								</p>
 							</div>
+
+							{disabilities.length > 0 && (
+								<div className="pt-4 border-t space-y-1.5">
+									<h3 className="text-sm font-semibold">Discapacidades</h3>
+									{disabilities.map((d, i) => (
+										<p key={i}>
+											<b>{DISABILITY_LABELS[d.disability_type] ?? d.disability_type}:</b>{" "}
+											{d.description || "—"}
+										</p>
+									))}
+								</div>
+							)}
 
 							<div className="pt-4 border-t space-y-1.5">
 								<h3 className="text-sm font-semibold">

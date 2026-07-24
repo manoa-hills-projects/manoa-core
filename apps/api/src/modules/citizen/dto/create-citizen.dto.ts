@@ -19,6 +19,10 @@ export const createCitizenDto = z.object({
     .transform((v) => (v ? v : null))
     .pipe(z.string().uuid().nullable()),
   user_id: z.string().optional().nullable(),
+  disabilities: z.array(z.object({
+    disability_type: z.enum(['visual', 'auditiva', 'fisica', 'intelectual', 'psicosocial', 'multiple', 'otra']),
+    description: z.string().optional(),
+  })).optional().default([]),
 });
 
 export type createCitizenInput = z.infer<typeof createCitizenDto>;

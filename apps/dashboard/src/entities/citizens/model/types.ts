@@ -1,5 +1,10 @@
 export type DniType = 'NATIONAL' | 'FOREIGN' | 'SYNTHETIC';
 
+export interface CitizenDisability {
+	disability_type: string;
+	description?: string | null;
+}
+
 export interface Citizen {
 	id: string;
 	cedula: string;
@@ -14,4 +19,6 @@ export interface Citizen {
 	family_label?: string | null;
 	house_label?: string | null;
 	user_id?: string | null;
+	has_disability?: boolean;
+	disabilities?: CitizenDisability[];
 }
