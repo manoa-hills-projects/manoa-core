@@ -213,7 +213,7 @@ const app = new Hono<HonoConfig>()
     }
 
     const requestHeader = c.req.header("Origin");
-    const trustedOrigins = [dashboardOrigin, requestOrigin, DEFAULT_DASHBOARD_ORIGIN];
+    const trustedOrigins = [dashboardOrigin, requestOrigin];
     if (requestHeader && !trustedOrigins.includes(requestHeader) && PAGES_PREVIEW_PATTERN.test(requestHeader)) {
       trustedOrigins.push(requestHeader);
     }
