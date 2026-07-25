@@ -231,8 +231,17 @@ export const requirePermission = (module: Module) => {
       return;
     }
 
-    // 4. Verificar si tiene acceso al módulo (cualquier fila = acceso)
-    const hasPermission = userPerms.allowedModules.has(module);
+    // 4. Verificar si tiene acceso al módulo
+    // - GET (lectura) → basta con tener el módulo en viewModules
+    // - POST/PATCH/PUT/DELETE (escritura) → necesita estar en allowedModules (gestión)
+    const method = c.req.method;
+    const isReadOperation = method === "GET" || method === "OPTIONS";
+    const hasManageAccess = userPerms.allowedModules.has(module);
+    const hasViewAccess = userPerms.viewModules?.has(module) ?? false;
+
+    const hasPermission = isReadOperation
+      ? hasViewAccess || hasManageAccess
+      : hasManageAccess;
 
     if (!hasPermission) {
       return c.json(
