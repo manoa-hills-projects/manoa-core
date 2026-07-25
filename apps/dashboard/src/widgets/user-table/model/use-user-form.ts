@@ -75,6 +75,12 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 				} else {
 					let passwordToUse = values.password;
 
+					// Si no hay contraseña ni ciudadano, no se puede crear
+					if (!passwordToUse && !values.citizen_id) {
+						toast.error("Se requiere una contraseña o asociar a un ciudadano");
+						return;
+					}
+
 					// Si seleccionó ciudadano pero no puso contraseña, obtener su cédula
 					if (values.citizen_id && !values.password) {
 						try {
