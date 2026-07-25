@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { User } from "./types";
 
-const roleMap: Record<string, string> = {
+const profileMap: Record<string, string> = {
 	admin: "Administrador",
 	superadmin: "Súper Admin",
 	user: "Habitante",
@@ -17,11 +17,12 @@ export const userColumns: ColumnDef<User>[] = [
 		header: "Correo Electrónico",
 	},
 	{
+		id: "profile",
 		accessorKey: "role",
-		header: "Rol",
+		header: "Perfil",
 		cell: ({ row }) => {
 			const role = row.original.role || "user";
-			return roleMap[role] || role;
+			return profileMap[role] || role;
 		},
 	},
 	{
