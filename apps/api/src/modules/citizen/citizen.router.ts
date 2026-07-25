@@ -11,36 +11,46 @@ import { MODULES } from "../../shared/constants";
 
 const citizensRouter = new Hono<HonoConfig>()
 
-.post("/", requirePermission(MODULES.CITIZENS), zValidator("json", createCitizenDto), async (c) => {
+// ─── ZONA 2: Ciudadano autenticado — crea su propio registro ───
+.post("/", zValidator("json", createCitizenDto), async (c) => {
   const data = c.req.valid("json");
   const db = c.get('db');
+  const session = c.get('session');
 
-  const result = await createCitizen(db, data);
+  // SESSION pasó por requireAuth (a nivel /citizens/*). Si no hay sesión, 401.
+  if (!session?.user) {
+    return c.json({ error: "No autorizado" }, 401);
+  }
+
+  // Forzar user_id al ciudadano autenticado por seguridad
+  const result = await createCitizen(db, { ...data, user_id: session.user.id });
 
   if ("error" in result) {
     return c.json({ message: result.error }, result.status as 400 | 409 | 500);
   }
   return c.json(result, 201);
 })
+
+// ─── ZONA 1/2: Listar ciudadanos ───
 .get("/", zValidator("query", citizenQueryDto), async (c) => {
   const db = c.get('db');
   const session = c.get('session');
   const query = c.req.valid("query");
 
-  // Zone 2: ?mine=true requires auth and returns only user's citizen record
   if (query.mine === "true") {
     if (!session?.user) {
       return c.json({ error: "No autorizado" }, 401);
     }
-    // Override user_id filter to only show the authenticated user's citizen
     const result = await findAllCitizens(db, { ...query, user_id: session.user.id });
     return c.json(result, 200);
   }
 
-  // Zone 1: Public listing - no auth required, returns limited fields
+  // Zone 1: cualquier autenticado puede ver listado público
   const result = await findAllCitizens(db, query);
   return c.json(result, 200);
 })
+
+// ─── ZONA 1: Check DNI (público con auth) ───
 .get("/check-dni", zValidator("query", z.object({ dni: z.string(), exclude_id: z.string().optional() })), async (c) => {
   const db = c.get('db');
   const { dni, exclude_id } = c.req.valid("query");
@@ -54,6 +64,8 @@ const citizensRouter = new Hono<HonoConfig>()
   const exists = result && result.id !== exclude_id;
   return c.json({ exists: !!exists });
 })
+
+// ─── ZONA 2/3: Ver detalle de un ciudadano ───
 .get("/:id", async (c) => {
   const db = c.get('db');
   const session = c.get('session');
@@ -63,44 +75,48 @@ const citizensRouter = new Hono<HonoConfig>()
     return c.json({ error: "No autorizado" }, 401);
   }
 
-  // Ownership check: fetch citizen first
   const result = await findOneCitizen(db, id);
-
-  if (!result.data) {
-    return c.json({ error: "No encontrado" }, 404);
-  }
+  if (!result.data) return c.json({ error: "No encontrado" }, 404);
 
   const citizen = result.data;
 
-  // Allow if user owns this record
-  if (citizen.user_id === session.user.id) {
-    return c.json(result, 200);
-  }
+  // Propietario o admin (bypassRbac)
+  if (citizen.user_id === session.user.id) return c.json(result, 200);
 
-  // Allow super_admin to view any citizen
   const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, session.user.id);
-  if (userPerms?.bypassesRbac) {
-    return c.json(result, 200);
-  }
+  if (userPerms?.bypassesRbac) return c.json(result, 200);
 
-  // Deny access - return 404 to not leak existence
   return c.json({ error: "No encontrado" }, 404);
 })
-.patch("/:id", requirePermission(MODULES.CITIZENS), zValidator("json", updateCitizenDto), async (c) => {
+
+// ─── ZONA 2: Ciudadano edita su propio registro / ZONA 3: Admin edita cualquiera ───
+.patch("/:id", zValidator("json", updateCitizenDto), async (c) => {
   const data = c.req.valid("json");
   const db = c.get('db');
   const id = c.req.param("id");
+  const session = c.get('session');
+
+  if (!session?.user) return c.json({ error: "No autorizado" }, 401);
+
+  // Si no es el propietario, verificar permiso de admin
+  const existing = await findOneCitizen(db, id);
+  if (existing.data?.user_id !== session.user.id) {
+    const userPerms = await getUserPermissions(db, c.env.PERMISSIONS_CACHE, session.user.id);
+    if (!userPerms?.bypassesRbac) {
+      return c.json({ error: "No autorizado" }, 403);
+    }
+  }
 
   const result = await updateCitizen(db, id, data);
-
   return c.json(result, 200);
 })
+
+// ─── ZONA 3: Solo admin elimina ───
 .delete("/:id", requirePermission(MODULES.CITIZENS), async (c) => {
   const db = c.get('db');
   const id = c.req.param("id");
 
   const result = await deleteCitizen(db, id);
-
   return c.json(result, 200);
 });
 
