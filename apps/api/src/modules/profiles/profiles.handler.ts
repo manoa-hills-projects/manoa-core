@@ -682,5 +682,25 @@ export async function getUserProfile(
   };
 }
 
+export async function findAllUsersWithProfiles(
+  db: Database,
+  search?: string
+): Promise<Array<{ userId: string; name: string; email: string; profileName: string | null; profileKey: string | null }>> {
+  const rows = await db
+    .select({
+      userId: userTable.id,
+      name: userTable.name,
+      email: userTable.email,
+      profileName: profiles.name,
+      profileKey: profiles.key,
+    })
+    .from(userTable)
+    .leftJoin(userProfiles, eq(userTable.id, userProfiles.userId))
+    .leftJoin(profiles, eq(userProfiles.profileId, profiles.id))
+    .all();
+
+  return rows;
+}
+
 // Import necesario para sql
 import { sql } from "drizzle-orm";

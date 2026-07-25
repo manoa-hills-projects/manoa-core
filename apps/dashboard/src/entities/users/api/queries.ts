@@ -39,23 +39,20 @@ export function useUsers(
 
 			const users = response.data.users;
 
-			// Fetch profiles for all users in batch
-			const usersWithProfiles = await Promise.all(
-				users.map(async (u) => {
-					try {
-						const profile = await api
-							.get(`profiles/users/${u.id}/profile`)
-							.json<{ userId: string; profile: { id: string; name: string; key: string } | null }>();
-						return {
-							...u,
-							profile_name: profile.profile?.name ?? null,
-							profile_key: profile.profile?.key ?? null,
-						};
-					} catch {
-						return { ...u, profile_name: null, profile_key: null };
-					}
-				}),
-			);
+			// Get all user profiles in one call from the profiles endpoint
+			let profileMap: Record<string, { name: string; key: string }> = {};
+			try {
+				const profilesRes = await api.get("profiles/users/profiles").json<Array<{ userId: string; name: string; key: string }>>();
+				for (const p of profilesRes) {
+					profileMap[p.userId] = { name: p.name, key: p.key };
+				}
+			} catch {}
+
+			const usersWithProfiles = users.map((u) => ({
+				...u,
+				profile_name: profileMap[u.id]?.name ?? null,
+				profile_key: profileMap[u.id]?.key ?? null,
+			}));
 
 			return {
 				data: usersWithProfiles,

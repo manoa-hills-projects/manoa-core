@@ -39,6 +39,7 @@ import {
   updatePermissions,
   assignProfileToUser,
   getUserProfile,
+  findAllUsersWithProfiles,
   ProfileError,
   ProfileNotFoundError,
   ProfileProtectedError,
@@ -396,6 +397,28 @@ profilesRouter.put(
         session.user.id
       );
 
+      return c.json(result);
+    } catch (error) {
+      return handleError(c, error);
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════
+// LISTAR USUARIOS CON PERFILES
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/profiles/users/profiles
+ *
+ * Lista todos los usuarios con su perfil asignado.
+ */
+profilesRouter.get(
+  "/users/profiles",
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const result = await findAllUsersWithProfiles(db);
       return c.json(result);
     } catch (error) {
       return handleError(c, error);
