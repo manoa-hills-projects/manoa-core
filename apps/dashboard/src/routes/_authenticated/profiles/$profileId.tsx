@@ -186,7 +186,8 @@ function ProfileDetailContent() {
 				description: profileDescription,
 				isActive,
 				isDefault,
-				modules: new Set(allowedModules),
+				view: new Set(viewModules),
+				manage: new Set(manageModules),
 			});
 		} catch (error: any) {
 			toast.error(error?.message || "Error al actualizar el perfil");
@@ -381,8 +382,10 @@ function ProfileDetailContent() {
 						</div>
 					) : (
 						<ModulesList
-							allowedModules={allowedModules}
-							onToggleGroup={toggleGroup}
+							viewModules={viewModules}
+							manageModules={manageModules}
+							onToggleView={toggleViewGroup}
+							onToggleManage={toggleManageGroup}
 							disabled={!isSuperAdmin}
 						/>
 					)}
@@ -421,14 +424,18 @@ function ProfileDetailContent() {
 // ═══════════════════════════════════════════════════════════════
 
 interface ModulesListProps {
-	allowedModules: Set<string>;
-	onToggleGroup: (modules: readonly string[], checked: boolean) => void;
+	viewModules: Set<string>;
+	manageModules: Set<string>;
+	onToggleView: (modules: readonly string[], checked: boolean) => void;
+	onToggleManage: (modules: readonly string[], checked: boolean) => void;
 	disabled?: boolean;
 }
 
 function ModulesList({
-	allowedModules,
-	onToggleGroup,
+	viewModules,
+	manageModules,
+	onToggleView,
+	onToggleManage,
 	disabled,
 }: ModulesListProps) {
 	const { modulesByGroup, isLoading } = useModules();
@@ -447,45 +454,40 @@ function ModulesList({
 		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{modulesByGroup.map(({ key: groupKey, label, modules }) => {
 				const moduleKeys = modules.map((m) => m.key);
-				const allChecked = moduleKeys.every((m) => allowedModules.has(m));
-				const someChecked = moduleKeys.some((m) => allowedModules.has(m));
+				const allView = moduleKeys.every((m) => viewModules.has(m));
+				const allManage = moduleKeys.every((m) => manageModules.has(m));
 
 				return (
-					<label
+					<div
 						key={groupKey}
-						className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors
-							${
-								allChecked
-									? "bg-primary/5 border-primary/30"
-									: "hover:bg-muted/50"
-							}
-							${disabled ? "opacity-60 cursor-not-allowed" : ""}
-						`}
+						className={`p-4 rounded-lg border ${disabled ? "opacity-60" : ""}`}
 					>
-						<Checkbox
-							className="mt-0.5"
-							checked={allChecked}
-							onCheckedChange={(checked) =>
-								onToggleGroup(moduleKeys, !!checked)
-							}
-							disabled={disabled}
-						/>
-						<div className="flex-1">
-							<div className="flex items-center gap-2">
-								<h3 className="font-semibold">{label}</h3>
-								{someChecked && !allChecked && (
-									<Badge variant="secondary" className="text-xs">
-										Parcial
-									</Badge>
-								)}
-							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								{modules.map((m) => m.name).join(", ")}
-							</p>
+						<h3 className="font-semibold mb-3">{label}</h3>
+						<p className="text-xs text-muted-foreground mb-3">
+							{modules.map((m) => m.name).join(", ")}
+						</p>
+						<div className="flex gap-4">
+							<label className="flex items-center gap-2 cursor-pointer">
+								<Checkbox
+									checked={allView}
+									onCheckedChange={(c) => onToggleView(moduleKeys, !!c)}
+									disabled={disabled}
+								/>
+								<span className="text-sm">Público</span>
+							</label>
+							<label className="flex items-center gap-2 cursor-pointer">
+								<Checkbox
+									checked={allManage}
+									onCheckedChange={(c) => onToggleManage(moduleKeys, !!c)}
+									disabled={disabled}
+								/>
+								<span className="text-sm">Administrar</span>
+							</label>
 						</div>
-					</label>
+					</div>
 				);
 			})}
 		</div>
 	);
+
 }
