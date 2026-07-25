@@ -18,19 +18,37 @@ type AgentEnv = {
   AI: { run: (model: string, input: unknown) => Promise<unknown> };
 };
 
-const SYSTEM_PROMPT = `Eres el Asistente Virtual del Consejo Comunal de Manoa, los datos a mostrar unicamente provienen de las tools que dispones, no inventes datos. Tu función es orientar a los vecinos de la comunidad sobre trámites, reportes de servicios y convivencia.
+const SYSTEM_PROMPT = `Eres el Asistente Virtual del Consejo Comunal de Manoa, los datos a mostrar unicamente provienen de las tools que dispones, no inventes datos. Tu función es orientar a los vecinos de la comunidad sobre trámites, servicios y convivencia.
 
-Instrucciones de Respuesta:
-- Personalidad: Eres un vecino digital: amable, respetuoso y colaborador. Usa un lenguaje claro y natural de Venezuela y en español.
-- Brevedad: Ve directo al punto. Usa listas de puntos (*) para requisitos o pasos a seguir.
-- Trámites y Reportes: Indica requisitos para cartas de residencia o censos. Si reportan fallas (luz, agua, gas), solicita siempre: Calle, Manzana y número de casa.
-- Neutralidad: Enfócate 100% en la gestión vecinal y soluciones comunitarias, evitando debates políticos.
-- Cierre: Si no tienes un dato exacto (como fechas de entrega de beneficios), sugiere estar atentos a los grupos de WhatsApp oficiales o al vocero de la calle.
+PERSONALIDAD:
+- Eres un vecino digital amable, respetuoso y colaborador de Venezuela.
+- SIEMPRE que tengas el nombre del vecino (por tool getMyProfile), úsalo para saludar y personalizar: "Claro, Armando, veamos..."
+- Habla claro, directo y con lenguaje natural venezolano.
 
-Tienes acceso a herramientas que consultan la base de datos del consejo comunal de manoa. Úsalas cuando el vecino pregunte por cifras, estadísticas o datos de la comunidad. Presenta los resultados de forma clara y amigable.
-También tienes acceso a las Leyes del Poder Popular vigentes (Ley Orgánica de los Consejos Comunales, Ley de las Comunas, Contraloría Social, etc.). Úsalas cuando el vecino pregunte sobre derechos, deberes, normativas o artículos de ley comunal.`;
+INSTRUCCIONES:
+- Sé breve. Usa listas (*) para pasos o requisitos.
+- Si preguntan por trámites (carta de residencia, censo), indica los requisitos exactos.
+- Para reportar fallas (luz, agua, gas), pide: calle, manzana y número de casa.
+- Si tienes los datos del vecino, ofrécete a ayudarlo con acciones concretas: "¿Quieres que emita tu carta de residencia?"
+- Cuando muestres datos del censo, ofrece contexto: "Hay 324 viviendas en 5 sectores. ¿Quieres ver el detalle por sector?"
+- Para discapacidades o temas sensibles, sé respetuoso y discreto.
+- Neutral: 100% gestión vecinal, cero política.
+- Cierre: si no tienes un dato exacto, sugiere estar atentos a los WhatsApp oficiales o al vocero del sector.
 
-function buildTools(db: DrizzleD1Database<typeof schema>) {
+HERRAMIENTAS DISPONIBLES:
+- censusSummary → resumen viviendas, familias, habitantes
+- demographicsByGender → hombres / mujeres
+- demographicsByAge → grupos etarios
+- statsBySector → viviendas por sector
+- housingStats → tipos de vivienda y tenencia
+- citizensBySector → cuántos habitantes por sector
+- disabilitiesSummary → personas con discapacidad registradas
+- pollsOverview / pollResults → encuestas comunitarias
+- searchLaws → Leyes del Poder Popular
+- getMyProfile → datos del vecino autenticado (nombre, familia, vivienda)
+- Esconde información personal sensible (cédula exacta, teléfono) a menos que el vecino la pida explícitamente.`;
+
+function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
   return {
     censusSummary: tool({
       description: "Obtiene un resumen general del censo: total de viviendas, familias y habitantes registrados en la comunidad.",
@@ -142,6 +160,94 @@ function buildTools(db: DrizzleD1Database<typeof schema>) {
       },
     }),
 
+    housingStats: tool({
+      description: "Obtiene estadísticas de viviendas: cantidad por tipo (casa, apto, rancho) y por tenencia (propia, alquilada, cedida).",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const byType = await db
+          .select({ tipo: schema.houses.type, cantidad: count(schema.houses.id) })
+          .from(schema.houses)
+          .groupBy(schema.houses.type);
+        const byTenure = await db
+          .select({ tenencia: schema.houses.tenure, cantidad: count(schema.houses.id) })
+          .from(schema.houses)
+          .groupBy(schema.houses.tenure);
+        const labels: Record<string, string> = {
+          casa: "Casa", apartamento: "Apartamento", rancho: "Rancho",
+          local: "Local", propia: "Propia", alquilada: "Alquilada",
+          cedida: "Cedida", otro: "Otro", otra: "Otra",
+        };
+        return {
+          porTipo: byType.map(t => ({ tipo: labels[t.tipo ?? "otro"] ?? t.tipo, cantidad: t.cantidad })),
+          porTenencia: byTenure.map(t => ({ tenencia: labels[t.tenencia ?? "otra"] ?? t.tenencia, cantidad: t.cantidad })),
+        };
+      },
+    }),
+
+    citizensBySector: tool({
+      description: "Obtiene la cantidad de habitantes por sector de la comunidad.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const rows = await db
+          .select({ sector: schema.houses.sector, habitantes: count(schema.citizens.id) })
+          .from(schema.citizens)
+          .innerJoin(schema.families, eq(schema.citizens.familyId, schema.families.id))
+          .innerJoin(schema.houses, eq(schema.families.houseId, schema.houses.id))
+          .groupBy(schema.houses.sector)
+          .orderBy(schema.houses.sector);
+        return rows;
+      },
+    }),
+
+    disabilitiesSummary: tool({
+      description: "Obtiene el resumen de personas con discapacidad registradas en la comunidad: total y desglose por tipo.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const [total] = await db
+          .select({ total: count(schema.citizenDisabilities.id) })
+          .from(schema.citizenDisabilities);
+        const byType = await db
+          .select({ tipo: schema.citizenDisabilities.disabilityType, cantidad: count(schema.citizenDisabilities.id) })
+          .from(schema.citizenDisabilities)
+          .groupBy(schema.citizenDisabilities.disabilityType);
+        const labels: Record<string, string> = {
+          visual: "Visual", auditiva: "Auditiva", fisica: "Física",
+          intelectual: "Intelectual", psicosocial: "Psicosocial",
+          multiple: "Múltiple", otra: "Otra",
+        };
+        return {
+          total: total?.total ?? 0,
+          porTipo: byType.map(t => ({ tipo: labels[t.tipo] ?? t.tipo, cantidad: t.cantidad })),
+        };
+      },
+    }),
+
+    getMyProfile: tool({
+      description: "Obtiene los datos del vecino que está usando el asistente (nombre, familia, vivienda, teléfono). Úsalo para personalizar la conversación y saludar por su nombre.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        if (!userId) return null;
+
+        const citizen = await db
+          .select({
+            nombres: schema.citizens.firstName,
+            apellidos: schema.citizens.lastName,
+            telefono: schema.citizens.phone,
+            familia: schema.families.name,
+            sector: schema.houses.sector,
+            direccion: schema.houses.address,
+          })
+          .from(schema.citizens)
+          .leftJoin(schema.families, eq(schema.citizens.familyId, schema.families.id))
+          .leftJoin(schema.houses, eq(schema.families.houseId, schema.houses.id))
+          .where(eq(schema.citizens.userId, userId))
+          .limit(1);
+
+        if (citizen.length === 0) return null;
+        return citizen[0];
+      },
+    }),
+
     searchLaws: tool({
       description: "Busca información en las Leyes del Poder Popular (Ley Orgánica de los Consejos Comunales, Ley de las Comunas, Contraloría Social, Poder Popular, Planificación, Gestión Comunitaria, Sistema Económico Comunal, etc.). Úsala cuando el vecino pregunte sobre leyes, normativas, artículos, derechos o deberes comunales.",
       inputSchema: z.object({
@@ -222,7 +328,7 @@ export class ChatAgent extends AIChatAgent<AgentEnv> {
       }
     }
 
-    const tools = buildTools(db);
+    const tools = buildTools(db, userId);
 
     const result = streamText({
       model: workersai("@cf/zai-org/glm-4.7-flash"),
