@@ -78,7 +78,8 @@ export const usePermissions = (): UsePermissionsResult => {
 		queryKey: ["me", "profile"],
 		queryFn: () => api.get("profiles/me/profile").json<UserProfile>(),
 		enabled: !!userId,
-		staleTime: 5 * 60 * 1000, // 5 minutos
+		staleTime: 60 * 1000, // 1 min
+		refetchOnMount: true,
 	});
 
 	// Conjunto de módulos gestionados por el perfil (sin granularidad de acción)

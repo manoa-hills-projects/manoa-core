@@ -13,7 +13,7 @@ export function useModules() {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["modules"],
 		queryFn: () => api.get("modules").json<ModulesResponse>(),
-		staleTime: 10 * 60 * 1000, // 10 min - cambia poco
+		staleTime: 2 * 60 * 1000, // 2 min
 	});
 
 	// Módulos agrupados por groupKey
