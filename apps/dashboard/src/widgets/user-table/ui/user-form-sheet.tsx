@@ -64,6 +64,7 @@ export function UserFormSheet({
 						name="profile_id"
 						label="Perfil"
 						placeholder="Buscar perfil..."
+						initialLabel={user?.profile_name}
 						fetcher={fetchProfilesOptions}
 						getLabel={(p) => p.name}
 						getValue={(p) => p.id}

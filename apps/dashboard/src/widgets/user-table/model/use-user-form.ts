@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { api } from "@/shared/api/api-client";
@@ -20,34 +20,40 @@ export function useUserForm({ user, onSuccess }: UseUserFormProps) {
 	const assignProfileMutation = useAssignProfile();
 
 	const isEditing = !!user?.id;
-	const [initialProfileId, setInitialProfileId] = useState("");
-
-	// Fetch user's current profile when editing
-	useEffect(() => {
-		if (user?.id) {
-			api.get(`profiles/users/${user.id}/profile`)
-				.json<{ userId: string; profile: { id: string; name: string } | null }>()
-				.then((res) => {
-					if (res.profile?.id) {
-						setInitialProfileId(res.profile.id);
-					}
-				})
-				.catch(() => {});
-		}
-	}, [user?.id]);
 
 	const form = useForm<UserFormValues>({
 		resolver: zodResolver(userFormSchema),
 		mode: "onChange",
 		reValidateMode: "onChange",
-		values: {
+		defaultValues: {
 			name: user?.name ?? "",
 			email: user?.email ?? "",
-			profile_id: initialProfileId || (user as any)?.profile_id || "",
+			profile_id: "",
 			citizen_id: "",
 			password: "",
 		},
 	});
+
+	// Fetch user's current profile when editing and update the form
+	useEffect(() => {
+		if (user?.id) {
+			form.reset({
+				name: user.name ?? "",
+				email: user.email ?? "",
+				profile_id: "",
+				citizen_id: "",
+				password: "",
+			});
+			api.get(`profiles/users/${user.id}/profile`)
+				.json<{ userId: string; profile: { id: string; name: string } | null }>()
+				.then((res) => {
+					if (res.profile?.id) {
+						form.setValue("profile_id", res.profile.id);
+					}
+				})
+				.catch(() => {});
+		}
+	}, [user?.id, form]);
 
 	const onSubmit = useCallback(
 		async (values: UserFormValues) => {
