@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { MessageSquareIcon } from "lucide-react";
 import { AssistantSheet } from "@/features/ai-assistant/assistant-sheet";
@@ -41,6 +41,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 			{!isAiAssistant && (
 				<div className="fixed bottom-6 right-6 z-50">
 					<Button
+						type="button"
 						onClick={() => setSheetOpen(true)}
 						className="h-14 w-14 rounded-full shadow-lg"
 						size="icon"

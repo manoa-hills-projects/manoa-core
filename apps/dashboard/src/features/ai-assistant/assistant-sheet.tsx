@@ -55,11 +55,20 @@ export function AssistantSheet({
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
+				showCloseButton={false}
 				className="p-0 max-w-full w-full sm:max-w-md flex flex-col"
 			>
 				<SheetHeader className="border-b px-4 py-3 flex-row items-center justify-between space-y-0">
 					<SheetTitle className="text-sm">Asistente IA</SheetTitle>
 					<div className="flex items-center gap-1">
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							onClick={() => onOpenChange(false)}
+							title="Cerrar"
+						>
+							<XIcon className="size-4" />
+						</Button>
 						<Button
 							variant="ghost"
 							size="icon-xs"
