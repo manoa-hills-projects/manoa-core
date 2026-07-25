@@ -438,6 +438,56 @@ function ModulesList({
 	onToggleManage,
 	disabled,
 }: ModulesListProps) {
+	const { modules, isLoading } = useModules();
+
+	if (isLoading) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-8 w-48" />
+				<Skeleton className="h-8 w-48" />
+				<Skeleton className="h-8 w-48" />
+			</div>
+		);
+	}
+
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+			{modules.map((mod) => {
+				const key = mod.key;
+				const canView = viewModules.has(key);
+				const canManage = manageModules.has(key);
+
+				return (
+					<div
+						key={key}
+						className={`p-4 rounded-lg border ${disabled ? "opacity-60" : ""}`}
+					>
+						<h3 className="font-semibold mb-3">{mod.name}</h3>
+						<p className="text-xs text-muted-foreground mb-3">{mod.key}</p>
+						<div className="flex gap-4">
+							<label className="flex items-center gap-2 cursor-pointer">
+								<Checkbox
+									checked={canView}
+									onCheckedChange={(c) => onToggleView([key], !!c)}
+									disabled={disabled}
+								/>
+								<span className="text-sm">Público</span>
+							</label>
+							<label className="flex items-center gap-2 cursor-pointer">
+								<Checkbox
+									checked={canManage}
+									onCheckedChange={(c) => onToggleManage([key], !!c)}
+									disabled={disabled}
+								/>
+								<span className="text-sm">Administrar</span>
+							</label>
+						</div>
+					</div>
+				);
+			})}
+		</div>
+	);
+}: ModulesListProps) {
 	const { modulesByGroup, isLoading } = useModules();
 
 	if (isLoading) {
