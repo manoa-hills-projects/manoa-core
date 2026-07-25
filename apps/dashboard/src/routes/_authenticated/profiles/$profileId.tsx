@@ -62,7 +62,8 @@ function ProfileDetailContent() {
 	const [profileDescription, setProfileDescription] = useState("");
 	const [isActive, setIsActive] = useState(true);
 	const [isDefault, setIsDefault] = useState(false);
-	const [allowedModules, setAllowedModules] = useState<Set<string>>(new Set());
+	const [viewModules, setViewModules] = useState<Set<string>>(new Set());
+	const [manageModules, setManageModules] = useState<Set<string>>(new Set());
 
 	// Valores originales para detectar cambios
 	const [original, setOriginal] = useState({
@@ -70,7 +71,8 @@ function ProfileDetailContent() {
 		description: "",
 		isActive: true,
 		isDefault: false,
-		modules: new Set<string>(),
+		view: new Set<string>(),
+		manage: new Set<string>(),
 	});
 
 	// Inicializar estado desde el perfil
@@ -82,19 +84,26 @@ function ProfileDetailContent() {
 		setIsActive(profile.isActive);
 		setIsDefault(profile.isDefault);
 
-		const modules = new Set(
+		const view = new Set(
 			profile.permissions
 				?.filter((p) => p.allowed && p.action === "view")
 				.map((p) => p.module) ?? [],
 		);
-		setAllowedModules(modules);
+		const manage = new Set(
+			profile.permissions
+				?.filter((p) => p.allowed && p.action !== "view")
+				.map((p) => p.module) ?? [],
+		);
+		setViewModules(view);
+		setManageModules(manage);
 
 		setOriginal({
 			name: profile.name,
 			description: profile.description ?? "",
 			isActive: profile.isActive,
 			isDefault: profile.isDefault,
-			modules: new Set(modules),
+			view: new Set(view),
+			manage: new Set(manage),
 		});
 	}, [profile]);
 
@@ -109,17 +118,30 @@ function ProfileDetailContent() {
 	);
 
 	const hasPermissionsChanges = useMemo(() => {
-		if (original.modules.size !== allowedModules.size) return true;
-		return [...allowedModules].some((m) => !original.modules.has(m));
-	}, [allowedModules, original.modules]);
+		if (original.view.size !== viewModules.size) return true;
+		if (original.manage.size !== manageModules.size) return true;
+		if ([...viewModules].some((m) => !original.view.has(m))) return true;
+		return [...manageModules].some((m) => !original.manage.has(m));
+	}, [viewModules, manageModules, original]);
 
 	const hasChanges = hasInfoChanges || hasPermissionsChanges;
 	const isSaving =
 		updateProfileMutation.isPending || updatePermissionsMutation.isPending;
 
 	// ── Handlers ──
-	const toggleGroup = (modules: readonly string[], checked: boolean) => {
-		setAllowedModules((prev) => {
+	const toggleViewGroup = (modules: readonly string[], checked: boolean) => {
+		setViewModules((prev) => {
+			const next = new Set(prev);
+			for (const m of modules) {
+				if (checked) next.add(m);
+				else next.delete(m);
+			}
+			return next;
+		});
+	};
+
+	const toggleManageGroup = (modules: readonly string[], checked: boolean) => {
+		setManageModules((prev) => {
 			const next = new Set(prev);
 			for (const m of modules) {
 				if (checked) next.add(m);
@@ -144,13 +166,13 @@ function ProfileDetailContent() {
 			}
 
 			if (hasPermissionsChanges) {
-				const permissionsArray = Array.from(allowedModules).map(
-					(module) => ({
-						module,
-						action: "view" as const,
-						allowed: true,
-					}),
-				);
+				const permissionsArray: { module: string; action: string; allowed: boolean }[] = [];
+				for (const module of viewModules) {
+					permissionsArray.push({ module, action: "view", allowed: true });
+				}
+				for (const module of manageModules) {
+					permissionsArray.push({ module, action: "manage", allowed: true });
+				}
 				await updatePermissionsMutation.mutateAsync({
 					id: profileId,
 					data: { permissions: permissionsArray },
@@ -176,7 +198,8 @@ function ProfileDetailContent() {
 		setProfileDescription(original.description);
 		setIsActive(original.isActive);
 		setIsDefault(original.isDefault);
-		setAllowedModules(new Set(original.modules));
+		setViewModules(new Set(original.view));
+		setManageModules(new Set(original.manage));
 	};
 
 	// ── Loading ──
