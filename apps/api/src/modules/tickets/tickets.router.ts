@@ -75,7 +75,7 @@ ticketsRouter.post("/", async (c) => {
     if (!session?.user?.id) return c.json({ error: "No autorizado" }, 401);
 
     const body = await c.req.json<{ title: string; description: string; category?: string }>();
-    const now = Date.now();
+    const now = Math.floor(Date.now() / 1000);
 
     const [newTicket] = await db
       .insert(tickets)
@@ -101,7 +101,7 @@ ticketsRouter.patch("/:id", requirePermission(MODULES.SETTINGS), async (c) => {
   try {
     const db = c.get("db");
     const body = await c.req.json<{ status?: string; assignedTo?: string; resolutionNotes?: string }>();
-    const now = Date.now();
+    const now = Math.floor(Date.now() / 1000);
 
     const [updated] = await db
       .update(tickets)
