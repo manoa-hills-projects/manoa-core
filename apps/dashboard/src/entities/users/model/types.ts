@@ -10,6 +10,8 @@ export interface User {
 	banExpires?: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
+	profile_name?: string | null;
+	profile_key?: string | null;
 }
 
 export interface UserQueryParams {

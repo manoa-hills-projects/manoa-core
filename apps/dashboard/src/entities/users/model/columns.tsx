@@ -18,10 +18,11 @@ export const userColumns: ColumnDef<User>[] = [
 	},
 	{
 		id: "profile",
-		accessorKey: "role",
 		header: "Perfil",
 		cell: ({ row }) => {
-			const role = row.original.role || "user";
+			const u = row.original;
+			if (u.profile_name) return u.profile_name;
+			const role = u.role || "user";
 			return profileMap[role] || role;
 		},
 	},

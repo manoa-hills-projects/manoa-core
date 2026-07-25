@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { api } from "@/shared/api/api-client";
 import type { UserQueryParams } from "../model/types";
 
 export const userKeys = {
@@ -27,7 +28,7 @@ export function useUsers(
 					offset,
 					...(filters?.search && {
 						searchValue: filters.search,
-						searchField: "name", // Better Auth Admin supports searching by name or email
+						searchField: "name",
 					}),
 				},
 			});
@@ -36,9 +37,28 @@ export function useUsers(
 				throw new Error(response.error.message || "Failed to fetch users");
 			}
 
-			// Format response to match the rest of the application's pagination contract
+			const users = response.data.users;
+
+			// Fetch profiles for all users in batch
+			const usersWithProfiles = await Promise.all(
+				users.map(async (u) => {
+					try {
+						const profile = await api
+							.get(`profiles/users/${u.id}/profile`)
+							.json<{ userId: string; profile: { id: string; name: string; key: string } | null }>();
+						return {
+							...u,
+							profile_name: profile.profile?.name ?? null,
+							profile_key: profile.profile?.key ?? null,
+						};
+					} catch {
+						return { ...u, profile_name: null, profile_key: null };
+					}
+				}),
+			);
+
 			return {
-				data: response.data.users,
+				data: usersWithProfiles,
 				metadata: {
 					total: response.data.total,
 				},
