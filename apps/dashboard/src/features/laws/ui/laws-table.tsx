@@ -22,22 +22,6 @@ export function LawsTable() {
 
 	const { data: selectedLaw } = useLaw(selectedId ?? "");
 
-	const { mutate: scrape, isPending: isScraping } = useScrapeLaws();
-
-	const handleScrape = () => {
-		scrape(undefined, {
-			onSuccess: (result) => {
-				toast.success(`${result.scraped} leyes sincronizadas correctamente.`);
-				if (result.errors.length > 0) {
-					toast.warning(`${result.errors.length} ley(es) con errores: ${result.errors[0]}`);
-				}
-			},
-			onError: () => {
-				toast.error("Error al sincronizar las leyes. Intenta nuevamente.");
-			},
-		});
-	};
-
 	const handleView = useCallback((law: Law) => {
 		setSelectedId(law.id);
 		setDetailOpen(true);
