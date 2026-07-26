@@ -2,7 +2,7 @@
  * Hook para la navegación del sidebar
  *
  * Combina la configuración del menú (menu.ts) con los módulos dinámicos
- * de la API, y filtra según los permisos del usuario.
+ * de la API, agrupa por categoría y filtra según los permisos del usuario.
  */
 
 import { useMemo } from "react";
@@ -17,6 +17,11 @@ import { useModules } from "@/entities/modules";
 import { usePermissions } from "@/hooks/use-permissions";
 import { authClient } from "@/lib/auth-client";
 import { ICON_MAP } from "./icon-map";
+
+export interface NavGroup {
+	groupLabel: string;
+	items: NavigationItems[];
+}
 
 /**
  * Resuelve el icono desde el mapa, con fallback a Circle si no existe
@@ -35,18 +40,17 @@ function resolveNavItem(
 	config: (typeof NAV_ITEMS)[number],
 	moduleMap: Map<string, Module>,
 ): NavigationItems | null {
-	// Si el módulo existe en la DB, usar sus datos
 	const mod = moduleMap.get(config.moduleKey);
 	if (mod) {
 		return {
 			title: mod.name,
 			url: mod.route || config.url || "/",
 			icon: resolveIcon(mod.icon),
+			groupLabel: mod.groupLabel,
 			permission: config.permission,
 		};
 	}
 
-	// Si no está en DB pero tiene title/url hardcoded, usarlos
 	if (config.title || config.url) {
 		return {
 			title: config.title || config.moduleKey,
@@ -71,6 +75,26 @@ const checkPermission = (
 };
 
 /**
+ * Agrupa items por groupLabel preservando el orden de aparición
+ */
+function groupItems(items: NavigationItems[]): NavGroup[] {
+	const groups: NavGroup[] = [];
+	const seen = new Set<string>();
+
+	for (const item of items) {
+		const label = item.groupLabel || "General";
+		if (!seen.has(label)) {
+			seen.add(label);
+			groups.push({ groupLabel: label, items: [] });
+		}
+		const group = groups.find((g) => g.groupLabel === label);
+		if (group) group.items.push(item);
+	}
+
+	return groups;
+}
+
+/**
  * Hook principal para la navegación del sidebar
  */
 export const useSidebarNav = () => {
@@ -91,24 +115,26 @@ export const useSidebarNav = () => {
 		return map;
 	}, [modules]);
 
-	// Resolver items principales
-	const filteredNav = useMemo(() => {
-		return NAV_ITEMS.map((item) => resolveNavItem(item, moduleMap))
+	// Resolver items principales agrupados
+	const navGroups = useMemo(() => {
+		const items = NAV_ITEMS.map((item) => resolveNavItem(item, moduleMap))
 			.filter((item): item is NavigationItems => item !== null)
 			.filter((item) => checkPermission(item.permission, canManage));
+		return groupItems(items);
 	}, [moduleMap, canManage]);
 
-	// Resolver items secundarios
-	const filteredSecondary = useMemo(() => {
-		return NAV_SECONDARY.map((item) => resolveNavItem(item, moduleMap))
+	// Resolver items secundarios agrupados
+	const secondaryGroups = useMemo(() => {
+		const items = NAV_SECONDARY.map((item) => resolveNavItem(item, moduleMap))
 			.filter((item): item is NavigationItems => item !== null)
 			.filter((item) => checkPermission(item.permission, canManage));
+		return groupItems(items);
 	}, [moduleMap, canManage]);
 
 	return {
 		user,
-		navItems: filteredNav,
-		secondaryItems: filteredSecondary,
+		navGroups,
+		secondaryGroups,
 		isLoading,
 	};
 };

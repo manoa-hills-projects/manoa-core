@@ -6,18 +6,24 @@ import {
 	SidebarMenuItem,
 } from "@/shared/ui/sidebar";
 
-interface SidebarItemsList {
+interface SidebarGroupSectionProps {
+	groupLabel: string;
 	items: NavigationItems[];
 }
 
-export function SidebarItemsList(props: SidebarItemsList) {
-	const { items } = props;
+export function SidebarGroupSection(props: SidebarGroupSectionProps) {
+	const { groupLabel, items } = props;
+
+	if (items.length === 0) return null;
 
 	return (
-		<SidebarMenu className="space-y-1">
-			{items.map((item) => {
-				return (
-					<SidebarMenuItem className="px-4" key={item.title}>
+		<div className="px-3 py-2">
+			<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 px-1">
+				{groupLabel}
+			</span>
+			<SidebarMenu className="mt-1 space-y-0.5">
+				{items.map((item) => (
+					<SidebarMenuItem key={item.title}>
 						<SidebarMenuButton className="py-5" asChild tooltip={item.title}>
 							<Link
 								to={item.url}
@@ -31,8 +37,8 @@ export function SidebarItemsList(props: SidebarItemsList) {
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
-				);
-			})}
-		</SidebarMenu>
+				))}
+			</SidebarMenu>
+		</div>
 	);
 }

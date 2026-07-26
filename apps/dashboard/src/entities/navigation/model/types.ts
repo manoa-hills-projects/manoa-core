@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 /**
  * Configuración de un item de navegación
  *
@@ -13,5 +15,17 @@ export interface NavigationConfig {
 	/** URL (solo para items públicos sin moduleKey en DB) */
 	url?: string;
 	/** Módulo requerido para ver este item (sin prop = visible para todos) */
+	permission?: string;
+}
+
+/**
+ * Item de navegación resuelto con datos reales (icono, título, ruta)
+ */
+export interface NavigationItems {
+	title: string;
+	url: string;
+	icon: LucideIcon;
+	/** Grupo al que pertenece para agrupar en el sidebar */
+	groupLabel?: string;
 	permission?: string;
 }
