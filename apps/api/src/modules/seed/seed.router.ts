@@ -285,6 +285,68 @@ seedRouter.post("/seed-treasury", async (c) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────
+// POST /api/seed/fix-modules
+// Limpia la tabla modules: elimina duplicados, reordena según
+// el menú real del frontend (menu.ts).
+// Idempotente: hace DELETE + INSERT.
+// ─────────────────────────────────────────────────────────────
+seedRouter.post("/fix-modules", async (c) => {
+  try {
+    const { bootstrapAdminKey } = c.get("runtimeSecrets");
+    if (!bootstrapAdminKey || c.req.header("X-Bootstrap-Key") !== bootstrapAdminKey) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const db = c.get("db");
+
+    // Eliminar módulos existentes (se resiembran completos)
+    await db.delete(schema.modules).run();
+
+    // Insertar módulos canónicos según menu.ts
+    const canonicalModules = [
+      // ── CENSO ──
+      { key: "houses",     name: "Viviendas",   description: "Gestión del censo de viviendas",    route: "/houses",       icon: "Home",         groupKey: "census",        groupLabel: "Censo",           sortOrder: 1 },
+      { key: "families",   name: "Familias",    description: "Gestión del censo de familias",     route: "/families",     icon: "Users",        groupKey: "census",        groupLabel: "Censo",           sortOrder: 2 },
+      { key: "citizens",   name: "Ciudadanos",  description: "Gestión del censo de ciudadanos",   route: "/citizens",     icon: "User",         groupKey: "census",        groupLabel: "Censo",           sortOrder: 3 },
+
+      // ── PARTICIPACIÓN ──
+      { key: "polls",      name: "Proyectos",   description: "Gestión de votaciones y proyectos", route: "/polls",        icon: "Vote",         groupKey: "participation", groupLabel: "Participación",   sortOrder: 4 },
+      { key: "events",     name: "Asambleas",   description: "Gestión de asambleas",              route: "/meetings",     icon: "Calendar",     groupKey: "participation", groupLabel: "Participación",   sortOrder: 5 },
+
+      // ── TRÁMITES ──
+      { key: "requests",   name: "Solicitudes", description: "Gestión de solicitudes y trámites", route: "/requests",     icon: "FileText",     groupKey: "requests",      groupLabel: "Trámites",        sortOrder: 6 },
+      { key: "validations",name: "Validaciones",description: "Validaciones comunitarias",          route: "/validations",  icon: "ShieldCheck",  groupKey: "requests",      groupLabel: "Trámites",        sortOrder: 7 },
+
+      // ── TESORERÍA ──
+      { key: "treasury",   name: "Tesorería",   description: "Gestión financiera y transparencia",route: "/treasury",     icon: "Wallet",       groupKey: "finance",       groupLabel: "Tesorería",       sortOrder: 8 },
+
+      // ── SISTEMA ──
+      { key: "laws",       name: "Normativas",  description: "Gestión de leyes y normativas",      route: "/laws",         icon: "Scale",        groupKey: "system",        groupLabel: "Sistema",         sortOrder: 9 },
+      { key: "ai",         name: "Asistente IA",description: "Asistente virtual con IA",          route: "/ai-assistant", icon: "Sparkles",     groupKey: "system",        groupLabel: "Sistema",         sortOrder: 10 },
+      { key: "tickets",    name: "Reportes",    description: "Reportes de incidencias",           route: "/tickets",      icon: "AlertTriangle",groupKey: "system",        groupLabel: "Sistema",         sortOrder: 11 },
+      { key: "acts",       name: "Libro de Actas",description: "Libro de actas digital",          route: "/acts",         icon: "FileText",     groupKey: "system",        groupLabel: "Sistema",         sortOrder: 12 },
+      { key: "users",      name: "Usuarios",    description: "Gestión de usuarios del sistema",   route: "/users",        icon: "UserCog",      groupKey: "system",        groupLabel: "Sistema",         sortOrder: 13 },
+      { key: "profiles",   name: "Perfiles",    description: "Gestión de perfiles y permisos",    route: "/profiles",     icon: "Shield",       groupKey: "system",        groupLabel: "Sistema",         sortOrder: 14 },
+      { key: "settings",   name: "Configuración",description: "Configuración del sistema",        route: "/settings",     icon: "Settings",     groupKey: "system",        groupLabel: "Sistema",         sortOrder: 15 },
+    ];
+
+    for (const mod of canonicalModules) {
+      await db.insert(schema.modules).values(mod).run();
+    }
+
+    return c.json({
+      ok: true,
+      message: "Módulos restablecidos correctamente",
+      count: canonicalModules.length,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[fix-modules] Error:", err);
+    return c.json({ error: message }, 500);
+  }
+});
+
 seedRouter.post("/seed-rbac", async (c) => {
   try {
     const db = c.get("db");
