@@ -90,7 +90,7 @@ function RouteComponent() {
 							<RequestTypeCard
 								title="Carta de Residencia"
 								description="Solicita una constancia oficial de residencia emitida por el Consejo Comunal. Válida por 90 días."
-								icon={<FileText className="h-6 w-6" />}
+								icon={<FileTextIcon className="h-6 w-6" />}
 								onClick={() => setDialogOpen(true)}
 							/>
 						</div>
