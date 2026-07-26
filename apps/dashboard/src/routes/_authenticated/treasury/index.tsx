@@ -114,7 +114,7 @@ function RouteComponent() {
 						{!loadingPayments && totalPayments === 0 && (
 							<p className="text-sm text-muted-foreground py-6">Todavía no has enviado pagos.</p>
 						)}
-						<div className="flex flex-col divide-y">
+						<div className="flex flex-col divide-y max-h-80 overflow-y-auto">
 							{myPayments?.map((p) => (
 								<div key={p.id} className="flex items-center justify-between gap-3 py-3">
 									<div>
