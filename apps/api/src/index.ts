@@ -351,7 +351,7 @@ const handler = {
     for (const message of batch.messages) {
       if (message.body.type === "scrape_laws") {
         try {
-          const result = await scrapeAndStoreLaws(db, "", "");
+          const result = await scrapeAndStoreLaws(db, env.AI);
           console.log(`[laws-queue] Completado: ${result.scraped} leyes procesadas. Errores: ${result.errors.length}`);
           if (result.errors.length > 0) {
             console.warn("[laws-queue] Errores:", result.errors);

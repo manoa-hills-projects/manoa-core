@@ -58,10 +58,9 @@ export const findOneLaw = async (
 
 export const triggerScrape = async (
 	db: DrizzleD1Database<typeof schema>,
-	accountId: string,
-	apiToken: string,
+	ai: { run: (model: string, input: unknown) => Promise<unknown> } | undefined,
 ) => {
-	const { scraped, errors } = await scrapeAndStoreLaws(db, accountId, apiToken);
+	const { scraped, errors } = await scrapeAndStoreLaws(db, ai);
 	return {
 		message: `Sincronizacion completada. ${scraped} leyes procesadas.`,
 		scraped,

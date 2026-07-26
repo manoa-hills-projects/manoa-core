@@ -17,9 +17,8 @@ async function extractPdfText(pdfUrl: string): Promise<string> {
 }
 
 export async function scrapeAndStoreLaws(
-	db: DrizzleD1Database<typeof schema>,
-	_accountId: string,
-	_apiToken: string,
+  db: DrizzleD1Database<typeof schema>,
+  ai: { run: (model: string, input: unknown) => Promise<unknown> } | undefined,
 ): Promise<{ scraped: number; errors: string[] }> {
 	const errors: string[] = [];
 
@@ -39,12 +38,30 @@ export async function scrapeAndStoreLaws(
 	for (const law of laws) {
 		try {
 			console.log(`[laws-scraper] Descargando PDF: ${law.name}`);
-			const fullText = await extractPdfText(law.pdfUrl);
+			const rawText = await extractPdfText(law.pdfUrl);
+
+			// Generar resumen con IA si está disponible
+			let summary = rawText;
+			if (ai) {
+				try {
+					const result = await ai.run("@cf/meta/llama-3.2-3b-instruct", {
+						messages: [{
+							role: "user",
+							content: `Resume en 2-3 párrafos esta ley venezolana de manera clara y simple para que un ciudadano común entienda de qué trata. Usa español. Texto:\n\n${rawText.slice(0, 5000)}`,
+						}],
+					});
+					summary = (result as any)?.response || rawText.slice(0, 2000);
+				} catch {
+					summary = rawText.slice(0, 2000);
+				}
+			} else {
+				summary = rawText.slice(0, 2000);
+			}
 
 			await db
 				.update(schema.laws)
 				.set({
-					fullText,
+					fullText: summary,
 					scrapedAt: new Date(),
 					updatedAt: new Date(),
 				})
@@ -52,11 +69,11 @@ export async function scrapeAndStoreLaws(
 				.run();
 
 			// Actualizar el índice FTS5
-			await db.run(sql`INSERT INTO laws_fts(laws_fts, name, full_text) VALUES('delete', ${law.name}, ${fullText})`);
-			await db.run(sql`INSERT INTO laws_fts(name, full_text) VALUES(${law.name}, ${fullText})`);
+			await db.run(sql`INSERT INTO laws_fts(laws_fts, name, full_text) VALUES('delete', ${law.name}, ${summary})`);
+			await db.run(sql`INSERT INTO laws_fts(name, full_text) VALUES(${law.name}, ${summary})`);
 
 			scraped++;
-			console.log(`[laws-scraper] ✅ ${law.name} procesado (${fullText.length} caracteres)`);
+			console.log(`[laws-scraper] ✅ ${law.name} resumido (${summary.length} caracteres)`);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			console.error(`[laws-scraper] ❌ ${law.name}: ${msg}`);
