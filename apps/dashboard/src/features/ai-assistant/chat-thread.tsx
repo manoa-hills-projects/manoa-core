@@ -1,10 +1,12 @@
 import {
-	ArrowDownIcon,
 	ArrowUpIcon,
+	BotIcon,
 	CopyIcon,
 	CheckIcon,
 	Loader2Icon,
+	SparklesIcon,
 	SquareIcon,
+	UserIcon,
 } from "lucide-react";
 import {
 	type FormEvent,
@@ -26,12 +28,13 @@ interface ChatThreadProps {
 	status: ChatStatus;
 	onSend: (message: { role: "user"; parts: [{ type: "text"; text: string }] }) => void;
 	onStop: () => void;
+	placeholder?: string;
+	compact?: boolean;
 }
 
-export function ChatThread({ messages, status, onSend, onStop }: ChatThreadProps) {
+export function ChatThread({ messages, status, onSend, onStop, placeholder, compact }: ChatThreadProps) {
 	const [input, setInput] = useState("");
 	const viewportRef = useRef<HTMLDivElement>(null);
-	const [showScrollButton, setShowScrollButton] = useState(false);
 
 	const isRunning = status === "submitted" || status === "streaming";
 	const isEmpty = messages.length === 0;
@@ -44,79 +47,73 @@ export function ChatThread({ messages, status, onSend, onStop }: ChatThreadProps
 	}, []);
 
 	useEffect(() => {
-		if (isRunning) {
-			scrollToBottom();
-		}
+		if (isRunning) scrollToBottom();
 	}, [messages, isRunning, scrollToBottom]);
 
-	const handleScroll = useCallback(() => {
-		const viewport = viewportRef.current;
-		if (!viewport) return;
-		const { scrollTop, scrollHeight, clientHeight } = viewport;
-		setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
-	}, []);
+	const handleSubmit = useCallback((e?: FormEvent) => {
+		e?.preventDefault();
+		const text = input.trim();
+		if (!text || isRunning) return;
+		onSend({ role: "user", parts: [{ type: "text", text }] });
+		setInput("");
+	}, [input, isRunning, onSend]);
 
-	const handleSubmit = useCallback(
-		(e?: FormEvent) => {
-			e?.preventDefault();
-			const text = input.trim();
-			if (!text || isRunning) return;
-			onSend({ role: "user", parts: [{ type: "text", text }] });
-			setInput("");
-		},
-		[input, isRunning, onSend],
-	);
-
-	const handleKeyDown = useCallback(
-		(e: KeyboardEvent<HTMLTextAreaElement>) => {
-			if (e.key === "Enter" && !e.shiftKey) {
-				e.preventDefault();
-				handleSubmit();
-			}
-		},
-		[handleSubmit],
-	);
+	const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+	}, [handleSubmit]);
 
 	return (
 		<div className="flex h-full flex-col bg-background">
-			{/* Viewport */}
-			<div
-				ref={viewportRef}
-				onScroll={handleScroll}
-				className="relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pt-4"
-			>
+			<div ref={viewportRef} className="flex-1 overflow-y-auto scroll-smooth">
 				{isEmpty ? (
-					<WelcomeScreen onSuggestionClick={(text) => onSend({ role: "user", parts: [{ type: "text", text }] })} />
+					<WelcomeScreen onSuggestionClick={(text) => onSend({ role: "user", parts: [{ type: "text", text }] })} compact={compact} />
 				) : (
-					<div className="mx-auto w-full max-w-3xl space-y-4 pb-4">
+					<div className={cn("mx-auto w-full max-w-3xl space-y-6", compact ? "px-3 py-3" : "px-4 py-6")}>
 						{messages.map((message) => (
 							<MessageBubble key={message.id} message={message} />
 						))}
-						{status === "submitted" && <TypingIndicator />}
+						{status === "submitted" && (
+							<div className="flex items-start gap-3">
+								<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+									<SparklesIcon className="size-4 text-primary" />
+								</div>
+								<div className="flex items-center gap-2 px-2 py-3">
+									<Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+									<span className="text-sm text-muted-foreground">Pensando...</span>
+								</div>
+							</div>
+						)}
 					</div>
 				)}
+			</div>
 
-				{/* Composer footer */}
-				<div className="sticky bottom-0 mx-auto w-full max-w-3xl pb-4 pt-2 md:pb-6">
-					{showScrollButton && (
-						<Button
-							variant="outline"
-							size="icon"
-							className="absolute -top-10 left-1/2 z-10 -translate-x-1/2 rounded-full shadow-md"
-							onClick={scrollToBottom}
-						>
-							<ArrowDownIcon className="size-4" />
-						</Button>
-					)}
-					<Composer
-						input={input}
-						onInputChange={setInput}
-						onSubmit={handleSubmit}
-						onStop={onStop}
+			{/* Composer */}
+			<div className={cn("mx-auto w-full max-w-3xl", compact ? "px-3 pb-3" : "px-4 pb-4 md:pb-6")}>
+				<form onSubmit={handleSubmit} className="flex items-end gap-2 rounded-2xl border bg-background px-3 py-2 shadow-sm transition-shadow focus-within:shadow-md focus-within:border-primary/30">
+					<textarea
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
-						isRunning={isRunning}
+						placeholder={placeholder || "Escribe un mensaje..."}
+						className="min-h-[44px] max-h-32 w-full resize-none bg-transparent px-1 py-1.5 text-sm outline-none placeholder:text-muted-foreground/60"
+						rows={1}
+						autoFocus={!compact}
 					/>
-				</div>
+					<div className="flex shrink-0 items-center gap-1 pb-0.5">
+						{isRunning ? (
+							<Button type="button" size="icon" className="size-8 rounded-full" onClick={onStop}>
+								<SquareIcon className="size-3.5 fill-current" />
+							</Button>
+						) : (
+							<Button type="submit" size="icon" className="size-8 rounded-full" disabled={!input.trim()}>
+								<ArrowUpIcon className="size-4" />
+							</Button>
+						)}
+					</div>
+				</form>
+				<p className="text-center text-[10px] text-muted-foreground/40 mt-2">
+					Manoa IA puede cometer errores. Verifica la información importante.
+				</p>
 			</div>
 		</div>
 	);
@@ -124,34 +121,40 @@ export function ChatThread({ messages, status, onSend, onStop }: ChatThreadProps
 
 /* ─── Welcome Screen ─── */
 
-function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string) => void }) {
+function WelcomeScreen({ onSuggestionClick, compact }: { onSuggestionClick: (text: string) => void; compact?: boolean }) {
 	const suggestions = [
-		{ title: "Resumen del censo", description: "¿Cuántas familias hay registradas?" },
-		{ title: "Estadísticas", description: "¿Cuántos habitantes hay por sector?" },
-		{ title: "Trámites", description: "¿Qué necesito para una carta de residencia?" },
-		{ title: "Leyes", description: "¿Qué dice la Ley de los Consejos Comunales?" },
+		{ icon: "📊", title: "Resumen del censo", q: "¿Cuántas familias hay registradas?" },
+		{ icon: "📋", title: "Trámites", q: "¿Qué necesito para una carta de residencia?" },
+		{ icon: "⚖️", title: "Leyes", q: "¿Qué dice la Ley de los Consejos Comunales?" },
+		{ icon: "🏠", title: "Viviendas por sector", q: "¿Cuántos habitantes hay por sector?" },
 	];
 
 	return (
-		<div className="mx-auto flex w-full max-w-3xl grow flex-col items-center justify-center px-4">
-			<h1 className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both font-bold text-3xl duration-200">
-				¡Hola, soy Manoa IA! 🏙️
-			</h1>
-			<p className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both text-muted-foreground text-lg delay-75 duration-200">
-				¿En qué puedo ayudarte hoy con los datos de tu comunidad?
-			</p>
-			<div className="mt-6 grid w-full grid-cols-1 gap-2 md:grid-cols-2">
-				{suggestions.map((s) => (
-					<button
-						key={s.title}
-						type="button"
-						onClick={() => onSuggestionClick(s.description)}
-						className="flex flex-col items-start gap-1 rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
-					>
-						<span className="font-medium">{s.title}</span>
-						<span className="text-muted-foreground">{s.description}</span>
-					</button>
-				))}
+		<div className="flex h-full flex-col items-center justify-center px-4">
+			<div className={cn("flex flex-col items-center text-center", compact ? "gap-3 py-6" : "gap-4 py-12")}>
+				<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-inner">
+					<SparklesIcon className="size-8 text-primary" />
+				</div>
+				<h1 className="text-2xl font-bold tracking-tight">¡Hola, soy Manoa IA!</h1>
+				<p className="text-muted-foreground text-sm max-w-sm">
+					Tu asistente comunitario. Pregúntame sobre el censo, trámites, leyes o datos de la comunidad.
+				</p>
+				<div className={cn("grid w-full max-w-lg gap-2", compact ? "grid-cols-1" : "grid-cols-2")}>
+					{suggestions.slice(0, compact ? 3 : 4).map((s) => (
+						<button
+							key={s.title}
+							type="button"
+							onClick={() => onSuggestionClick(s.q)}
+							className="flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all hover:bg-muted/50 hover:border-primary/20"
+						>
+							<span className="text-lg">{s.icon}</span>
+							<div className="min-w-0">
+								<p className="font-medium truncate">{s.title}</p>
+								<p className="text-xs text-muted-foreground truncate">{s.q}</p>
+							</div>
+						</button>
+					))}
+				</div>
 			</div>
 		</div>
 	);
@@ -161,29 +164,34 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
 
 function MessageBubble({ message }: { message: UIMessage }) {
 	const isUser = message.role === "user";
-	const textParts = message.parts.filter(
-		(p): p is { type: "text"; text: string } => p.type === "text",
-	);
-	const text = textParts.map((p) => p.text).join("");
-
-	if (isUser) {
-		return (
-			<div className="flex justify-end">
-				<div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2.5">
-					<p className="whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
-				</div>
-			</div>
-		);
-	}
+	const text = message.parts.filter((p): p is { type: "text"; text: string } => p.type === "text").map((p) => p.text).join("");
 
 	return (
-		<div className="flex justify-start">
-			<div className="max-w-[85%] px-2">
-				<div className="prose prose-sm max-w-none text-sm leading-relaxed">
-					<MarkdownRenderer content={text} />
+		<div className={cn("flex items-start gap-3", isUser ? "justify-end" : "")}>
+			{!isUser && (
+				<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+					<BotIcon className="size-4 text-primary" />
 				</div>
-				<MessageActions text={text} />
+			)}
+			<div className={cn("group relative", isUser ? "max-w-[80%]" : "max-w-[85%] flex-1")}>
+				{isUser ? (
+					<div className="rounded-2xl rounded-br-md bg-primary text-primary-foreground px-4 py-2.5">
+						<p className="whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
+					</div>
+				) : (
+					<div className="space-y-1">
+						<div className="prose prose-sm max-w-none text-sm leading-relaxed">
+							<MarkdownRenderer content={text} />
+						</div>
+						<MessageActions text={text} />
+					</div>
+				)}
 			</div>
+			{isUser && (
+				<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+					<UserIcon className="size-4 text-muted-foreground" />
+				</div>
+			)}
 		</div>
 	);
 }
@@ -192,103 +200,16 @@ function MessageBubble({ message }: { message: UIMessage }) {
 
 function MessageActions({ text }: { text: string }) {
 	const [copied, setCopied] = useState(false);
-
-	const handleCopy = useCallback(() => {
-		if (!text || copied) return;
-		navigator.clipboard.writeText(text).then(() => {
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		});
-	}, [text, copied]);
-
 	return (
-		<div className="mt-1 flex items-center gap-1 text-muted-foreground">
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				onClick={handleCopy}
-				title="Copiar"
-			>
-				{copied ? (
-					<CheckIcon className="size-3.5" />
-				) : (
-					<CopyIcon className="size-3.5" />
-				)}
+		<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+			<Button variant="ghost" size="icon" className="size-7 rounded-full" onClick={() => {
+				navigator.clipboard.writeText(text);
+				setCopied(true);
+				setTimeout(() => setCopied(false), 2000);
+			}} title="Copiar">
+				{copied ? <CheckIcon className="size-3.5 text-emerald-500" /> : <CopyIcon className="size-3.5" />}
 			</Button>
 		</div>
-	);
-}
-
-/* ─── Typing Indicator ─── */
-
-function TypingIndicator() {
-	return (
-		<div className="flex justify-start">
-			<div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
-				<Loader2Icon className="size-4 animate-spin" />
-				<span>Pensando...</span>
-			</div>
-		</div>
-	);
-}
-
-/* ─── Composer ─── */
-
-interface ComposerProps {
-	input: string;
-	onInputChange: (value: string) => void;
-	onSubmit: (e?: FormEvent) => void;
-	onStop: () => void;
-	onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
-	isRunning: boolean;
-}
-
-function Composer({
-	input,
-	onInputChange,
-	onSubmit,
-	onStop,
-	onKeyDown,
-	isRunning,
-}: ComposerProps) {
-	return (
-		<form onSubmit={onSubmit} className="flex w-full flex-col rounded-2xl border bg-background px-1 pt-2 shadow-sm">
-			<textarea
-				value={input}
-				onChange={(e) => onInputChange(e.target.value)}
-				onKeyDown={onKeyDown}
-				placeholder="Escribe un mensaje..."
-				className="mb-1 max-h-32 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-muted-foreground"
-				rows={1}
-				autoFocus
-			/>
-			<div className="mx-2 mb-2 flex items-center justify-end">
-				{isRunning ? (
-					<Button
-						type="button"
-						variant="default"
-						size="icon"
-						className="size-8 rounded-full"
-						onClick={onStop}
-						title="Detener generación"
-					>
-						<SquareIcon className="size-3 fill-current" />
-					</Button>
-				) : (
-					<Button
-						type="submit"
-						variant="default"
-						size="icon"
-						className="size-8 rounded-full"
-						disabled={!input.trim()}
-						title="Enviar mensaje"
-					>
-						<ArrowUpIcon className="size-4" />
-					</Button>
-				)}
-			</div>
-		</form>
 	);
 }
 
@@ -299,60 +220,19 @@ const MarkdownRenderer = memo(function MarkdownRenderer({ content }: { content: 
 		<ReactMarkdown
 			remarkPlugins={[remarkGfm]}
 			components={{
-				p: ({ className, ...props }) => (
-					<p className={cn("my-2.5 leading-normal first:mt-0 last:mb-0", className)} {...props} />
-				),
-				ul: ({ className, ...props }) => (
-					<ul className={cn("my-2 ml-4 list-disc marker:text-muted-foreground [&>li]:mt-1", className)} {...props} />
-				),
-				ol: ({ className, ...props }) => (
-					<ol className={cn("my-2 ml-4 list-decimal marker:text-muted-foreground [&>li]:mt-1", className)} {...props} />
-				),
-				li: ({ className, ...props }) => (
-					<li className={cn("leading-normal", className)} {...props} />
-				),
-				a: ({ className, ...props }) => (
-					<a className={cn("text-primary underline underline-offset-2 hover:text-primary/80", className)} {...props} />
-				),
-				strong: ({ className, ...props }) => (
-					<strong className={cn("font-semibold", className)} {...props} />
-				),
-				code: ({ className, ...props }) => (
-					<code className={cn("rounded-md border border-border/50 bg-muted/50 px-1.5 py-0.5 font-mono text-[0.85em]", className)} {...props} />
-				),
-				pre: ({ className, ...props }) => (
-					<pre className={cn("overflow-x-auto rounded-lg border border-border/50 bg-muted/30 p-3 text-xs leading-relaxed", className)} {...props} />
-				),
-				blockquote: ({ className, ...props }) => (
-					<blockquote className={cn("my-2.5 border-muted-foreground/30 border-l-2 pl-3 text-muted-foreground italic", className)} {...props} />
-				),
-				h1: ({ className, ...props }) => (
-					<h1 className={cn("mb-2 scroll-m-20 font-semibold text-base first:mt-0 last:mb-0", className)} {...props} />
-				),
-				h2: ({ className, ...props }) => (
-					<h2 className={cn("mt-3 mb-1.5 scroll-m-20 font-semibold text-sm first:mt-0 last:mb-0", className)} {...props} />
-				),
-				h3: ({ className, ...props }) => (
-					<h3 className={cn("mt-2.5 mb-1 scroll-m-20 font-semibold text-sm first:mt-0 last:mb-0", className)} {...props} />
-				),
-				table: ({ className, ...props }) => (
-					<table className={cn("my-2 w-full border-separate border-spacing-0 overflow-y-auto", className)} {...props} />
-				),
-				th: ({ className, ...props }) => (
-					<th className={cn("bg-muted px-2 py-1 text-left font-medium first:rounded-tl-lg last:rounded-tr-lg", className)} {...props} />
-				),
-				td: ({ className, ...props }) => (
-					<td className={cn("border-muted-foreground/20 border-b border-l px-2 py-1 text-left last:border-r", className)} {...props} />
-				),
-				tr: ({ className, ...props }) => (
-					<tr className={cn("m-0 border-b p-0 first:border-t", className)} {...props} />
-				),
-				hr: ({ className, ...props }) => (
-					<hr className={cn("my-2 border-muted-foreground/20", className)} {...props} />
-				),
+				p: ({ className, ...props }) => <p className={cn("my-2 leading-normal first:mt-0 last:mb-0", className)} {...props} />,
+				ul: ({ className, ...props }) => <ul className={cn("my-2 ml-4 list-disc marker:text-muted-foreground [&>li]:mt-1", className)} {...props} />,
+				ol: ({ className, ...props }) => <ol className={cn("my-2 ml-4 list-decimal marker:text-muted-foreground [&>li]:mt-1", className)} {...props} />,
+				li: ({ className, ...props }) => <li className={cn("leading-normal", className)} {...props} />,
+				a: ({ className, ...props }) => <a className={cn("text-primary underline underline-offset-2 hover:text-primary/80", className)} {...props} />,
+				strong: ({ className, ...props }) => <strong className="font-semibold" {...props} />,
+				code: ({ className, ...props }) => <code className="rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-[0.85em]" {...props} />,
+				pre: ({ className, ...props }) => <pre className="overflow-x-auto rounded-lg border bg-muted/30 p-3 text-xs leading-relaxed" {...props} />,
+				blockquote: ({ className, ...props }) => <blockquote className="my-2 border-l-2 border-muted-foreground/30 pl-3 italic text-muted-foreground" {...props} />,
+				h1: ({ className, ...props }) => <h1 className="mb-2 mt-3 font-semibold text-base" {...props} />,
+				h2: ({ className, ...props }) => <h2 className="mb-1.5 mt-2.5 font-semibold text-sm" {...props} />,
+				h3: ({ className, ...props }) => <h3 className="mb-1 mt-2 font-semibold text-sm" {...props} />,
 			}}
-		>
-			{content}
-		</ReactMarkdown>
+		>{content}</ReactMarkdown>
 	);
 });

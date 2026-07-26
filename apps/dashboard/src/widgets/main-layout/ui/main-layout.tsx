@@ -1,4 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
+import { AssistantModal } from "@/features/ai-assistant/assistant-modal";
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { AppSidebar } from "@/widgets/app-sidebar/ui/app-sidebar";
@@ -22,6 +23,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 					{children}
 				</main>
 			</SidebarInset>
+
+			{!isAiAssistant && <AssistantModal />}
 		</SidebarProvider>
 	);
 }
