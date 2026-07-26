@@ -44,9 +44,10 @@ HERRAMIENTAS DISPONIBLES:
 - citizensBySector → cuántos habitantes por sector
 - disabilitiesSummary → personas con discapacidad registradas
 - pollsOverview / pollResults → encuestas comunitarias
-- searchLaws → Leyes del Poder Popular
+- searchLaws → Leyes del Poder Popular (devuelve resumen de la ley + enlace al PDF)
 - getMyProfile → datos del vecino autenticado (nombre, familia, vivienda)
-- Esconde información personal sensible (cédula exacta, teléfono) a menos que el vecino la pida explícitamente.`;
+- Esconde información personal sensible (cédula exacta, teléfono) a menos que el vecino la pida explícitamente.
+- Cuando te pregunten sobre una ley específica, usa searchLaws y luego explícale al vecino el resumen en palabras sencillas, como si fueras un amigo explicándole la ley.`;
 
 function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
   return {
@@ -254,35 +255,30 @@ function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
         query: z.string().describe("Términos de búsqueda relacionados con la ley o normativa"),
       }),
       execute: async ({ query }) => {
-        const term = `%${query.toLowerCase()}%`;
-        const rows = await db
-          .select({
-            name: schema.laws.name,
-            pdfUrl: schema.laws.pdfUrl,
-            fullText: schema.laws.fullText,
-          })
-          .from(schema.laws)
-          .where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
-          .limit(3);
-
-        if (rows.length === 0) {
-          return { message: "No se encontraron leyes relacionadas con esa búsqueda." };
+        try {
+          const sanitized = query.replace(/['"*()]/g, '').trim();
+          const rows = await db.all<{ name: string; pdf_url: string; full_text: string }>(
+            sql`SELECT name, pdf_url, full_text FROM laws_fts WHERE laws_fts MATCH ${sanitized} ORDER BY rank LIMIT 3`
+          );
+          return rows.map((row: any) => ({
+            ley: row.name,
+            resumen: row.full_text || "Sin resumen disponible",
+            enlace: row.pdf_url,
+          }));
+        } catch {
+          // Fallback a LIKE
+          const term = `%${query.toLowerCase()}%`;
+          const rows = await db
+            .select({ name: schema.laws.name, pdfUrl: schema.laws.pdfUrl, fullText: schema.laws.fullText })
+            .from(schema.laws)
+            .where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
+            .limit(3);
+          return rows.map((row) => ({
+            ley: row.name,
+            resumen: row.fullText?.slice(0, 500) ?? "Sin resumen",
+            enlace: row.pdfUrl,
+          }));
         }
-
-        return rows.map((row) => {
-          let excerpt = "";
-          if (row.fullText) {
-            const idx = row.fullText.toLowerCase().indexOf(query.toLowerCase());
-            if (idx !== -1) {
-              const start = Math.max(0, idx - 150);
-              const end = Math.min(row.fullText.length, idx + 400);
-              excerpt = (start > 0 ? "..." : "") + row.fullText.slice(start, end) + (end < row.fullText.length ? "..." : "");
-            } else {
-              excerpt = row.fullText.slice(0, 500) + "...";
-            }
-          }
-          return { ley: row.name, fragmento: excerpt, enlace: row.pdfUrl };
-        });
       },
     }),
   };
