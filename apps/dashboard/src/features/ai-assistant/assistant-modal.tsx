@@ -1,6 +1,7 @@
 import { useChat } from "@ai-sdk/react";
 import { BotIcon, ChevronDownIcon, SparklesIcon, ArrowUpIcon, SquareIcon } from "lucide-react";
 import { memo, useCallback, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ export function AssistantModal() {
 		setInput("");
 	}, [input, isLoading, handleSubmit, setInput]);
 
-	return (
+	return createPortal(
 		<>
 			{open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
 
@@ -105,7 +106,8 @@ export function AssistantModal() {
 					{open ? <ChevronDownIcon className="size-6" /> : <BotIcon className="size-6" />}
 				</Button>
 			</div>
-		</>
+		</>,
+		document.body
 	);
 }
 
