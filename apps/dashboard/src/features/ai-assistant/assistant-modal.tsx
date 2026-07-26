@@ -1,16 +1,17 @@
 import { AssistantModalPrimitive } from "@assistant-ui/react";
 import { BotIcon, ChevronDownIcon, SparklesIcon } from "lucide-react";
-import { forwardRef, useState } from "react";
-import { ChatThread } from "./chat-thread";
-import { useChatRuntime } from "./api/use-chat-runtime";
+import { forwardRef, lazy, Suspense, useState } from "react";
 import { Button } from "@/shared/ui/button";
 
+const LazyChatContent = lazy(() => import("./chat-popover-content"));
+
 export function AssistantModal() {
-	const [conversationId] = useState(() => crypto.randomUUID());
-	const chat = useChatRuntime(conversationId);
+	const [hasBeenOpened, setHasBeenOpened] = useState(false);
 
 	return (
-		<AssistantModalPrimitive.Root>
+		<AssistantModalPrimitive.Root onOpenChange={(open) => {
+			if (open) setHasBeenOpened(true);
+		}}>
 			<AssistantModalPrimitive.Anchor className="fixed end-4 bottom-4 size-11 z-50">
 				<AssistantModalPrimitive.Trigger asChild>
 					<AssistantModalButton />
@@ -28,15 +29,24 @@ export function AssistantModal() {
 						</span>
 					</div>
 					<div className="flex-1 overflow-hidden">
-						<ChatThread
-							key={conversationId}
-							messages={chat.messages}
-							status={chat.status}
-							onSend={chat.sendMessage}
-							onStop={chat.stop}
-							placeholder="Pregúntame..."
-							compact
-						/>
+						{hasBeenOpened ? (
+							<Suspense fallback={
+								<div className="flex h-full items-center justify-center">
+									<p className="text-sm text-muted-foreground animate-pulse">Conectando...</p>
+								</div>
+							}>
+								<LazyChatContent />
+							</Suspense>
+						) : (
+							<div className="flex h-full items-center justify-center p-6 text-center">
+								<div className="space-y-3">
+									<SparklesIcon className="size-8 text-primary/40 mx-auto" />
+									<p className="text-sm text-muted-foreground">
+										Tu asistente comunitario. Pregúntame sobre el censo, trámites o leyes.
+									</p>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 			</AssistantModalPrimitive.Content>
@@ -47,12 +57,7 @@ export function AssistantModal() {
 const AssistantModalButton = forwardRef<HTMLButtonElement, { "data-state"?: "open" | "closed" }>(
 	function AssistantModalButton({ "data-state": state, ...rest }, ref) {
 		return (
-			<Button
-				ref={ref}
-				{...rest}
-				variant="default"
-				className="size-full rounded-full shadow-lg"
-			>
+			<Button ref={ref as any} {...rest} variant="default" className="size-full rounded-full shadow-lg">
 				<BotIcon className="absolute size-6 transition-all data-[state=closed]:scale-100 data-[state=open]:scale-0" data-state={state} />
 				<ChevronDownIcon className="absolute size-6 transition-all data-[state=closed]:scale-0 data-[state=open]:scale-100" data-state={state} />
 			</Button>
