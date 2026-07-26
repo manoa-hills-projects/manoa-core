@@ -1,14 +1,34 @@
-import { useCallback, useState } from "react";
-import { SparklesIcon } from "lucide-react";
+import { Component, useCallback, useState } from "react";
+import { AlertTriangleIcon, SparklesIcon } from "lucide-react";
 import { ChatThread } from "@/features/ai-assistant/chat-thread";
 import { useChatRuntime } from "@/features/ai-assistant/api/use-chat-runtime";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
 
+// ── Error Boundary ──
+
+class ChatErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+	constructor(props: { children: React.ReactNode }) { super(props); this.state = { hasError: false }; }
+	static getDerivedStateFromError() { return { hasError: true }; }
+	render() {
+		if (this.state.hasError) {
+			return (
+				<div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+					<AlertTriangleIcon className="size-8 text-muted-foreground" />
+					<p className="text-sm text-muted-foreground">No se pudo conectar al asistente. Intenta de nuevo.</p>
+					<Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false })}>Reintentar</Button>
+				</div>
+			);
+		}
+		return this.props.children;
+	}
+}
+
+// ── Chat Content ──
+
 function ChatContent({ onNewChat }: { onNewChat: () => void }) {
 	const [conversationId] = useState(() => crypto.randomUUID());
 	const chat = useChatRuntime(conversationId);
-
 	return (
 		<ChatThread
 			key={conversationId}
@@ -21,6 +41,8 @@ function ChatContent({ onNewChat }: { onNewChat: () => void }) {
 		/>
 	);
 }
+
+// ── Modal ──
 
 export function AssistantModal() {
 	const [open, setOpen] = useState(false);
@@ -51,7 +73,9 @@ export function AssistantModal() {
 						</div>
 					</div>
 					<div className="flex-1 overflow-hidden">
-						{open && <ChatContent key={chatKey} onNewChat={handleNewChat} />}
+						<ChatErrorBoundary key={chatKey}>
+							{open && <ChatContent onNewChat={handleNewChat} />}
+						</ChatErrorBoundary>
 					</div>
 				</SheetContent>
 			</Sheet>
