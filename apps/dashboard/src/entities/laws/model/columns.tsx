@@ -1,45 +1,37 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { FileText, Link } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
 import type { Law } from "./types";
+import { Button } from "@/shared/ui/button";
 
 export const lawColumns: ColumnDef<Law>[] = [
 	{
 		accessorKey: "name",
 		header: () => (
 			<div className="flex flex-row items-center gap-1">
-				<FileText className="size-3.5" /> Nombre de la Ley
-			</div>
-		),
-	},
-	{
-		accessorKey: "pdf_url",
-		header: () => (
-			<div className="flex flex-row items-center gap-1">
-				<Link className="size-3.5" /> Enlace PDF
+				<FileText className="size-3.5" /> Ley
 			</div>
 		),
 		cell: ({ row }) => (
-			<a
-				href={row.original.pdf_url}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="text-primary underline-offset-4 hover:underline text-sm"
-			>
-				Ver PDF
-			</a>
+			<div>
+				<p className="font-medium">{row.original.name}</p>
+				{row.original.full_text && row.original.full_text.length > 30 && row.original.full_text.length < 500 && (
+					<p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 max-w-md">
+						{row.original.full_text}
+					</p>
+				)}
+			</div>
 		),
 	},
 	{
-		accessorKey: "scraped_at",
-		header: "Última sincronización",
-		cell: ({ row }) => {
-			const val = row.original.scraped_at;
-			if (!val) return "—";
-			return new Date(val * 1000).toLocaleDateString("es-VE", {
-				day: "2-digit",
-				month: "short",
-				year: "numeric",
-			});
-		},
+		id: "pdf",
+		header: "Documento",
+		cell: ({ row }) => (
+			<Button variant="ghost" size="sm" className="gap-1" asChild>
+				<a href={row.original.pdf_url} target="_blank" rel="noopener noreferrer">
+					<ExternalLink className="size-3.5" />
+					PDF
+				</a>
+			</Button>
+		),
 	},
 ];
