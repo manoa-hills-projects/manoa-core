@@ -26,7 +26,7 @@ const lawsRouter = new Hono<HonoConfig>()
 		if (!result.data) return c.json({ error: "Ley no encontrada" }, 404);
 		return c.json(result, 200);
 	})
-	.post("/scrape", async (c) => {
+	.post("/scrape", requirePermission(MODULES.LAWS), async (c) => {
 		const env = c.env;
 		await env.LAWS_SCRAPE_QUEUE.send({ type: "scrape_laws" });
 		return c.json({ message: "Sincronización encolada. El proceso se ejecutará en segundo plano." }, 202);
