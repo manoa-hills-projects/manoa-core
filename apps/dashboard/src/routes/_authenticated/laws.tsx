@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useLaws } from "@/entities/laws";
 import { LawsTable } from "@/features/laws";
 import { usePermissions } from "@/hooks/use-permissions";
+import { api } from "@/shared/api/api-client";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
@@ -29,8 +30,7 @@ function RouteComponent() {
 	const handleScrape = async () => {
 		setIsScraping(true);
 		try {
-			const res = await fetch("/api/laws/scrape", { method: "POST", credentials: "include" });
-			if (!res.ok) throw new Error("Error al sincronizar");
+			await api.post("laws/scrape").json();
 			toast.success("Leyes sincronizadas correctamente");
 		} catch {
 			toast.error("Error al sincronizar leyes");
