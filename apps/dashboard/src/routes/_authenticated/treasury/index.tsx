@@ -1,10 +1,13 @@
 import { BanknoteIcon, DollarSignIcon, HandCoinsIcon, PlusIcon } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ConceptManagement } from "@/features/concept-management";
 import { ExchangeRateForm } from "@/features/exchange-rate-set";
 import { ExpenseRegister } from "@/features/expense-register";
 import {
+	formatBs,
+	formatUsd,
 	PAYMENT_STATUS_LABELS,
 	type TreasuryPayment,
 	useMyPayments,
@@ -15,8 +18,10 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { DataTable } from "@/shared/ui/data-table";
 import { ProtectedRoute } from "@/shared/ui/protected-route";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { useTableFilters } from "@/shared/hooks/use-table-filters";
 import { PaymentsInbox } from "@/widgets/payments-inbox";
 
 export const Route = createFileRoute("/_authenticated/treasury/")({
@@ -31,13 +36,18 @@ function RouteComponent() {
 	const isTreasurer = canManage("treasury");
 
 	// ── Mis pagos ──
-	const { data: myPayments, isLoading: loadingPayments } = useMyPayments();
+	const filters = useTableFilters();
+	const { data: myPaymentsRes, isLoading: loadingPayments } = useMyPayments(
+		filters.pagination.pageIndex + 1,
+		filters.pagination.pageSize,
+	);
 	const { data: rate } = useTodayRate();
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [rejected, setRejected] = useState<TreasuryPayment | null>(null);
 
+	const myPayments = myPaymentsRes?.data ?? [];
+	const totalPayments = myPaymentsRes?.total ?? 0;
 	const pendingCount = myPayments?.filter((p) => p.status === "pending").length ?? 0;
-	const totalPayments = myPayments?.length ?? 0;
 
 	return (
 		<ProtectedRoute>
@@ -110,41 +120,14 @@ function RouteComponent() {
 						</div>
 					</CardHeader>
 					<CardContent>
-						{loadingPayments && <p className="text-sm text-muted-foreground py-6">Cargando...</p>}
-						{!loadingPayments && totalPayments === 0 && (
-							<p className="text-sm text-muted-foreground py-6">Todavía no has enviado pagos.</p>
-						)}
-						<div className="flex flex-col divide-y max-h-80 overflow-y-auto">
-							{myPayments?.map((p) => (
-								<div key={p.id} className="flex items-center justify-between gap-3 py-3">
-									<div>
-										<div className="flex items-center gap-2">
-											<p className="font-medium">{p.description || "Pago sin descripción"}</p>
-											<Badge variant={p.status === "approved" ? "default" : p.status === "rejected" ? "destructive" : "secondary"}>
-												{PAYMENT_STATUS_LABELS[p.status]}
-											</Badge>
-										</div>
-										<p className="text-xs text-muted-foreground">
-											{new Date(p.submittedAt).toLocaleDateString("es-VE")}
-										</p>
-										{p.status === "rejected" && p.reviewNotes && (
-											<p className="text-xs text-destructive mt-1">Motivo: {p.reviewNotes}</p>
-										)}
-									</div>
-									<div className="flex items-center gap-3">
-										<div className="text-right">
-											<p className="font-medium">{formatUsd(p.amountUsdCents)}</p>
-											<p className="text-xs text-muted-foreground">{formatBs(p.amountBsCents)}</p>
-										</div>
-										{p.status === "rejected" && (
-											<Button size="sm" variant="secondary" onClick={() => { setRejected(p); setSheetOpen(true); }}>
-												Corregir
-											</Button>
-										)}
-									</div>
-								</div>
-							))}
-						</div>
+						<DataTable
+							columns={paymentColumns({ onResubmit: (p) => { setRejected(p); setSheetOpen(true); } })}
+							data={myPayments}
+							rowCount={totalPayments}
+							pagination={filters.pagination}
+							onPaginationChange={filters.setPagination}
+							isLoading={loadingPayments}
+						/>
 					</CardContent>
 				</Card>
 
@@ -179,4 +162,62 @@ function RouteComponent() {
 			/>
 		</ProtectedRoute>
 	);
+}
+
+
+// ── Columnas para la tabla de pagos ──
+
+function paymentColumns({ onResubmit }: { onResubmit: (p: TreasuryPayment) => void }) {
+	const cols: ColumnDef<TreasuryPayment>[] = [
+		{
+			accessorKey: "description",
+			header: "Concepto",
+			cell: ({ row }) => (
+				<div>
+					<p className="font-medium">{row.original.description || "Pago sin descripción"}</p>
+					{row.original.status === "rejected" && row.original.reviewNotes && (
+						<p className="text-xs text-destructive mt-0.5">Motivo: {row.original.reviewNotes}</p>
+					)}
+				</div>
+			),
+		},
+		{
+			id: "amount",
+			header: "Monto",
+			cell: ({ row }) => (
+				<div className="text-right">
+					<p className="font-medium">{formatUsd(row.original.amountUsdCents)}</p>
+					<p className="text-xs text-muted-foreground">{formatBs(row.original.amountBsCents)}</p>
+				</div>
+			),
+		},
+		{
+			id: "date",
+			accessorKey: "submittedAt",
+			header: "Fecha",
+			cell: ({ row }) => new Date(row.original.submittedAt).toLocaleDateString("es-VE"),
+		},
+		{
+			id: "status",
+			accessorKey: "status",
+			header: "Estado",
+			cell: ({ row }) => (
+				<Badge variant={row.original.status === "approved" ? "default" : row.original.status === "rejected" ? "destructive" : "secondary"}>
+					{PAYMENT_STATUS_LABELS[row.original.status]}
+				</Badge>
+			),
+		},
+		{
+			id: "actions",
+			header: "",
+			cell: ({ row }) =>
+				row.original.status === "rejected" ? (
+					<Button size="sm" variant="secondary" onClick={() => onResubmit(row.original)}>
+						Corregir
+					</Button>
+				) : null,
+		},
+	];
+
+	return cols;
 }

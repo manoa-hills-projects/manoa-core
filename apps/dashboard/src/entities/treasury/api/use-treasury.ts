@@ -250,14 +250,16 @@ export const useResubmitPayment = () => {
 	});
 };
 
-export const useMyPayments = () =>
+export const useMyPayments = (page = 1, limit = 10) =>
 	useQuery({
-		queryKey: treasuryKeys.myPayments(),
+		queryKey: [...treasuryKeys.myPayments(), page, limit],
 		queryFn: async () => {
 			const res = await api
-				.get("treasury/payments/mine")
-				.json<Envelope<TreasuryPayment[]>>();
-			return res.data;
+				.get("treasury/payments/mine", {
+					searchParams: { page, limit },
+				})
+				.json<{ data: TreasuryPayment[]; total: number; page: number; limit: number }>();
+			return res;
 		},
 	});
 

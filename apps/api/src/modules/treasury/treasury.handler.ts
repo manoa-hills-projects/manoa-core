@@ -390,13 +390,22 @@ export async function createPayment({
   }
 }
 
-export async function listMyPayments(db: Database, userId: string) {
-  return db
-    .select()
-    .from(treasuryPayments)
-    .where(eq(treasuryPayments.userId, userId))
-    .orderBy(desc(treasuryPayments.submittedAt))
-    .all();
+export async function listMyPayments(db: Database, userId: string, page = 1, limit = 10) {
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select()
+      .from(treasuryPayments)
+      .where(eq(treasuryPayments.userId, userId))
+      .orderBy(desc(treasuryPayments.submittedAt))
+      .limit(limit)
+      .offset((page - 1) * limit),
+    db
+      .select({ total: count() })
+      .from(treasuryPayments)
+      .where(eq(treasuryPayments.userId, userId))
+      .get(),
+  ]);
+  return { data: rows, total: total ?? 0, page, limit };
 }
 
 export async function getPaymentById(

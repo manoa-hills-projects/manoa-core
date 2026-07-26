@@ -327,12 +327,19 @@ treasuryRouter.post("/payments", async (c) => {
   }
 });
 
-treasuryRouter.get("/payments/mine", async (c) => {
+const myPaymentsQueryDto = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+
+treasuryRouter.get("/payments/mine", zValidator("query", myPaymentsQueryDto), async (c) => {
   try {
     const db = c.get("db");
     const userId = getSessionUserId(c);
     if (!userId) return c.json({ error: "No autorizado" }, 401);
-    return c.json(buildSingleData(await listMyPayments(db, userId)));
+    const { page, limit } = c.req.valid("query");
+    const result = await listMyPayments(db, userId, page, limit);
+    return c.json(result);
   } catch (error) {
     return handleError(c, error);
   }
