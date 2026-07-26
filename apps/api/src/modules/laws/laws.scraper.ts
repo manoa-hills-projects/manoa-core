@@ -1,65 +1,12 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "@/shared/database/schemas";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { extractText, getDocumentProxy } from "unpdf";
 
-interface CrawlRecord {
-	url: string;
-	status: string;
-	markdown?: string;
-}
-
-interface CrawlJobResult {
-	status: string;
-	records?: CrawlRecord[];
-}
-
-interface ParsedLaw {
-	name: string;
-	pdfUrl: string;
-}
-
-async function pollCrawlJob(
-	accountId: string,
-	apiToken: string,
-	jobId: string,
-	maxAttempts = 20,
-): Promise<CrawlJobResult> {
-	const baseUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/crawl/${jobId}`;
-
-	for (let i = 0; i < maxAttempts; i++) {
-		const res = await fetch(`${baseUrl}?limit=1`, {
-			headers: { Authorization: `Bearer ${apiToken}` },
-		});
-		const data = (await res.json()) as { result: CrawlJobResult };
-		if (data.result.status !== "running") {
-			const fullRes = await fetch(baseUrl, {
-				headers: { Authorization: `Bearer ${apiToken}` },
-			});
-			const fullData = (await fullRes.json()) as { result: CrawlJobResult };
-			return fullData.result;
-		}
-		await new Promise((r) => setTimeout(r, 3000));
-	}
-	throw new Error("Crawl job did not complete in time");
-}
-
-function parseLawLinksFromMarkdown(markdown: string): ParsedLaw[] {
-	const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi;
-	const laws: ParsedLaw[] = [];
-
-	for (const match of markdown.matchAll(linkRegex)) {
-		const name = match[1].trim();
-		const pdfUrl = match[2].trim();
-		if (name && pdfUrl && pdfUrl.toLowerCase().includes("pdf")) {
-			laws.push({ name, pdfUrl });
-		}
-	}
-	return laws;
-}
-
 async function extractPdfText(pdfUrl: string): Promise<string> {
-	const response = await fetch(pdfUrl);
+	const response = await fetch(pdfUrl, {
+		headers: { "User-Agent": "Mozilla/5.0 (compatible; ManoaBot/1.0)" },
+	});
 	if (!response.ok) {
 		throw new Error(`Failed to fetch PDF: ${response.status} ${pdfUrl}`);
 	}
@@ -71,87 +18,49 @@ async function extractPdfText(pdfUrl: string): Promise<string> {
 
 export async function scrapeAndStoreLaws(
 	db: DrizzleD1Database<typeof schema>,
-	accountId: string,
-	apiToken: string,
+	_accountId: string,
+	_apiToken: string,
 ): Promise<{ scraped: number; errors: string[] }> {
-	const SOURCE_URL = "https://www.comunas.gob.ve/leyes-poder-popular/";
 	const errors: string[] = [];
 
-	// Phase 1: crawl the page with Cloudflare Browser Rendering
-	const startRes = await fetch(
-		`https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/crawl`,
-		{
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${apiToken}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				url: SOURCE_URL,
-				limit: 1,
-				depth: 1,
-				formats: ["markdown"],
-				render: true,
-			}),
-		},
-	);
+	// Obtener todas las leyes que ya tenemos en DB con sus PDF URLs
+	const laws = await db
+		.select({ id: schema.laws.id, name: schema.laws.name, pdfUrl: schema.laws.pdfUrl })
+		.from(schema.laws)
+		.all();
 
-	if (!startRes.ok) {
-		const errText = await startRes.text();
-		throw new Error(`Failed to start crawl job: ${errText}`);
+	if (laws.length === 0) {
+		throw new Error("No hay leyes en la base de datos. Ejecute primero la inserción manual.");
 	}
 
-	const startData = (await startRes.json()) as { result: string; success: boolean };
-	if (!startData.success) {
-		throw new Error("Crawl job creation was not successful");
-	}
+	console.log(`[laws-scraper] Procesando ${laws.length} leyes...`);
 
-	const jobId = startData.result;
-	const jobResult = await pollCrawlJob(accountId, apiToken, jobId);
-
-	if (jobResult.status !== "completed") {
-		throw new Error(`Crawl job ended with status: ${jobResult.status}`);
-	}
-
-	const pageRecord = jobResult.records?.find((r) => r.status === "completed");
-	if (!pageRecord?.markdown) {
-		throw new Error("No markdown content returned from crawl");
-	}
-
-	// Phase 2: parse PDF links from markdown
-	console.log("[laws-scraper] markdown preview:", pageRecord.markdown.slice(0, 1000));
-	const parsedLaws = parseLawLinksFromMarkdown(pageRecord.markdown);
-	console.log(`[laws-scraper] found ${parsedLaws.length} PDF links`);
-	if (parsedLaws.length === 0) {
-		throw new Error(`No PDF links found on the page. Markdown preview: ${pageRecord.markdown.slice(0, 500)}`);
-	}
-
-	// Phase 3: extract text from each PDF and upsert to D1
 	let scraped = 0;
-	for (const law of parsedLaws) {
+	for (const law of laws) {
 		try {
+			console.log(`[laws-scraper] Descargando PDF: ${law.name}`);
 			const fullText = await extractPdfText(law.pdfUrl);
+
 			await db
-				.insert(schema.laws)
-				.values({
-					name: law.name,
-					sourceUrl: SOURCE_URL,
-					pdfUrl: law.pdfUrl,
+				.update(schema.laws)
+				.set({
 					fullText,
 					scrapedAt: new Date(),
+					updatedAt: new Date(),
 				})
-				.onConflictDoUpdate({
-					target: schema.laws.pdfUrl,
-					set: {
-						name: law.name,
-						fullText,
-						scrapedAt: new Date(),
-						updatedAt: new Date(),
-					},
-				});
+				.where(eq(schema.laws.id, law.id))
+				.run();
+
+			// Actualizar el índice FTS5
+			await db.run(sql`INSERT INTO laws_fts(laws_fts, name, full_text) VALUES('delete', ${law.name}, ${fullText})`);
+			await db.run(sql`INSERT INTO laws_fts(name, full_text) VALUES(${law.name}, ${fullText})`);
+
 			scraped++;
+			console.log(`[laws-scraper] ✅ ${law.name} procesado (${fullText.length} caracteres)`);
 		} catch (err) {
-			errors.push(`${law.name}: ${err instanceof Error ? err.message : String(err)}`);
+			const msg = err instanceof Error ? err.message : String(err);
+			console.error(`[laws-scraper] ❌ ${law.name}: ${msg}`);
+			errors.push(`${law.name}: ${msg}`);
 		}
 	}
 
