@@ -159,30 +159,55 @@ export async function scrapeAndStoreLaws(
 }
 
 export async function searchLawsText(
-	db: DrizzleD1Database<typeof schema>,
-	query: string,
-	limit = 3,
+  db: DrizzleD1Database<typeof schema>,
+  query: string,
+  limit = 3,
 ): Promise<Array<{ name: string; excerpt: string; pdfUrl: string }>> {
-	const term = `%${query.toLowerCase()}%`;
-	const rows = await db
-		.select({
-			id: schema.laws.id,
-			name: schema.laws.name,
-			pdfUrl: schema.laws.pdfUrl,
-			fullText: schema.laws.fullText,
-		})
-		.from(schema.laws)
-		.where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
-		.limit(limit);
+  // Escape FTS5 special characters
+  const sanitized = query.replace(/['"*()]/g, '').trim();
+  if (!sanitized) return [];
 
-	return rows.map((row) => {
-		let excerpt = "";
-		if (row.fullText) {
-			const idx = row.fullText.toLowerCase().indexOf(query.toLowerCase());
-			const start = Math.max(0, idx - 150);
-			const end = Math.min(row.fullText.length, idx + 400);
-			excerpt = (start > 0 ? "..." : "") + row.fullText.slice(start, end) + (end < row.fullText.length ? "..." : "");
-		}
-		return { name: row.name, excerpt, pdfUrl: row.pdfUrl };
-	});
+  try {
+    const rows = await db.all<{
+      name: string;
+      pdf_url: string;
+      full_text: string;
+    }>(
+      sql`SELECT name, pdf_url, full_text FROM laws_fts WHERE laws_fts MATCH ${sanitized} ORDER BY rank LIMIT ${limit}`
+    );
+
+    return rows.map((row: any) => {
+      let excerpt = "";
+      if (row.full_text) {
+        const idx = row.full_text.toLowerCase().indexOf(sanitized.toLowerCase());
+        const start = Math.max(0, idx - 150);
+        const end = Math.min(row.full_text.length, idx + 400);
+        excerpt = (start > 0 ? "..." : "") + row.full_text.slice(start, end) + (end < row.full_text.length ? "..." : "");
+      }
+      return { name: row.name, excerpt, pdfUrl: row.pdf_url };
+    });
+  } catch {
+    // Fallback a LIKE si FTS5 falla
+    const term = `%${sanitized.toLowerCase()}%`;
+    const rows = await db
+      .select({
+        name: schema.laws.name,
+        pdfUrl: schema.laws.pdfUrl,
+        fullText: schema.laws.fullText,
+      })
+      .from(schema.laws)
+      .where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
+      .limit(limit);
+
+    return rows.map((row) => {
+      let excerpt = "";
+      if (row.fullText) {
+        const idx = row.fullText.toLowerCase().indexOf(sanitized.toLowerCase());
+        const start = Math.max(0, idx - 150);
+        const end = Math.min(row.fullText.length, idx + 400);
+        excerpt = (start > 0 ? "..." : "") + row.fullText.slice(start, end) + (end < row.fullText.length ? "..." : "");
+      }
+      return { name: row.name, excerpt, pdfUrl: row.pdfUrl };
+    });
+  }
 }
