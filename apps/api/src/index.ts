@@ -280,7 +280,7 @@ const app = new Hono<HonoConfig>()
   .route('/signatories', signatoriesRouter)
   .use('/validations/*', requireAuth)
   .route('/validations', validationsRouter)
-  // .use('/laws/scrape', requireAuth)  // temporalmente desactivado para test
+  .use('/laws/scrape', requireAuth)
   .route('/laws', lawsRouter)
   .use('/settings/*', requireAuth)
   .route('/settings', settingsRouter)
