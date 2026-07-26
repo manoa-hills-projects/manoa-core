@@ -1,3 +1,6 @@
+import { memo } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { Law } from "@/entities/laws/model/types";
 import {
 	Sheet,
@@ -9,6 +12,7 @@ import {
 import { ExternalLink, FileText, MessageSquare, ScrollText } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
 interface LawDetailSheetProps {
 	open: boolean;
@@ -48,9 +52,7 @@ export function LawDetailSheet({ open, onOpenChange, law }: LawDetailSheetProps)
 									<ScrollText className="size-4 text-muted-foreground" />
 									<span className="text-sm font-medium">Resumen</span>
 								</div>
-								<p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
-									{summary}
-								</p>
+								<MarkdownRenderer content={summary} />
 							</div>
 						) : (
 							<div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-lg border border-dashed">
@@ -81,3 +83,39 @@ export function LawDetailSheet({ open, onOpenChange, law }: LawDetailSheetProps)
 		</Sheet>
 	);
 }
+
+const MarkdownRenderer = memo(function MarkdownRenderer({ content }: { content: string }) {
+	return (
+		<ReactMarkdown
+			remarkPlugins={[remarkGfm]}
+			components={{
+				p: ({ className, ...props }) => (
+					<p className={cn("my-2 leading-relaxed text-sm text-foreground/80 first:mt-0 last:mb-0", className)} {...props} />
+				),
+				strong: ({ className, ...props }) => (
+					<strong className={cn("font-semibold", className)} {...props} />
+				),
+				ul: ({ className, ...props }) => (
+					<ul className={cn("my-1 ml-4 list-disc marker:text-muted-foreground [&>li]:mt-0.5", className)} {...props} />
+				),
+				ol: ({ className, ...props }) => (
+					<ol className={cn("my-1 ml-4 list-decimal marker:text-muted-foreground [&>li]:mt-0.5", className)} {...props} />
+				),
+				li: ({ className, ...props }) => (
+					<li className={cn("text-sm leading-relaxed", className)} {...props} />
+				),
+				h1: ({ className, ...props }) => (
+					<h1 className={cn("mb-2 mt-3 scroll-m-20 font-semibold text-base first:mt-0 last:mb-0", className)} {...props} />
+				),
+				h2: ({ className, ...props }) => (
+					<h2 className={cn("mb-1.5 mt-2.5 scroll-m-20 font-semibold text-sm first:mt-0 last:mb-0", className)} {...props} />
+				),
+				h3: ({ className, ...props }) => (
+					<h3 className={cn("mb-1 mt-2 scroll-m-20 font-semibold text-sm first:mt-0 last:mb-0", className)} {...props} />
+				),
+			}}
+		>
+			{content}
+		</ReactMarkdown>
+	);
+});
