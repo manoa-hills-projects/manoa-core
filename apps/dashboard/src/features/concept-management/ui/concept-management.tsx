@@ -122,28 +122,39 @@ function ConceptCreateSheet({
 	categories,
 }: ConceptCreateSheetProps) {
 	const create = useCreateConcept();
-	const [key, setKey] = useState("");
-	const [name, setName] = useState("");
-	const [categoryId, setCategoryId] = useState("");
-	const [description, setDescription] = useState("");
-	const [defaultBs, setDefaultBs] = useState("");
-	const [defaultUsd, setDefaultUsd] = useState("");
+ 	const [name, setName] = useState("");
+ 	const [categoryId, setCategoryId] = useState("");
+ 	const [description, setDescription] = useState("");
+ 	const [defaultBs, setDefaultBs] = useState("");
+ 	const [defaultUsd, setDefaultUsd] = useState("");
 
-	const reset = () => {
-		setKey("");
-		setName("");
-		setCategoryId("");
-		setDescription("");
-		setDefaultBs("");
-		setDefaultUsd("");
-	};
+ 	// Auto-generar clave desde el nombre
+ 	const autoKey = name
+ 		.toLowerCase()
+ 		.replace(/[^a-záéíóúñ0-9\s]/g, "")
+ 		.replace(/\s+/g, "_")
+ 		.replace(/á/g, "a")
+ 		.replace(/é/g, "e")
+ 		.replace(/í/g, "i")
+ 		.replace(/ó/g, "o")
+ 		.replace(/ú/g, "u")
+ 		.replace(/ñ/g, "n")
+ 		.trim() || "";
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		try {
-			await create.mutateAsync({
-				key,
-				name,
+ 	const reset = () => {
+ 		setName("");
+ 		setCategoryId("");
+ 		setDescription("");
+ 		setDefaultBs("");
+ 		setDefaultUsd("");
+ 	};
+
+ 	const handleSubmit = async (e: React.FormEvent) => {
+ 		e.preventDefault();
+ 		try {
+ 			await create.mutateAsync({
+ 				key: autoKey,
+ 				name,
 				categoryId,
 				description: description || null,
 				defaultAmountBs: defaultBs || null,
@@ -167,16 +178,6 @@ function ConceptCreateSheet({
 		>
 			<form onSubmit={handleSubmit} className="flex flex-col gap-4 px-1">
 				<div className="flex flex-col gap-1">
-					<Label htmlFor="key">Clave (solo minúsculas y guión bajo)</Label>
-					<Input
-						id="key"
-						value={key}
-						onChange={(e) => setKey(e.target.value.toLowerCase())}
-						placeholder="cuota_enero_2026"
-						required
-					/>
-				</div>
-				<div className="flex flex-col gap-1">
 					<Label htmlFor="name">Nombre</Label>
 					<Input
 						id="name"
@@ -185,6 +186,11 @@ function ConceptCreateSheet({
 						placeholder="Cuota Enero 2026"
 						required
 					/>
+					{name && (
+						<p className="text-xs text-muted-foreground">
+							Clave: <code className="text-xs bg-muted px-1 rounded">{autoKey}</code>
+						</p>
+					)}
 				</div>
 				<div className="flex flex-col gap-1">
 					<Label>Categoría</Label>
