@@ -11,11 +11,15 @@ import { usePollForm } from "../model/use-poll-form";
 interface PollFormSheetProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	onSuccess?: () => void;
 }
 
-export function PollFormSheet({ open, onOpenChange }: PollFormSheetProps) {
+export function PollFormSheet({ open, onOpenChange, onSuccess }: PollFormSheetProps) {
 	const { form, onSubmit, isSubmitting } = usePollForm({
-		onSuccess: () => onOpenChange(false),
+		onSuccess: () => {
+			onOpenChange(false);
+			onSuccess?.();
+		},
 	});
 
 	const { fields, append, remove } = useFieldArray({
