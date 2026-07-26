@@ -391,7 +391,7 @@ export async function createPayment({
 }
 
 export async function listMyPayments(db: Database, userId: string, page = 1, limit = 10) {
-  const [rows, [{ total }]] = await Promise.all([
+  const [rows, totalResult] = await Promise.all([
     db
       .select()
       .from(treasuryPayments)
@@ -405,7 +405,8 @@ export async function listMyPayments(db: Database, userId: string, page = 1, lim
       .where(eq(treasuryPayments.userId, userId))
       .get(),
   ]);
-  return { data: rows, total: total ?? 0, page, limit };
+  const total = totalResult?.total ?? 0;
+  return { data: rows, total, page, limit };
 }
 
 export async function getPaymentById(
