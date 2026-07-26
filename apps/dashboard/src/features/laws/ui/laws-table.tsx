@@ -1,16 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState, useCallback } from "react";
-import { type Law, useLaws, useScrapeLaws } from "@/entities/laws";
+import { type Law, useLaws } from "@/entities/laws";
 import { lawColumns } from "@/entities/laws/model/columns";
 import { useTableFilters } from "@/shared/hooks/use-table-filters";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/ui/data-table";
 import { InputSearch } from "@/shared/ui/input-search";
-import { RefreshCw, Eye } from "lucide-react";
-import { toast } from "sonner";
+import { Eye } from "lucide-react";
 import { LawDetailSheet } from "./law-detail-sheet";
 import { useLaw } from "@/entities/laws/api/use-laws";
-import { ProtectedRoute } from "@/shared/ui/protected-route";
 
 export function LawsTable() {
 	const filters = useTableFilters();
@@ -78,12 +76,6 @@ export function LawsTable() {
 						onChange={(value) => filters.setSearch(value)}
 					/>
 				</div>
-				<ProtectedRoute module="laws" fallback={null}>
-					<Button onClick={handleScrape} disabled={isScraping} className="gap-2">
-						<RefreshCw className={`size-4 ${isScraping ? "animate-spin" : ""}`} />
-						{isScraping ? "Sincronizando..." : "Sincronizar leyes"}
-					</Button>
-				</ProtectedRoute>
 			</div>
 
 			<DataTable
