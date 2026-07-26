@@ -1,23 +1,37 @@
 import { useCallback, useState } from "react";
-import { XIcon, SparklesIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 import { ChatThread } from "@/features/ai-assistant/chat-thread";
 import { useChatRuntime } from "@/features/ai-assistant/api/use-chat-runtime";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
 
-export function AssistantModal() {
-	const [open, setOpen] = useState(false);
-	const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
-
+function ChatContent({ onNewChat }: { onNewChat: () => void }) {
+	const [conversationId] = useState(() => crypto.randomUUID());
 	const chat = useChatRuntime(conversationId);
 
+	return (
+		<ChatThread
+			key={conversationId}
+			messages={chat.messages}
+			status={chat.status}
+			onSend={chat.sendMessage}
+			onStop={chat.stop}
+			placeholder="Pregúntame sobre tu comunidad..."
+			compact
+		/>
+	);
+}
+
+export function AssistantModal() {
+	const [open, setOpen] = useState(false);
+	const [chatKey, setChatKey] = useState(0);
+
 	const handleNewChat = useCallback(() => {
-		setConversationId(crypto.randomUUID());
+		setChatKey((k) => k + 1);
 	}, []);
 
 	return (
 		<>
-			{/* Floating button */}
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
@@ -26,7 +40,6 @@ export function AssistantModal() {
 				<SparklesIcon className="size-6" />
 			</button>
 
-			{/* Sheet modal */}
 			<Sheet open={open} onOpenChange={setOpen}>
 				<SheetContent side="right" className="w-full sm:max-w-[480px] p-0 flex flex-col" showCloseButton>
 					<div className="flex items-center justify-between px-4 py-3 border-b">
@@ -38,15 +51,7 @@ export function AssistantModal() {
 						</div>
 					</div>
 					<div className="flex-1 overflow-hidden">
-						<ChatThread
-							key={conversationId}
-							messages={chat.messages}
-							status={chat.status}
-							onSend={chat.sendMessage}
-							onStop={chat.stop}
-							placeholder="Pregúntame sobre tu comunidad..."
-							compact
-						/>
+						{open && <ChatContent key={chatKey} onNewChat={handleNewChat} />}
 					</div>
 				</SheetContent>
 			</Sheet>
