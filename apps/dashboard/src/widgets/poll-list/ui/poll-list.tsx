@@ -1,8 +1,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { EyeIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Poll } from "@/entities/polls";
 import { usePolls } from "@/entities/polls";
@@ -12,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/ui/data-table";
 import { InputSearch } from "@/shared/ui/input-search";
 import { useTableFilters } from "@/shared/hooks/use-table-filters";
+import { PollDetailSheet } from "./poll-detail-sheet";
 import { PollFormSheet } from "./poll-form-sheet";
 
 interface PollListProps {
@@ -22,9 +22,10 @@ export function PollList({ onChange }: PollListProps) {
 	const filters = useTableFilters();
 	const { canManage } = usePermissions();
 	const isAdmin = canManage("polls");
-	const [sheetOpen, setSheetOpen] = useState(false);
+	const [formOpen, setFormOpen] = useState(false);
+	const [detailPoll, setDetailPoll] = useState<Poll | null>(null);
 
-	const { data: response, isLoading } = usePolls({
+	const { data: response } = usePolls({
 		page: filters.pagination.pageIndex + 1,
 		limit: filters.pagination.pageSize,
 		search: filters.filters.search,
@@ -71,23 +72,19 @@ export function PollList({ onChange }: PollListProps) {
 				cell: ({ row }) =>
 					format(new Date(row.original.createdAt), "PPP", { locale: es }),
 			},
+			{
+				id: "actions",
+				header: "",
+				cell: ({ row }) => (
+					<Button variant="ghost" size="icon" onClick={() => setDetailPoll(row.original)}>
+						<EyeIcon className="size-4" />
+					</Button>
+				),
+			},
 		];
 
-		if (isAdmin) {
-			cols.push({
-				id: "voted",
-				header: "Mi Voto",
-				cell: ({ row }) =>
-					row.original.hasVoted ? (
-						<Badge variant="outline" className="text-emerald-600">Votó</Badge>
-					) : (
-						<span className="text-muted-foreground">—</span>
-					),
-			});
-		}
-
 		return cols;
-	}, [isAdmin]);
+	}, []);
 
 	return (
 		<div className="space-y-6">
@@ -101,7 +98,7 @@ export function PollList({ onChange }: PollListProps) {
 					/>
 				</div>
 				{isAdmin && (
-					<Button onClick={() => setSheetOpen(true)}>
+					<Button onClick={() => setFormOpen(true)}>
 						<PlusIcon className="h-4 w-4" />
 						Crear Votación
 					</Button>
@@ -114,12 +111,18 @@ export function PollList({ onChange }: PollListProps) {
 				rowCount={response?.metadata?.total ?? 0}
 				pagination={filters.pagination}
 				onPaginationChange={filters.setPagination}
-				isLoading={isLoading}
+			/>
+
+			<PollDetailSheet
+				open={!!detailPoll}
+				onOpenChange={(o) => { if (!o) setDetailPoll(null); }}
+				poll={detailPoll}
+				onChange={onChange}
 			/>
 
 			<PollFormSheet
-				open={sheetOpen}
-				onOpenChange={setSheetOpen}
+				open={formOpen}
+				onOpenChange={setFormOpen}
 				onSuccess={onChange}
 			/>
 		</div>
