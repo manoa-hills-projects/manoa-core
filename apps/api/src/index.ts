@@ -296,8 +296,8 @@ const app = new Hono<HonoConfig>()
   .route('/modules', modulesRouter)
   .use('/profiles/*', requireAuth)
   .route('/profiles', profilesRouter)
-  .use('/events/*', requireAuth)
-  .route('/events', eventsRouter)
+  .use('/meetings/*', requireAuth)
+  .route('/meetings', eventsRouter)
   .use('/treasury/*', requireAuth)
   .route('/treasury', treasuryRouter);
 
