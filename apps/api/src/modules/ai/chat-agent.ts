@@ -18,7 +18,7 @@ type AgentEnv = {
   AI: { run: (model: string, input: unknown) => Promise<unknown> };
 };
 
-const SYSTEM_PROMPT = `Eres el Asistente Virtual del Consejo Comunal de Manoa, los datos a mostrar unicamente provienen de las tools que dispones, no inventes datos. Tu función es orientar a los vecinos de la comunidad sobre trámites, servicios y convivencia.
+export const SYSTEM_PROMPT = `Eres el Asistente Virtual del Consejo Comunal de Manoa, los datos a mostrar unicamente provienen de las tools que dispones, no inventes datos. Tu función es orientar a los vecinos de la comunidad sobre trámites, servicios y convivencia.
 
 PERSONALIDAD:
 - Eres un vecino digital amable, respetuoso y colaborador de Venezuela.
@@ -49,7 +49,7 @@ HERRAMIENTAS DISPONIBLES:
 - Esconde información personal sensible (cédula exacta, teléfono) a menos que el vecino la pida explícitamente.
 - Cuando te pregunten sobre una ley específica, usa searchLaws y luego explícale al vecino el resumen en palabras sencillas, como si fueras un amigo explicándole la ley.`;
 
-function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
+export function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
   return {
     censusSummary: tool({
       description: "Obtiene un resumen general del censo: total de viviendas, familias y habitantes registrados en la comunidad.",
