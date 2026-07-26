@@ -6,8 +6,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/ui/sheet";
-import { Badge } from "@/shared/ui/badge";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, ScrollText } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 
 interface LawDetailSheetProps {
@@ -25,6 +24,11 @@ export function LawDetailSheet({ open, onOpenChange, law }: LawDetailSheetProps)
 				month: "long",
 				year: "numeric",
 		  })
+		: null;
+
+	const hasText = law.full_text && law.full_text.length > 50;
+	const textPreview = hasText
+		? law.full_text!.slice(0, 3000) + (law.full_text!.length > 3000 ? "..." : "")
 		: null;
 
 	return (
@@ -59,22 +63,32 @@ export function LawDetailSheet({ open, onOpenChange, law }: LawDetailSheetProps)
 							</a>
 						</Button>
 
-						{law.full_text ? (
-							<div className="rounded-md border bg-muted/40 p-4">
-								<div className="flex items-center justify-between mb-2">
-									<Badge variant="secondary" className="text-xs">
-										Texto completo
-									</Badge>
+						{textPreview ? (
+							<div className="rounded-lg border bg-card p-5">
+								<div className="flex items-center gap-2 mb-4 pb-3 border-b">
+									<ScrollText className="size-4 text-muted-foreground" />
+									<span className="text-sm font-medium">Texto de la Ley</span>
+									<span className="text-xs text-muted-foreground ml-auto">
+										{law.full_text!.length.toLocaleString()} caracteres
+									</span>
 								</div>
-								<pre className="text-xs text-foreground whitespace-pre-wrap leading-relaxed font-sans max-h-[60vh] overflow-y-auto">
-									{law.full_text}
-								</pre>
+								<div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line max-h-[55vh] overflow-y-auto">
+									{textPreview}
+								</div>
+								{law.full_text!.length > 3000 && (
+									<p className="text-xs text-muted-foreground text-center mt-4 pt-3 border-t">
+										El texto completo está disponible en el PDF oficial.
+									</p>
+								)}
 							</div>
 						) : (
-							<p className="text-sm text-muted-foreground text-center py-8">
-								El texto de esta ley aún no ha sido extraído. Ejecuta una
-								sincronización para obtenerlo.
-							</p>
+							<div className="flex flex-col items-center justify-center gap-3 py-12 text-center rounded-lg border border-dashed">
+								<FileText className="size-10 text-muted-foreground/40" />
+								<p className="text-sm text-muted-foreground max-w-xs">
+									El texto de esta ley aún no ha sido extraído. Usa el botón 
+									"Abrir PDF oficial" para consultarla.
+								</p>
+							</div>
 						)}
 					</div>
 				</SheetDescription>
