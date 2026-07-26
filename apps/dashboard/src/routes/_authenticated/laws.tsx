@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BookOpen, FileText, RefreshCw, ScrollText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLaws } from "@/entities/laws";
 import { LawsTable } from "@/features/laws";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/laws")({
 
 function RouteComponent() {
 	const { canManage } = usePermissions();
+	const queryClient = useQueryClient();
 	const [isScraping, setIsScraping] = useState(false);
 	const { data: lawsResponse } = useLaws(
 		{ pageIndex: 0, pageSize: 100 },
@@ -31,7 +33,10 @@ function RouteComponent() {
 		setIsScraping(true);
 		try {
 			await api.post("laws/scrape").json();
-			toast.success("Leyes sincronizadas correctamente");
+			toast.success("Leyes sincronizadas correctamente. Espera unos segundos mientras se procesan...");
+			setTimeout(() => {
+				queryClient.invalidateQueries({ queryKey: ["laws"] });
+			}, 5000);
 		} catch {
 			toast.error("Error al sincronizar leyes");
 		} finally {
