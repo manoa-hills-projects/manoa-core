@@ -12,3 +12,4 @@ export * from "./treasury.schema";
 export * from "./modules.schema";
 export * from "./acts.schema";
 export * from "./tickets.schema";
+export * from "./events.schema";

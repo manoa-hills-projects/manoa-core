@@ -27,6 +27,7 @@ import { scrapeAndStoreLaws } from './modules/laws/laws.scraper';
 import { settingsRouter } from './modules/settings';
 import { statsRouter } from './modules/stats';
 import { profilesRouter } from './modules/profiles/profiles.router';
+import { eventsRouter } from "./modules/events/events.router";
 import { treasuryRouter } from './modules/treasury/treasury.router';
 import { modulesRouter } from './modules/modules/modules.router';
 import { actsRouter } from './modules/acts/acts.router';
@@ -295,6 +296,8 @@ const app = new Hono<HonoConfig>()
   .route('/modules', modulesRouter)
   .use('/profiles/*', requireAuth)
   .route('/profiles', profilesRouter)
+  .use('/events/*', requireAuth)
+  .route('/events', eventsRouter)
   .use('/treasury/*', requireAuth)
   .route('/treasury', treasuryRouter);
 
