@@ -8,7 +8,7 @@
  * @module modules/treasury/handler
  */
 
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import type * as schema from "../../shared/database/schemas";
 import {

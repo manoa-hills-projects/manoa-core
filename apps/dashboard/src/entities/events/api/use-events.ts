@@ -9,19 +9,34 @@ export const eventKeys = {
 	detail: (id: string) => [...eventKeys.all, "detail", id] as const,
 };
 
+/**
+ * Silencia errores de requests a /api/events porque algunos navegadores
+ * con adblockers bloquean la palabra "events" en las URLs.
+ */
+async function silentFetch<T>(url: string): Promise<T> {
+	try {
+		return await api.get(url).json<T>();
+	} catch {
+		return { data: [] } as T;
+	}
+}
+
 export const useEvents = (status?: string) =>
 	useQuery({
 		queryKey: eventKeys.list({ status: status || "" }),
 		queryFn: () => {
 			const params = status ? `?status=${status}` : "";
-			return api.get(`events${params}`).json<{ data: Event[] }>();
+			const url = `events${params}`;
+			return silentFetch<{ data: Event[] }>(url);
 		},
+		retry: false,
 	});
 
 export const useUpcomingEvents = () =>
 	useQuery({
 		queryKey: [...eventKeys.all, "upcoming"],
-		queryFn: () => api.get("events/upcoming").json<{ data: Event[] }>(),
+		queryFn: () => silentFetch<{ data: Event[] }>("events/upcoming"),
+		retry: false,
 	});
 
 export const useEvent = (id: string) =>
