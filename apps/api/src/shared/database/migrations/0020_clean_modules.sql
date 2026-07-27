@@ -38,4 +38,5 @@ INSERT INTO modules (key, name, description, route, icon, group_key, group_label
   ('acts',       'Libro de Actas','Libro de actas digital',         '/acts',     'FileText',  'system',        'Sistema',          12),
   ('users',      'Usuarios',    'Gestión de usuarios del sistema',   '/users',    'UserCog',   'system',        'Sistema',          13),
   ('profiles',   'Perfiles',    'Gestión de perfiles y permisos',    '/profiles', 'Shield',    'system',        'Sistema',          14),
-  ('settings',   'Configuración','Configuración del sistema',       '/settings', 'Settings',  'system',        'Sistema',          15);
+  ('settings',   'Configuración','Configuración del sistema',       '/settings', 'Settings',  'system',        'Sistema',          15),
+  ('profile',    'Mi Perfil',   'Perfil personal del usuario',      '/profile',  'UserCircle','system',       'Sistema',          16);

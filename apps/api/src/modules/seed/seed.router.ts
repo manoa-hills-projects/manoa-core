@@ -320,6 +320,7 @@ seedRouter.post("/fix-modules", async (c) => {
       ["users",      "Usuarios",     "/users",       "UserCog",      "system",   "Sistema",        13],
       ["profiles",   "Perfiles",     "/profiles",    "Shield",       "system",   "Sistema",        14],
       ["settings",   "Configuración","/settings",    "Settings",     "system",   "Sistema",        15],
+      ["profile",    "Mi Perfil",    "/profile",     "UserCircle",   "system",   "Sistema",        16],
     ];
 
     for (const r of rows) {

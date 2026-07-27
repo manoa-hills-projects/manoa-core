@@ -17,6 +17,7 @@ export const NAV_ITEMS: NavigationConfig[] = [
 	// Items públicos (sin moduleKey, siempre visibles para autenticados)
 	{ moduleKey: "dashboard", title: "Dashboard", url: "/" },
 	{ moduleKey: "ai", title: "Asistente IA", url: "/ai-assistant" },
+	{ moduleKey: "profile", title: "Mi Perfil", url: "/profile" },
 	{ moduleKey: "polls", title: "Proyectos", url: "/polls" },
 	{ moduleKey: "treasury", title: "Tesorería", url: "/treasury" },
 	{ moduleKey: "requests", title: "Solicitudes", url: "/requests" },
