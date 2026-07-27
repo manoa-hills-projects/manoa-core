@@ -8,6 +8,8 @@ import {
 	forgotPasswordSchema,
 	type LoginFormValues,
 	loginSchema,
+	type ResetPasswordFormValues,
+	resetPasswordSchema,
 	type SignUpFormValues,
 	signUpSchema,
 } from "./auth-schema";
@@ -84,7 +86,7 @@ export function useForgotPasswordForm() {
 					method: "POST",
 					body: {
 						email: values.email,
-						redirectTo: `${window.location.origin}/auth`,
+						redirectTo: `${window.location.origin}/auth?reset-password`,
 					},
 				});
 
@@ -111,6 +113,62 @@ export function useForgotPasswordForm() {
 		setErrorMessage,
 		successMessage,
 		setSuccessMessage,
+	};
+}
+
+interface UseResetPasswordFormProps {
+	token: string;
+	onSuccess?: () => void;
+}
+
+export function useResetPasswordForm({ token, onSuccess }: UseResetPasswordFormProps) {
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+	const form = useForm<ResetPasswordFormValues>({
+		resolver: zodResolver(resetPasswordSchema),
+		defaultValues: {
+			password: "",
+			confirmPassword: "",
+		},
+		mode: "onChange",
+		reValidateMode: "onChange",
+	});
+
+	const onSubmit = useCallback(
+		async (values: ResetPasswordFormValues) => {
+			setErrorMessage(null);
+			setSuccessMessage(null);
+
+			try {
+				await authClient.$fetch("/reset-password", {
+					method: "POST",
+					body: {
+						newPassword: values.password,
+						token,
+					},
+				});
+
+				setSuccessMessage("Contraseña restablecida correctamente");
+				form.reset();
+				onSuccess?.();
+			} catch (error) {
+				setErrorMessage(
+					error instanceof Error
+						? error.message
+						: "No se pudo restablecer la contraseña",
+				);
+			}
+		},
+		[form, token, onSuccess],
+	);
+
+	return {
+		form,
+		onSubmit: form.handleSubmit(onSubmit),
+		isSubmitting: form.formState.isSubmitting,
+		errorMessage,
+		successMessage,
 	};
 }
 
