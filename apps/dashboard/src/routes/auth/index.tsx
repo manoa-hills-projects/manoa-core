@@ -2,6 +2,7 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ForgotPasswordForm } from "@/features/auth/ui/forgot-password-form";
 import { LoginForm } from "@/features/auth/ui/login-form";
+import { SignUpForm } from "@/features/auth/ui/signup-form";
 import { authClient } from "@/lib/auth-client";
 import {
 	Card,
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/auth/")({
 
 function RouteComponent() {
 	const navigate = useNavigate({ from: "/auth/" });
-	const [mode, setMode] = useState<"login" | "forgot">("login");
+	const [mode, setMode] = useState<"login" | "forgot" | "signup">("login");
 	const { data, isPending, refetch } = authClient.useSession();
 
 	if (isPending) {
@@ -42,17 +43,25 @@ function RouteComponent() {
 			<Card className="w-full max-w-md">
 				<CardHeader>
 					<CardTitle>
-						{mode === "login" ? "Iniciar sesión" : "Olvidé mi contraseña"}
+						{mode === "login"
+							? "Iniciar sesión"
+							: mode === "signup"
+								? "Crear cuenta"
+								: "Olvidé mi contraseña"}
 					</CardTitle>
 					<CardDescription>
 						{mode === "login"
 							? "Accede al panel de gestión comunitaria"
-							: "Te enviaremos un enlace para recuperar tu acceso"}
+							: mode === "signup"
+								? "Regístrate para gestionar tu comunidad"
+								: "Te enviaremos un enlace para recuperar tu acceso"}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					{mode === "login" ? (
 						<LoginForm onSuccess={handleLoginSuccess} />
+					) : mode === "signup" ? (
+						<SignUpForm onSuccess={handleLoginSuccess} />
 					) : (
 						<ForgotPasswordForm />
 					)}
@@ -75,6 +84,16 @@ function RouteComponent() {
 								onClick={() => setMode("forgot")}
 							>
 								¿Olvidaste tu contraseña?
+							</button>
+						) : null}
+
+						{mode !== "signup" ? (
+							<button
+								type="button"
+								className="text-primary underline-offset-4 hover:underline"
+								onClick={() => setMode("signup")}
+							>
+								¿No tienes cuenta? Regístrate
 							</button>
 						) : null}
 					</div>

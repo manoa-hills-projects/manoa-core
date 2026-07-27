@@ -2,11 +2,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { authClient } from "@/lib/auth-client";
+import { env } from "@/env";
 import {
 	type ForgotPasswordFormValues,
 	forgotPasswordSchema,
 	type LoginFormValues,
 	loginSchema,
+	type SignUpFormValues,
+	signUpSchema,
 } from "./auth-schema";
 
 interface UseLoginFormProps {
@@ -98,6 +101,99 @@ export function useForgotPasswordForm() {
 			}
 		},
 		[form],
+	);
+
+	return {
+		form,
+		onSubmit: form.handleSubmit(onSubmit),
+		isSubmitting: form.formState.isSubmitting,
+		errorMessage,
+		setErrorMessage,
+		successMessage,
+		setSuccessMessage,
+	};
+}
+
+interface UseSignUpFormProps {
+	onSuccess?: () => void;
+}
+
+export function useSignUpForm({ onSuccess }: UseSignUpFormProps = {}) {
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+	const form = useForm<SignUpFormValues>({
+		resolver: zodResolver(signUpSchema),
+		defaultValues: {
+			dni: "",
+			email: "",
+			name: "",
+			password: "",
+		},
+		mode: "onChange",
+		reValidateMode: "onChange",
+	});
+
+	const onSubmit = useCallback(
+		async (values: SignUpFormValues) => {
+			setErrorMessage(null);
+			setSuccessMessage(null);
+
+			try {
+				const { error: signUpError } = await authClient.signUp.email({
+					email: values.email,
+					password: values.password,
+					name: values.name,
+				});
+
+				if (signUpError) {
+					setErrorMessage(
+						signUpError.message || "No se pudo crear la cuenta",
+					);
+					return;
+				}
+
+				// Vincula el ciudadano por DNI al usuario recién creado
+				const apiBase = env.VITE_API_URL || "http://localhost:8787/api";
+				const linkRes = await fetch(`${apiBase}/auth/link-citizen`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "include",
+					body: JSON.stringify({ dni: values.dni }),
+				});
+
+				const linkData = await linkRes.json();
+
+				if (!linkRes.ok) {
+					// Mapeo de errores conocidos
+					const knownErrors: Record<string, string> = {
+						"No se encontró un ciudadano con ese DNI":
+							"DNI no encontrado en el censo",
+						"Este ciudadano ya tiene un usuario vinculado":
+							"Ciudadano ya vinculado a otra cuenta",
+						"No autorizado": "Sesión no válida. Intenta de nuevo",
+					};
+
+					setErrorMessage(
+						knownErrors[linkData.error] ||
+							linkData.error ||
+							"Error al vincular el ciudadano",
+					);
+					return;
+				}
+
+				setSuccessMessage("Cuenta creada correctamente");
+				form.reset();
+				onSuccess?.();
+			} catch (error) {
+				setErrorMessage(
+					error instanceof Error
+						? error.message
+						: "No se pudo completar el registro",
+				);
+			}
+		},
+		[form, onSuccess],
 	);
 
 	return {

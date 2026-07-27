@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/d1'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
-import { count } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { MiddlewareHandler } from 'hono'
 import { cors } from 'hono/cors'
@@ -241,6 +241,30 @@ const app = new Hono<HonoConfig>()
     }
     // Allow public sign-up for POST (admin creation handled via CLI script)
     await next();
+  })
+  // POST /auth/link-citizen — vincula el usuario autenticado a un ciudadano por DNI
+  .post('/auth/link-citizen', async (c) => {
+    try {
+      const auth = c.get('auth');
+      const session = await auth.api.getSession({ headers: c.req.raw.headers });
+      if (!session?.user?.id) return c.json({ error: 'No autorizado' }, 401);
+
+      const { dni } = await c.req.json();
+      if (!dni) return c.json({ error: 'DNI requerido' }, 400);
+
+      const db = c.get('db');
+
+      const citizen = await db.select().from(schema.citizens).where(eq(schema.citizens.dni, dni)).get();
+      if (!citizen) return c.json({ error: 'No se encontró un ciudadano con ese DNI' }, 404);
+      if (citizen.userId) return c.json({ error: 'Este ciudadano ya tiene un usuario vinculado' }, 409);
+
+      await db.update(schema.citizens).set({ userId: session.user.id }).where(eq(schema.citizens.id, citizen.id)).run();
+
+      return c.json({ ok: true, citizenId: citizen.id });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return c.json({ error: msg }, 500);
+    }
   })
   .on(["GET", "POST", "OPTIONS"], '/auth/*', async (c) => {
     if (c.req.method === "OPTIONS") {
