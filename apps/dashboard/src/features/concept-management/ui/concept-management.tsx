@@ -248,9 +248,9 @@ function ConceptCreateSheet({
 					</Button>
 					<Button
 						type="submit"
-						disabled={
-							create.isPending || !key.trim() || !name.trim() || !categoryId
-						}
+					disabled={
+						create.isPending || !autoKey.trim() || !name.trim() || !categoryId
+					}
 					>
 						Crear
 					</Button>
