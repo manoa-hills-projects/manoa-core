@@ -65,6 +65,42 @@ const citizensRouter = new Hono<HonoConfig>()
   return c.json({ exists: !!exists });
 })
 
+// ─── ZONA 2: Ciudadano vinculado al usuario autenticado ───
+.get("/me", async (c) => {
+  const db = c.get('db');
+  const session = c.get('session');
+
+  if (!session?.user) {
+    return c.json({ error: "No autorizado" }, 401);
+  }
+
+  const citizen = await db
+    .select()
+    .from(schema.citizens)
+    .where(eq(schema.citizens.userId, session.user.id))
+    .get();
+
+  if (!citizen) {
+    return c.json({ data: null });
+  }
+
+  return c.json({
+    data: {
+      id: citizen.id,
+      cedula: citizen.dni,
+      dni_type: citizen.dniType,
+      phone: citizen.phone,
+      names: citizen.firstName,
+      surnames: citizen.lastName,
+      birth_date: citizen.birthDate,
+      gender: citizen.gender,
+      is_head_of_household: citizen.isHeadOfHousehold,
+      family_id: citizen.familyId,
+      user_id: citizen.userId,
+    },
+  });
+})
+
 // ─── ZONA 2/3: Ver detalle de un ciudadano ───
 .get("/:id", async (c) => {
   const db = c.get('db');
