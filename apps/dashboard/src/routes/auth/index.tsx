@@ -96,7 +96,7 @@ function RouteComponent() {
 						<SignUpForm onSuccess={handleLoginSuccess} />
 					) : mode === "reset-password" ? (
 						<ResetPasswordForm token={token ?? ""} />
-					) : 
+					) : (
 						<ForgotPasswordForm />
 					)}
 
