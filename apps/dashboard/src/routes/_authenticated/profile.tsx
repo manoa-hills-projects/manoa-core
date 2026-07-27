@@ -1,26 +1,32 @@
 /**
  * Página de perfil de usuario (self-service)
  *
- * Permite al usuario autenticado gestionar su información personal:
- * - Ver datos de su cuenta (nombre, email)
- * - Editar su nombre
- * - Cambiar su contraseña
- * - Ver datos de ciudadano vinculado (si existe)
- * - Cerrar sesión
- *
- * @route /_authenticated/profile
+ * Muestra la información del usuario autenticado, permite editar nombre,
+ * cambiar contraseña, ver datos del ciudadano vinculado y cerrar sesión.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+	CalendarIcon,
+	LockIcon,
+	LogOutIcon,
+	MailIcon,
+	PhoneIcon,
+	SaveIcon,
+	UserCogIcon,
+	UserIcon,
+	VenetianMaskIcon,
+} from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@/shared/api/api-client";
+import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Separator } from "@/shared/ui/separator";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { SectionHeader } from "@/widgets/section-header/ui/section-header";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -44,46 +50,48 @@ interface CitizenData {
 	user_id: string;
 }
 
+interface UserProfile {
+	id: string;
+	key: string;
+	name: string;
+}
+
 function ProfilePage() {
 	const { data: session, isPending: sessionLoading } = authClient.useSession();
 	const [citizen, setCitizen] = useState<CitizenData | null | "loading">("loading");
+	const [profile, setProfile] = useState<UserProfile | null>(null);
 
-	// ── Estado formulario editar nombre ──
+	// ── Formulario editar nombre ──
 	const [editName, setEditName] = useState(false);
 	const [newName, setNewName] = useState("");
 	const [savingName, setSavingName] = useState(false);
 
-	// ── Estado formulario cambiar contraseña ──
+	// ── Formulario cambiar contraseña ──
 	const [currentPassword, setCurrentPassword] = useState("");
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [changingPassword, setChangingPassword] = useState(false);
 
-	// ── Cargar datos del ciudadano ──
+	const user = session?.user;
+
+	// ── Cargar datos del ciudadano + perfil ──
 	useEffect(() => {
-		api
-			.get("citizens/me")
+		api.get("citizens/me")
 			.json<{ data: CitizenData | null }>()
 			.then((res) => setCitizen(res.data))
 			.catch(() => setCitizen(null));
+
+		api.get("profiles/me/profile")
+			.json<{ profile: UserProfile | null }>()
+			.then((res) => setProfile(res.profile))
+			.catch(() => null);
 	}, []);
-
-	if (sessionLoading) {
-		return (
-			<div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
-				Cargando perfil...
-			</div>
-		);
-	}
-
-	const user = session?.user;
 
 	const handleUpdateName = async () => {
 		if (!newName.trim()) {
 			toast.error("El nombre no puede estar vacío");
 			return;
 		}
-
 		setSavingName(true);
 		try {
 			const { error } = await authClient.updateUser({ name: newName.trim() });
@@ -93,8 +101,8 @@ function ProfilePage() {
 			}
 			toast.success("Nombre actualizado correctamente");
 			setEditName(false);
-		} catch (err: any) {
-			toast.error(err?.message || "Error al actualizar el nombre");
+		} catch {
+			toast.error("Error al actualizar el nombre");
 		} finally {
 			setSavingName(false);
 		}
@@ -102,22 +110,18 @@ function ProfilePage() {
 
 	const handleChangePassword = async (e: React.FormEvent) => {
 		e.preventDefault();
-
 		if (!currentPassword) {
 			toast.error("La contraseña actual es obligatoria");
 			return;
 		}
-
 		if (!newPassword || newPassword.length < 6) {
 			toast.error("La nueva contraseña debe tener al menos 6 caracteres");
 			return;
 		}
-
 		if (newPassword !== confirmPassword) {
 			toast.error("Las contraseñas no coinciden");
 			return;
 		}
-
 		setChangingPassword(true);
 		try {
 			const { error } = await authClient.changePassword({
@@ -132,8 +136,8 @@ function ProfilePage() {
 			setCurrentPassword("");
 			setNewPassword("");
 			setConfirmPassword("");
-		} catch (err: any) {
-			toast.error(err?.message || "Error al cambiar la contraseña");
+		} catch {
+			toast.error("Error al cambiar la contraseña");
 		} finally {
 			setChangingPassword(false);
 		}
@@ -142,221 +146,259 @@ function ProfilePage() {
 	const handleSignOut = async () => {
 		try {
 			await authClient.signOut();
-			// La redirección la maneja el layout _authenticated
-		} catch (err: any) {
-			toast.error(err?.message || "Error al cerrar sesión");
+		} catch {
+			toast.error("Error al cerrar sesión");
 		}
 	};
 
+	if (sessionLoading) {
+		return (
+			<div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
+				Cargando perfil...
+			</div>
+		);
+	}
+
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-8">
 			<SectionHeader
 				name="Mi Perfil"
 				description="Gestiona tu información personal y los datos de tu cuenta."
 			/>
 
-			{/* ════════════════════════════════════════════ */}
-			{/* MI CUENTA                                    */}
-			{/* ════════════════════════════════════════════ */}
-			<Card>
-				<CardHeader>
-					<CardTitle>Mi Cuenta</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-5">
-					{/* Email (solo lectura) */}
-					<div className="space-y-2">
-						<Label>Correo electrónico</Label>
-						<Input value={user?.email ?? ""} disabled />
+			{/* ═══ CARD DE IDENTIDAD ═══ */}
+			<Card className="overflow-hidden">
+				<div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
+					<div className="flex items-center gap-4">
+						<div className="flex size-16 items-center justify-center rounded-full bg-primary/15 text-primary">
+							<UserIcon className="size-8" />
+						</div>
+						<div className="flex-1 min-w-0">
+							<h2 className="text-xl font-semibold truncate">
+								{user?.name || "Usuario"}
+							</h2>
+							<p className="text-sm text-muted-foreground truncate">
+								{user?.email || ""}
+							</p>
+							{profile && (
+								<Badge variant="secondary" className="mt-1.5 text-xs">
+									{profile.name}
+								</Badge>
+							)}
+						</div>
 					</div>
+				</div>
+			</Card>
 
-					{/* Nombre */}
-					{editName ? (
-						<div className="space-y-3">
-							<div className="space-y-2">
-								<Label htmlFor="name">Nombre</Label>
+			<div className="grid gap-6 md:grid-cols-2">
+				{/* ═══ MI CUENTA ═══ */}
+				<Card>
+					<CardHeader className="flex flex-row items-center gap-2">
+						<UserCogIcon className="size-4 text-muted-foreground" />
+						<CardTitle className="text-base">Mi Cuenta</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="space-y-1.5">
+							<Label className="text-xs text-muted-foreground">Correo electrónico</Label>
+							<div className="flex items-center gap-2 text-sm">
+								<MailIcon className="size-3.5 text-muted-foreground shrink-0" />
+								<span>{user?.email || ""}</span>
+							</div>
+						</div>
+
+						<div className="space-y-1.5">
+							<Label className="text-xs text-muted-foreground">Nombre</Label>
+							{editName ? (
+								<div className="space-y-2">
+									<Input
+										value={newName}
+										onChange={(e) => setNewName(e.target.value)}
+										placeholder="Tu nombre completo"
+										autoFocus
+									/>
+									<div className="flex gap-2">
+										<Button size="sm" onClick={handleUpdateName} disabled={savingName}>
+											<SaveIcon className="size-3.5 mr-1" />
+											{savingName ? "Guardando..." : "Guardar"}
+										</Button>
+										<Button
+											size="sm"
+											variant="outline"
+											onClick={() => {
+												setEditName(false);
+												setNewName("");
+											}}
+										>
+											Cancelar
+										</Button>
+									</div>
+								</div>
+							) : (
+								<div className="flex items-center justify-between gap-2">
+									<span className="text-sm">{user?.name || ""}</span>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											setNewName(user?.name ?? "");
+											setEditName(true);
+										}}
+									>
+										Editar
+									</Button>
+								</div>
+							)}
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* ═══ CAMBIAR CONTRASEÑA ═══ */}
+				<Card>
+					<CardHeader className="flex flex-row items-center gap-2">
+						<LockIcon className="size-4 text-muted-foreground" />
+						<CardTitle className="text-base">Cambiar Contraseña</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<form onSubmit={handleChangePassword} className="space-y-3">
+							<div className="space-y-1.5">
+								<Label htmlFor="cp" className="text-xs text-muted-foreground">
+									Contraseña actual
+								</Label>
 								<Input
-									id="name"
-									value={newName}
-									onChange={(e) => setNewName(e.target.value)}
-									placeholder="Tu nombre completo"
-									autoFocus
+									id="cp"
+									type="password"
+									value={currentPassword}
+									onChange={(e) => setCurrentPassword(e.target.value)}
+									placeholder="••••••••"
 								/>
 							</div>
-							<div className="flex items-center gap-2">
-								<Button onClick={handleUpdateName} disabled={savingName}>
-									{savingName ? "Guardando..." : "Guardar"}
-								</Button>
-								<Button
-									variant="outline"
-									onClick={() => {
-										setEditName(false);
-										setNewName("");
-									}}
-								>
-									Cancelar
-								</Button>
+							<div className="space-y-1.5">
+								<Label htmlFor="np" className="text-xs text-muted-foreground">
+									Nueva contraseña
+								</Label>
+								<Input
+									id="np"
+									type="password"
+									value={newPassword}
+									onChange={(e) => setNewPassword(e.target.value)}
+									placeholder="Mínimo 6 caracteres"
+								/>
 							</div>
-						</div>
-					) : (
-						<div className="space-y-2">
-							<Label>Nombre</Label>
-							<div className="flex items-center gap-3">
-								<Input value={user?.name ?? ""} disabled className="flex-1" />
-								<Button
-									variant="outline"
-									onClick={() => {
-										setNewName(user?.name ?? "");
-										setEditName(true);
-									}}
-								>
-									Editar
-								</Button>
+							<div className="space-y-1.5">
+								<Label htmlFor="cnp" className="text-xs text-muted-foreground">
+									Confirmar nueva contraseña
+								</Label>
+								<Input
+									id="cnp"
+									type="password"
+									value={confirmPassword}
+									onChange={(e) => setConfirmPassword(e.target.value)}
+									placeholder="Repite la nueva contraseña"
+								/>
 							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+							<Button
+								type="submit"
+								size="sm"
+								disabled={changingPassword}
+								className="mt-1"
+							>
+								{changingPassword ? "Cambiando..." : "Cambiar Contraseña"}
+							</Button>
+						</form>
+					</CardContent>
+				</Card>
+			</div>
 
-			{/* ════════════════════════════════════════════ */}
-			{/* CAMBIAR CONTRASEÑA                            */}
-			{/* ════════════════════════════════════════════ */}
+			{/* ═══ DATOS DEL CIUDADANO ═══ */}
 			<Card>
-				<CardHeader>
-					<CardTitle>Cambiar Contraseña</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleChangePassword} className="space-y-5">
-						<div className="space-y-2">
-							<Label htmlFor="currentPassword">Contraseña actual</Label>
-							<Input
-								id="currentPassword"
-								type="password"
-								value={currentPassword}
-								onChange={(e) => setCurrentPassword(e.target.value)}
-								placeholder="Ingresa tu contraseña actual"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="newPassword">Nueva contraseña</Label>
-							<Input
-								id="newPassword"
-								type="password"
-								value={newPassword}
-								onChange={(e) => setNewPassword(e.target.value)}
-								placeholder="Mínimo 6 caracteres"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
-							<Input
-								id="confirmPassword"
-								type="password"
-								value={confirmPassword}
-								onChange={(e) => setConfirmPassword(e.target.value)}
-								placeholder="Repite la nueva contraseña"
-							/>
-						</div>
-
-						<Button type="submit" disabled={changingPassword}>
-							{changingPassword ? "Cambiando..." : "Cambiar Contraseña"}
-						</Button>
-					</form>
-				</CardContent>
-			</Card>
-
-			{/* ════════════════════════════════════════════ */}
-			{/* MIS DATOS DE CIUDADANO                        */}
-			{/* ════════════════════════════════════════════ */}
-			<Card>
-				<CardHeader>
-					<CardTitle>Mis Datos de Ciudadano</CardTitle>
+				<CardHeader className="flex flex-row items-center gap-2">
+					<VenetianMaskIcon className="size-4 text-muted-foreground" />
+					<CardTitle className="text-base">Mis Datos de Ciudadano</CardTitle>
 				</CardHeader>
 				<CardContent>
 					{citizen === "loading" ? (
-						<p className="text-sm text-muted-foreground">
-							Cargando datos del censo...
-						</p>
+						<div className="grid grid-cols-2 gap-4">
+							{Array.from({ length: 6 }).map((_, i) => (
+								<div key={i} className="space-y-1.5">
+									<Skeleton className="h-3 w-16" />
+									<Skeleton className="h-5 w-32" />
+								</div>
+							))}
+						</div>
 					) : citizen ? (
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Nombres
-								</p>
-								<p className="text-sm font-medium">{citizen.names}</p>
-							</div>
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Apellidos
-								</p>
-								<p className="text-sm font-medium">{citizen.surnames}</p>
-							</div>
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Cédula / DNI
-								</p>
-								<p className="text-sm font-medium">{citizen.cedula}</p>
-							</div>
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Teléfono
-								</p>
-								<p className="text-sm font-medium">
-									{citizen.phone || "—"}
-								</p>
-							</div>
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Fecha de nacimiento
-								</p>
-								<p className="text-sm font-medium">{citizen.birth_date}</p>
-							</div>
-							<div className="space-y-1">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Género
-								</p>
-								<p className="text-sm font-medium capitalize">
-									{citizen.gender === "male"
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+							<CitizenField
+								icon={<UserIcon className="size-3.5" />}
+								label="Nombres"
+								value={`${citizen.names} ${citizen.surnames}`}
+							/>
+							<CitizenField icon={<UserIcon className="size-3.5" />} label="Cédula" value={citizen.cedula} />
+							<CitizenField
+								icon={<MailIcon className="size-3.5" />}
+								label="Tipo DNI"
+								value={citizen.dni_type === "NATIONAL" ? "V" : citizen.dni_type === "FOREIGN" ? "E" : "SINTÉTICO"}
+							/>
+							<CitizenField
+								icon={<PhoneIcon className="size-3.5" />}
+								label="Teléfono"
+								value={citizen.phone || "—"}
+							/>
+							<CitizenField
+								icon={<CalendarIcon className="size-3.5" />}
+								label="Fecha de nacimiento"
+								value={citizen.birth_date}
+							/>
+							<CitizenField
+								icon={<VenetianMaskIcon className="size-3.5" />}
+								label="Género"
+								value={
+									citizen.gender === "MASCULINO" || citizen.gender === "male"
 										? "Masculino"
-										: citizen.gender === "female"
+										: citizen.gender === "FEMENINO" || citizen.gender === "female"
 											? "Femenino"
-											: citizen.gender}
-								</p>
-							</div>
-							<div className="space-y-1 sm:col-span-2">
-								<p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-									Jefe de familia
-								</p>
-								<p className="text-sm font-medium">
-									{citizen.is_head_of_household ? "Sí" : "No"}
-								</p>
-							</div>
+											: citizen.gender
+								}
+							/>
 						</div>
 					) : (
-						<div className="text-center py-8">
-							<p className="text-muted-foreground">
-								No estás vinculado a ningún ciudadano del censo.
-							</p>
-							<p className="text-xs text-muted-foreground mt-1">
-								Si eres residente de Manoa, contacta a la directiva del
-								consejo comunal para que te vinculen.
+						<div className="flex flex-col items-center justify-center py-10 text-center">
+							<UserIcon className="size-10 text-muted-foreground/30 mb-3" />
+							<p className="text-sm text-muted-foreground max-w-sm">
+								No estás vinculado a ningún ciudadano del censo. Si eres residente,
+								contacta a la directiva del consejo comunal para que te vinculen.
 							</p>
 						</div>
 					)}
 				</CardContent>
 			</Card>
 
-			{/* ════════════════════════════════════════════ */}
-			{/* CERRAR SESIÓN                                 */}
-			{/* ════════════════════════════════════════════ */}
-			<Separator />
-
-			<div>
+			{/* ═══ CERRAR SESIÓN ═══ */}
+			<div className="flex items-center gap-4 pt-2">
 				<Button variant="destructive" onClick={handleSignOut}>
+					<LogOutIcon className="size-4 mr-1.5" />
 					Cerrar sesión
 				</Button>
 			</div>
+		</div>
+	);
+}
+
+function CitizenField({
+	icon,
+	label,
+	value,
+}: {
+	icon: React.ReactNode;
+	label: string;
+	value: string;
+}) {
+	return (
+		<div className="space-y-1">
+			<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+				{icon}
+				{label}
+			</p>
+			<p className="text-sm font-medium">{value}</p>
 		</div>
 	);
 }
