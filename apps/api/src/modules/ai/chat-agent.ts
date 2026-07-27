@@ -44,10 +44,10 @@ HERRAMIENTAS DISPONIBLES:
 - citizensBySector → cuántos habitantes por sector
 - disabilitiesSummary → personas con discapacidad registradas
 - pollsOverview / pollResults → encuestas comunitarias
-- searchLaws → Leyes del Poder Popular (devuelve resumen de la ley + enlace al PDF)
+- searchLaws → Leyes del Poder Popular. Busca en TODAS las leyes scrapeadas (Ley de Consejos Comunales, Comunas, Contraloría Social, Poder Popular, etc.). Devuelve el nombre, contenido completo y enlace al PDF.
 - getMyProfile → datos del vecino autenticado (nombre, familia, vivienda)
 - Esconde información personal sensible (cédula exacta, teléfono) a menos que el vecino la pida explícitamente.
-- Cuando te pregunten sobre una ley específica, usa searchLaws y luego explícale al vecino el resumen en palabras sencillas, como si fueras un amigo explicándole la ley.`;
+- Cuando te pregunten sobre una ley específica, usa searchLaws, analiza el contenido de la ley y explícale al vecino en palabras sencillas como si fueras un amigo. Incluye detalles específicos de la ley como artículos, requisitos o procedimientos si están disponibles en el contenido de la ley.`;
 
 export function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string) {
   return {
@@ -250,32 +250,31 @@ export function buildTools(db: DrizzleD1Database<typeof schema>, userId?: string
     }),
 
     searchLaws: tool({
-      description: "Busca información en las Leyes del Poder Popular (Ley Orgánica de los Consejos Comunales, Ley de las Comunas, Contraloría Social, Poder Popular, Planificación, Gestión Comunitaria, Sistema Económico Comunal, etc.). Úsala cuando el vecino pregunte sobre leyes, normativas, artículos, derechos o deberes comunales.",
+      description: "Busca y analiza leyes del Poder Popular (Ley de Consejos Comunales, Comunas, Contraloría Social, Poder Popular, etc.). Devuelve el nombre, el contenido completo de la ley y enlace al PDF oficial. Úsala cuando el vecino pregunte sobre leyes, normativas, artículos, derechos, deberes o procedimientos comunales.",
       inputSchema: z.object({
-        query: z.string().describe("Términos de búsqueda relacionados con la ley o normativa"),
+        query: z.string().describe("Términos de búsqueda: nombre de la ley, artículo, tema o palabra clave"),
       }),
       execute: async ({ query }) => {
         try {
           const sanitized = query.replace(/['"*()]/g, '').trim();
           const rows = await db.all<{ name: string; pdf_url: string; full_text: string }>(
-            sql`SELECT name, pdf_url, full_text FROM laws_fts WHERE laws_fts MATCH ${sanitized} ORDER BY rank LIMIT 3`
+            sql`SELECT name, pdf_url, full_text FROM laws_fts WHERE laws_fts MATCH ${sanitized} ORDER BY rank LIMIT 5`
           );
           return rows.map((row: any) => ({
             ley: row.name,
-            resumen: row.full_text || "Sin resumen disponible",
+            contenido: row.full_text || "Sin contenido disponible",
             enlace: row.pdf_url,
           }));
         } catch {
-          // Fallback a LIKE
           const term = `%${query.toLowerCase()}%`;
           const rows = await db
             .select({ name: schema.laws.name, pdfUrl: schema.laws.pdfUrl, fullText: schema.laws.fullText })
             .from(schema.laws)
             .where(sql`LOWER(${schema.laws.fullText}) LIKE ${term} OR LOWER(${schema.laws.name}) LIKE ${term}`)
-            .limit(3);
+            .limit(5);
           return rows.map((row) => ({
             ley: row.name,
-            resumen: row.fullText?.slice(0, 500) ?? "Sin resumen",
+            contenido: row.fullText ?? "Sin contenido disponible",
             enlace: row.pdfUrl,
           }));
         }

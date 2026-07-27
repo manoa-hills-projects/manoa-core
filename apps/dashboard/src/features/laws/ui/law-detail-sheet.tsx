@@ -9,9 +9,8 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/ui/sheet";
-import { ExternalLink, FileText, MessageSquare, ScrollText } from "lucide-react";
+import { ExternalLink, FileText, ScrollText } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 interface LawDetailSheetProps {
@@ -69,12 +68,6 @@ export function LawDetailSheet({ open, onOpenChange, law }: LawDetailSheetProps)
 									<ExternalLink className="size-4" />
 									Abrir PDF oficial
 								</a>
-							</Button>
-							<Button variant="outline" className="w-full gap-2" asChild>
-								<Link to="/ai-assistant">
-									<MessageSquare className="size-4" />
-									Preguntar al asistente IA
-								</Link>
 							</Button>
 						</div>
 					</div>
