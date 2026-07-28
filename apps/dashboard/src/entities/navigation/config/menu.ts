@@ -15,7 +15,7 @@ import type { NavigationConfig } from "../model/types";
  */
 export const NAV_ITEMS: NavigationConfig[] = [
 	// Items públicos (sin moduleKey, siempre visibles para autenticados)
-	{ moduleKey: "dashboard", title: "Dashboard", url: "/" },
+	{ moduleKey: "kiosko", title: "Inicio", url: "/" },
 	{ moduleKey: "ai", title: "Asistente IA", url: "/ai-assistant" },
 	{ moduleKey: "profile", title: "Mi Perfil", url: "/profile" },
 	{ moduleKey: "polls", title: "Proyectos", url: "/polls" },
@@ -28,7 +28,6 @@ export const NAV_ITEMS: NavigationConfig[] = [
 	{ moduleKey: "families", permission: "families" },
 	{ moduleKey: "citizens", permission: "citizens" },
 	{ moduleKey: "laws", permission: "laws" },
-	{ moduleKey: "tickets", permission: "tickets" },
 ];
 
 /**

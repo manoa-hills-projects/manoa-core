@@ -33,6 +33,7 @@ import {
 
 export const ICON_MAP: Record<string, LucideIcon> = {
 	dashboard: LayoutDashboard,
+	kiosko: Home,
 	Home,
 	Users,
 	User,
