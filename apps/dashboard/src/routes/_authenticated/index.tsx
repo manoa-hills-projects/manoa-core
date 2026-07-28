@@ -387,25 +387,22 @@ function RouteComponent() {
 					)}
 				</div>
 
-				<aside className="space-y-4">
-					<p className="text-lg font-semibold">Manzanas</p>
-					<div className="space-y-1">
-						{sectors.map((s) => (
-							<button key={s.sector} type="button" onClick={() => handleSectorClick(s.sector)} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base transition-colors hover:bg-muted ${selectedSector === s.sector ? "bg-muted font-bold" : ""}`}>
-								<HomeIcon className="size-5 shrink-0" />
-								<div className="flex w-full items-center justify-between">
-									<span>Manzana {s.sector}</span>
-									<span className="text-sm text-muted-foreground">{s.count}</span>
-								</div>
-							</button>
-						))}
-					</div>
-				</aside>
-			</div>
-
-			<div className="flex items-center justify-between text-sm text-muted-foreground/60">
-				<p>Manoa - Consejo Comunal</p>
-				<Link to="/dashboard" className="underline-offset-2 hover:underline">Dashboard</Link>
+				<Card>
+					<CardContent className="p-5">
+						<p className="mb-3 text-lg font-semibold">Manzanas</p>
+						<div className="space-y-1">
+							{sectors.map((s) => (
+								<button key={s.sector} type="button" onClick={() => handleSectorClick(s.sector)} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base transition-colors hover:bg-muted ${selectedSector === s.sector ? "bg-muted font-bold" : ""}`}>
+									<HomeIcon className="size-5 shrink-0" />
+									<div className="flex w-full items-center justify-between">
+										<span>Manzana {s.sector}</span>
+										<span className="text-sm text-muted-foreground">{s.count}</span>
+									</div>
+								</button>
+							))}
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	);
