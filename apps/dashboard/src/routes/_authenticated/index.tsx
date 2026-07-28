@@ -1,9 +1,13 @@
 /**
- * Kiosko — Página principal
+ * Kiosko — Búsqueda unificada
+ *
+ * Un solo endpoint paginado con joins: GET /api/kiosko/search
+ * Filtros: family, address, dni, sector
+ * Los autocomplete solo llenan el input, no disparan búsqueda.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
 	DownloadIcon,
@@ -26,15 +30,8 @@ export const Route = createFileRoute("/_authenticated/")({
 	component: RouteComponent,
 });
 
-interface FamilyData {
-	id: string;
-	name: string;
-	address?: string;
-	sector?: string;
-	members: MemberData[];
-}
-interface MemberData {
-	id: string;
+interface CitizenRow {
+	citizenId: string;
 	dni: string;
 	firstName: string;
 	lastName: string;
@@ -42,67 +39,18 @@ interface MemberData {
 	gender: string;
 	isHeadOfHousehold: boolean;
 	phone: string | null;
-	disabilities?: string[];
+	familyId: string | null;
+	familyName: string | null;
+	houseAddress: string | null;
+	houseSector: string | null;
+	houseNumber: string | null;
 }
 
-// ─── AutoInput con dropdown ───
-function AutoInput({
-	label, placeholder, icon: Icon, value, onChange, renderDropdown,
-}: {
-	label: string; placeholder: string; icon: any;
-	value: string; onChange: (v: string) => void;
-	renderDropdown: (close: () => void) => React.ReactNode;
-}) {
-	const [focused, setFocused] = useState(false);
-	const ref = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setFocused(false); };
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, []);
-	const close = useCallback(() => setFocused(false), []);
-
-	return (
-		<div ref={ref} className="relative space-y-2">
-			<label className="text-lg font-medium">{label}</label>
-			<div className="relative">
-				<Icon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
-				<Input
-					value={value ?? ""}
-					onChange={(e) => onChange(e.target.value)}
-					onFocus={() => setFocused(true)}
-					placeholder={placeholder}
-					className="h-14 pl-12 pr-12 text-lg"
-				/>
-				{value && (
-					<button type="button" onClick={() => { onChange(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground" tabIndex={-1}>
-						<XIcon className="size-5" />
-					</button>
-				)}
-			</div>
-			{focused && renderDropdown(close)}
-		</div>
-	);
-}
-
-// ─── Sugerencias con debounce ───
-function useSuggestions(fetchFn: (q: string) => Promise<{ id: string; label: string; sublabel?: string }[]>) {
-	const [items, setItems] = useState<{ id: string; label: string; sublabel?: string }[]>([]);
-	const [loading, setLoading] = useState(false);
-	const timer = useRef<ReturnType<typeof setTimeout>>();
-
-	const search = useCallback((q: string) => {
-		if (timer.current) clearTimeout(timer.current);
-		if (q.length < 2) { setItems([]); return; }
-		setLoading(true);
-		timer.current = setTimeout(async () => {
-			try { setItems(await fetchFn(q)); }
-			catch { setItems([]); }
-			finally { setLoading(false); }
-		}, 300);
-	}, [fetchFn]);
-
-	return { items, loading, search };
+interface Metadata {
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
 }
 
 // ─── Page ───
@@ -111,26 +59,27 @@ function RouteComponent() {
 	const [address, setAddress] = useState("");
 	const [cedula, setCedula] = useState("");
 	const [dniPrefix, setDniPrefix] = useState("V");
+	const [selectedSector, setSelectedSector] = useState("");
 	const [loading, setLoading] = useState(false);
-	const [family, setFamily] = useState<FamilyData | null>(null);
+	const [results, setResults] = useState<CitizenRow[]>([]);
+	const [metadata, setMetadata] = useState<Metadata | null>(null);
 	const [searched, setSearched] = useState(false);
 	const [generating, setGenerating] = useState<string | null>(null);
+	const [page, setPage] = useState(1);
 	const [sectors, setSectors] = useState<{ sector: string; count: number }[]>([]);
-	const [selectedSector, setSelectedSector] = useState("");
 
-	// Sugerencias familias
-	const famSuggest = useSuggestions(useCallback(async (q) => {
-		const r = await api.get(`families?search=${encodeURIComponent(q)}&limit=10`).json<{ data: { id: string; name: string }[] }>();
-		return (r.data ?? []).map((f) => ({ id: f.id, label: f.name }));
-	}, []));
+	// Sugerencias
+	const [famSug, setFamSug] = useState<{ label: string }[]>([]);
+	const [addrSug, setAddrSug] = useState<{ label: string }[]>([]);
+	const timer = useRef<ReturnType<typeof setTimeout>>();
 
-	// Sugerencias direcciones
-	const addrSuggest = useSuggestions(useCallback(async (q) => {
-		const r = await api.get(`houses?search=${encodeURIComponent(q)}&limit=10`).json<{ data: { id: string; address: string; sector: string; number: string }[] }>();
-		return (r.data ?? []).map((h) => ({ id: h.id, label: `Manzana ${h.sector} · Casa ${h.number}`, sublabel: h.address }));
-	}, []));
+	const debounce = useCallback((q: string, cb: (q: string) => Promise<void>) => {
+		if (timer.current) clearTimeout(timer.current);
+		if (q.length < 2) { setFamSug([]); setAddrSug([]); return; }
+		timer.current = setTimeout(() => cb(q), 300);
+	}, []);
 
-	// Cargar sectores (manzanas)
+	// Cargar manzanas
 	useEffect(() => {
 		api.get("houses?limit=999").json<{ data: { sector: string }[] }>()
 			.then((res) => {
@@ -140,123 +89,129 @@ function RouteComponent() {
 			}).catch(() => null);
 	}, []);
 
+	// Búsqueda principal
+	const doSearch = useCallback(async (p = 1) => {
+		if (!familyName && !address && !cedula) { toast.error("Completá al menos un campo"); return; }
+		setLoading(true); setSearched(true); setPage(p);
+		try {
+			const params = new URLSearchParams();
+			if (familyName) params.set("family", familyName);
+			if (address) params.set("address", address);
+			if (cedula) params.set("dni", `${dniPrefix}-${cedula}`);
+			if (selectedSector) params.set("sector", selectedSector);
+			params.set("page", String(p));
+			params.set("limit", "20");
+
+			const res = await api.get(`kiosko/search?${params}`).json<{ data: CitizenRow[]; metadata: Metadata }>();
+			setResults(res.data ?? []);
+			setMetadata(res.metadata ?? null);
+		} catch { toast.error("Error al buscar"); setResults([]); }
+		finally { setLoading(false); }
+	}, [familyName, address, cedula, dniPrefix, selectedSector]);
+
 	const resetSearch = useCallback(() => {
 		setFamilyName(""); setAddress(""); setCedula(""); setDniPrefix("V");
-		setFamily(null); setSearched(false); setSelectedSector("");
+		setSelectedSector(""); setResults([]); setSearched(false); setMetadata(null); setPage(1);
 	}, []);
 
-	// Buscar
-	const doSearch = useCallback(async (famId?: string) => {
-		if (!familyName && !address && !cedula && !famId) { toast.error("Completá al menos un campo"); return; }
-		setLoading(true); setSearched(true); setFamily(null);
+	const handleGenerate = useCallback(async (citizenId: string, name: string) => {
+		setGenerating(citizenId);
 		try {
-			let famData: FamilyData | null = null;
-			if (famId) {
-				const r = await api.get(`families/${famId}`).json<{ data: FamilyData }>();
-				famData = r.data;
-			} else if (cedula) {
-				const fullDni = `${dniPrefix}-${cedula.trim()}`;
-				const r = await api.get(`citizens?search=${encodeURIComponent(fullDni)}&limit=1`).json<{ data: { id: string; familyId: string | null }[] }>();
-				const c = r.data?.[0];
-				if (c?.familyId) {
-					const r2 = await api.get(`families/${c.familyId}`).json<{ data: FamilyData }>();
-					famData = r2.data;
-				}
-			} else {
-				const params = new URLSearchParams();
-				if (familyName) params.set("search", familyName);
-				if (address) params.set("search", address);
-				const r = await api.get(`families?${params.toString()}&limit=1`).json<{ data: FamilyData[] }>();
-				famData = r.data?.[0] ?? null;
-			}
-			if (famData) {
-				const m = await api.get(`citizens?familyId=${famData.id}`).json<{ data: MemberData[] }>();
-				setFamily({ ...famData, members: m.data ?? [] });
-				setFamilyName(famData.name);
-			}
-		} catch { toast.error("Error al buscar"); }
-		finally { setLoading(false); }
-	}, [familyName, address, cedula]);
-
-	// Click en manzana → busca familias de esa manzana
-	const handleSectorClick = useCallback(async (sector: string) => {
-		if (sector === selectedSector) { setSelectedSector(""); return; }
-		setSelectedSector(sector); setLoading(true);
-		try {
-			const r = await api.get(`families?sector=${sector}&limit=1`).json<{ data: FamilyData[] }>();
-			if (r.data?.[0]) {
-				const f = r.data[0];
-				const m = await api.get(`citizens?familyId=${f.id}`).json<{ data: MemberData[] }>();
-				setFamily({ ...f, members: m.data ?? [] });
-				setFamilyName(f.name);
-				setAddress(`Manzana ${sector}`);
-				setSearched(true);
-			}
-		} catch { toast.error("Error al buscar"); }
-		finally { setLoading(false); }
-	}, [selectedSector]);
-
-	const handleGenerate = useCallback(async (member: MemberData) => {
-		setGenerating(member.id);
-		try {
-			const r = await api.post("certifications/generar", { json: { documentType: "carta_residencia", residentId: member.id } }).json<{ success: boolean; data: { hash: string } }>();
-			if (r.success) { toast.success(`✅ Carta generada para ${member.firstName}`); window.open(`/verify/${r.data.hash}`, "_blank"); }
+			const r = await api.post("certifications/generar", { json: { documentType: "carta_residencia", residentId: citizenId } }).json<{ success: boolean; data: { hash: string } }>();
+			if (r.success) { toast.success(`✅ Carta generada para ${name}`); window.open(`/verify/${r.data.hash}`, "_blank"); }
 		} catch { toast.error("Error al generar la carta"); }
 		finally { setGenerating(null); }
 	}, []);
 
+	const handleSectorClick = useCallback((sector: string) => {
+		setSelectedSector(sector === selectedSector ? "" : sector);
+		setAddress(`Manzana ${sector}`);
+	}, [selectedSector]);
+
 	const isMinor = (bd: string) => (Date.now() - new Date(bd).getTime()) / 31557600000 < 18;
 	const isElderly = (bd: string) => (Date.now() - new Date(bd).getTime()) / 31557600000 >= 60;
 
-	// ─── Render ───
+	// Agrupar resultados por familia
+	const grouped = results.reduce<Record<string, CitizenRow[]>>((acc, r) => {
+		const key = r.familyId || r.citizenId;
+		if (!acc[key]) acc[key] = [];
+		acc[key].push(r);
+		return acc;
+	}, {});
+	const familyGroups = Object.entries(grouped).map(([key, members]) => ({
+		key,
+		familyName: members[0]?.familyName ?? "Sin familia",
+		address: `${members[0]?.houseSector ? `Manzana ${members[0].houseSector}` : ""}${members[0]?.houseNumber ? ` · Casa ${members[0].houseNumber}` : ""}`,
+		members,
+	}));
+
 	return (
 		<div className="mx-auto flex max-w-6xl flex-col gap-10 pb-12 pt-6">
 			<div className="text-center">
 				<h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Descargar Carta de Residencia</h1>
-				<p className="mt-3 text-xl text-muted-foreground">Buscá tu familia, seleccioná un miembro y descargá la carta</p>
+				<p className="mt-3 text-xl text-muted-foreground">Completá los campos y buscanos</p>
 			</div>
 
 			<div className="grid gap-10 xl:grid-cols-[1fr_280px]">
 				<div className="space-y-10">
 					<section className="space-y-6 rounded-2xl border-2 p-8 shadow-sm">
 						<div className="grid gap-6 md:grid-cols-2">
-							<AutoInput
-								label="Nombre de la Familia"
-								placeholder="Ej: Familia Pérez"
-								icon={UsersIcon}
-								value={familyName}
-								onChange={(v) => { setFamilyName(v); famSuggest.search(v); }}
-								renderDropdown={(close) => (
-									<SuggestionDropdown
-										items={famSuggest.items}
-										loading={famSuggest.loading}
-										onSelect={(id, label) => { setFamilyName(label); doSearch(id); close(); }}
-										emptyText="Sin resultados"
-									/>
+							{/* Familia */}
+							<div className="relative space-y-2">
+								<label className="text-lg font-medium">Nombre de la Familia</label>
+								<div className="relative">
+									<UsersIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
+									<Input value={familyName} onChange={(e) => {
+										setFamilyName(e.target.value);
+										debounce(e.target.value, async (q) => {
+											try {
+												const r = await api.get(`families?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { name: string }[] }>();
+												setFamSug((r.data ?? []).map((f) => ({ label: f.name })));
+											} catch { setFamSug([]); }
+										});
+									}} placeholder="Ej: Familia Pérez" className="h-14 pl-12 pr-12 text-lg" />
+									{familyName && <button type="button" onClick={() => setFamilyName("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"><XIcon className="size-5" /></button>}
+								</div>
+								{famSug.length > 0 && (
+									<div className="absolute z-50 mt-1 w-full rounded-xl border bg-background shadow-lg">
+										{famSug.map((s) => (
+											<button key={s.label} type="button" className="flex w-full rounded-lg px-3 py-2.5 text-left text-base hover:bg-muted" onClick={() => { setFamilyName(s.label); setFamSug([]); }}>{s.label}</button>
+										))}
+									</div>
 								)}
-							/>
-							<AutoInput
-								label="Dirección / Manzana"
-								placeholder="Ej: Manzana 10 Casa 20"
-								icon={HomeIcon}
-								value={address}
-								onChange={(v) => { setAddress(v); addrSuggest.search(v); }}
-								renderDropdown={(close) => (
-									<SuggestionDropdown
-										items={addrSuggest.items}
-										loading={addrSuggest.loading}
-										onSelect={(id, label) => { setAddress(label); doSearch(id); close(); }}
-										emptyText="Sin resultados"
-									/>
+							</div>
+
+							{/* Dirección */}
+							<div className="relative space-y-2">
+								<label className="text-lg font-medium">Dirección / Manzana</label>
+								<div className="relative">
+									<HomeIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
+									<Input value={address} onChange={(e) => {
+										setAddress(e.target.value);
+										debounce(e.target.value, async (q) => {
+											try {
+												const r = await api.get(`houses?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { address: string; sector: string; number: string }[] }>();
+												setAddrSug((r.data ?? []).map((h) => ({ label: `Manzana ${h.sector} · Casa ${h.number}` })));
+											} catch { setAddrSug([]); }
+										});
+									}} placeholder="Ej: Manzana 10 Casa 20" className="h-14 pl-12 pr-12 text-lg" />
+									{address && <button type="button" onClick={() => setAddress("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"><XIcon className="size-5" /></button>}
+								</div>
+								{addrSug.length > 0 && (
+									<div className="absolute z-50 mt-1 w-full rounded-xl border bg-background shadow-lg">
+										{addrSug.map((s) => (
+											<button key={s.label} type="button" className="flex w-full rounded-lg px-3 py-2.5 text-left text-base hover:bg-muted" onClick={() => { setAddress(s.label); setAddrSug([]); }}>{s.label}</button>
+										))}
+									</div>
 								)}
-							/>
+							</div>
+
+							{/* Cédula */}
 							<div className="space-y-2 md:col-span-2">
-								<label className="text-lg font-medium" htmlFor="ci">O buscá por Cédula de Identidad</label>
+								<label className="text-lg font-medium">O buscá por Cédula de Identidad</label>
 								<div className="flex gap-2">
 									<Select value={dniPrefix} onValueChange={setDniPrefix}>
-										<SelectTrigger className="h-14 w-20 shrink-0 text-lg">
-											<SelectValue />
-										</SelectTrigger>
+										<SelectTrigger className="h-14 w-20 shrink-0 text-lg"><SelectValue /></SelectTrigger>
 										<SelectContent>
 											<SelectItem value="V">V</SelectItem>
 											<SelectItem value="E">E</SelectItem>
@@ -264,14 +219,7 @@ function RouteComponent() {
 									</Select>
 									<div className="relative flex-1">
 										<UserIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
-										<Input
-											id="ci"
-											value={cedula}
-											onChange={(e) => setCedula(e.target.value)}
-											onKeyDown={(e) => e.key === "Enter" && doSearch()}
-											placeholder="12345678"
-											className="h-14 pl-12 text-lg"
-										/>
+										<Input value={cedula} onChange={(e) => setCedula(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} placeholder="12345678" className="h-14 pl-12 text-lg" />
 									</div>
 								</div>
 							</div>
@@ -291,7 +239,8 @@ function RouteComponent() {
 
 					{/* Resultados */}
 					{loading && <div className="flex items-center justify-center py-20"><Loader2Icon className="size-12 animate-spin text-muted-foreground" /></div>}
-					{!loading && searched && !family && (
+
+					{!loading && searched && results.length === 0 && (
 						<Card className="border-dashed py-16">
 							<CardContent className="flex flex-col items-center gap-4 text-center">
 								<UsersIcon className="size-16 text-muted-foreground/30" />
@@ -299,52 +248,60 @@ function RouteComponent() {
 							</CardContent>
 						</Card>
 					)}
-					{!loading && family && (
-						<div className="space-y-6">
-							<div className="flex flex-col gap-4 rounded-2xl border-2 bg-muted/30 p-6 md:flex-row md:items-center md:justify-between">
-								<div className="flex items-center gap-4">
-									<div className="flex size-16 items-center justify-center rounded-full bg-primary text-3xl text-primary-foreground"><UsersIcon className="size-8" /></div>
+
+					{!loading && familyGroups.map((g) => (
+						<div key={g.key} className="space-y-4">
+							<div className="flex flex-col gap-3 rounded-2xl border-2 bg-muted/30 p-5 md:flex-row md:items-center md:justify-between">
+								<div className="flex items-center gap-3">
+									<div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><UsersIcon className="size-6" /></div>
 									<div>
-										<p className="text-2xl font-bold">{family.name}</p>
-										<p className="text-base text-muted-foreground">{family.address || `Manzana ${family.sector || "—"}`}</p>
+										<p className="text-xl font-bold">{g.familyName}</p>
+										<p className="text-sm text-muted-foreground">{g.address || "—"}</p>
 									</div>
 								</div>
-								<div className="flex items-center gap-8">
-									<div className="text-center"><p className="text-xs uppercase tracking-wider text-muted-foreground">Miembros</p><p className="text-3xl font-bold">{family.members.length}</p></div>
-									<div className="hidden h-12 w-px bg-border md:block" />
-									<div className="text-center md:text-left"><p className="text-xs uppercase tracking-wider text-muted-foreground">Jefe</p><p className="text-lg font-medium">{family.members.find((m) => m.isHeadOfHousehold)?.firstName || "—"}</p></div>
+								<div className="text-center md:text-right">
+									<p className="text-xs uppercase text-muted-foreground">Miembros</p>
+									<p className="text-2xl font-bold">{g.members.length}</p>
 								</div>
 							</div>
-							<div className="grid gap-6 md:grid-cols-2">
-								{family.members.map((m) => (
-									<Card key={m.id} className={`flex flex-col justify-between p-6 ${isMinor(m.birthDate) ? "border-dashed opacity-70" : "shadow-sm"}`}>
+							<div className="grid gap-4 md:grid-cols-2">
+								{g.members.map((m) => (
+									<Card key={m.citizenId} className={`flex flex-col justify-between p-5 ${isMinor(m.birthDate) ? "border-dashed opacity-70" : "shadow-sm"}`}>
 										<div>
-											<div className="mb-4 flex flex-wrap gap-2">
+											<div className="mb-3 flex flex-wrap gap-1.5">
 												{m.isHeadOfHousehold && <Badge className="px-3 py-1 text-sm">Jefe</Badge>}
 												{isElderly(m.birthDate) && <Badge variant="secondary" className="px-3 py-1 text-sm">Adulto Mayor</Badge>}
-												{isMinor(m.birthDate) && <Badge variant="outline" className="px-3 py-1 text-sm">Menor de edad</Badge>}
-												{m.disabilities?.length ? <Badge variant="destructive" className="px-3 py-1 text-sm">Discapacidad</Badge> : null}
+												{isMinor(m.birthDate) && <Badge variant="outline" className="px-3 py-1 text-sm">Menor</Badge>}
 											</div>
-											<p className="text-2xl font-bold">{m.firstName} {m.lastName}</p>
-											<p className="mt-1 text-lg text-muted-foreground">{m.dni}</p>
-											{m.phone && <p className="mt-2 text-base text-muted-foreground">📞 {m.phone}</p>}
+											<p className="text-xl font-bold">{m.firstName} {m.lastName}</p>
+											<p className="text-base text-muted-foreground">{m.dni}</p>
+											{m.phone && <p className="mt-1 text-sm text-muted-foreground">📞 {m.phone}</p>}
 										</div>
 										{!isMinor(m.birthDate) ? (
-											<Button size="lg" className="mt-6 h-14 w-full gap-3 text-lg" onClick={() => handleGenerate(m)} disabled={generating === m.id}>
-												{generating === m.id ? <Loader2Icon className="size-6 animate-spin" /> : <DownloadIcon className="size-6" />}
-												{generating === m.id ? "Generando..." : "Descargar Carta"}
+											<Button size="lg" className="mt-5 h-12 w-full gap-2 text-base" onClick={() => handleGenerate(m.citizenId, m.firstName)} disabled={generating === m.citizenId}>
+												{generating === m.citizenId ? <Loader2Icon className="size-5 animate-spin" /> : <DownloadIcon className="size-5" />}
+												{generating === m.citizenId ? "Generando..." : "Descargar Carta"}
 											</Button>
 										) : (
-											<div className="mt-6 flex h-14 w-full items-center justify-center rounded-xl border-2 border-dashed text-base text-muted-foreground">No disponible</div>
+											<div className="mt-5 flex h-12 items-center justify-center rounded-xl border-2 border-dashed text-sm text-muted-foreground">No disponible</div>
 										)}
 									</Card>
 								))}
 							</div>
 						</div>
+					))}
+
+					{/* Paginación */}
+					{metadata && metadata.totalPages > 1 && (
+						<div className="flex items-center justify-center gap-2 pt-4">
+							<Button variant="outline" size="sm" disabled={page <= 1} onClick={() => doSearch(page - 1)}>Anterior</Button>
+							<span className="text-sm text-muted-foreground">Pág {page} de {metadata.totalPages}</span>
+							<Button variant="outline" size="sm" disabled={page >= metadata.totalPages} onClick={() => doSearch(page + 1)}>Siguiente</Button>
+						</div>
 					)}
 				</div>
 
-				{/* Manzanas (sticky) */}
+				{/* Manzanas */}
 				<Card className="sticky top-6 self-start">
 					<CardContent className="p-5">
 						<p className="mb-3 text-lg font-semibold">Manzanas</p>
@@ -363,32 +320,6 @@ function RouteComponent() {
 					</CardContent>
 				</Card>
 			</div>
-		</div>
-	);
-}
-
-// ─── Componente dropdown de sugerencias ───
-function SuggestionDropdown({ items, loading, onSelect, emptyText }: {
-	items: { id: string; label: string; sublabel?: string }[];
-	loading: boolean;
-	onSelect: (id: string, label: string) => void;
-	emptyText: string;
-}) {
-	if (!items.length && !loading) return null;
-	return (
-		<div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border bg-background shadow-lg">
-			{loading && <div className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground"><Loader2Icon className="size-4 animate-spin" /> Buscando...</div>}
-			{!loading && items.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">{emptyText}</div>}
-			{items.length > 0 && (
-				<div className="max-h-60 overflow-y-auto px-1 pb-1">
-					{items.map((s) => (
-						<button key={s.id} type="button" className="flex w-full flex-col rounded-lg px-3 py-2.5 text-left text-base transition-colors hover:bg-muted cursor-pointer" onClick={() => onSelect(s.id, s.label)}>
-							<span className="font-medium">{s.label}</span>
-							{s.sublabel && <span className="text-sm text-muted-foreground">{s.sublabel}</span>}
-						</button>
-					))}
-				</div>
-			)}
 		</div>
 	);
 }

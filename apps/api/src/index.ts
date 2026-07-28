@@ -32,6 +32,7 @@ import { treasuryRouter } from './modules/treasury/treasury.router';
 import { modulesRouter } from './modules/modules/modules.router';
 import { actsRouter } from './modules/acts/acts.router';
 import { ticketsRouter } from './modules/tickets/tickets.router';
+import kioskoRouter from './modules/kiosko/kiosko.router';
 
 type Bindings = {
   DB: D1Database
@@ -266,6 +267,8 @@ const app = new Hono<HonoConfig>()
       return c.json({ error: msg }, 500);
     }
   })
+  // Kiosko de búsqueda pública
+  .route('/kiosko', kioskoRouter)
   .on(["GET", "POST", "OPTIONS"], '/auth/*', async (c) => {
     if (c.req.method === "OPTIONS") {
       return new Response(null, { status: 204 });
