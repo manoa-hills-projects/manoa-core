@@ -189,6 +189,18 @@ function RouteComponent() {
 		setSelectedSector("");
 	}, []);
 
+	// Autocomplete familias
+	const fetchFamilies = useCallback(async (q: string) => {
+		const r = await api.get(`families?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { id: string; name: string }[] }>();
+		return (r.data ?? []).map((f) => ({ id: f.id, label: f.name }));
+	}, []);
+
+	// Autocomplete direcciones
+	const fetchAddresses = useCallback(async (q: string) => {
+		const r = await api.get(`houses?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { id: string; address: string; sector: string; number: string }[] }>();
+		return (r.data ?? []).map((h) => ({ id: h.id, label: `Manzana ${h.sector} · Casa ${h.number}`, sublabel: h.address }));
+	}, []);
+
 	// Buscar
 	const handleSearch = useCallback(async (famId?: string) => {
 		if (!familyName && !address && !cedula && !famId) {
@@ -278,10 +290,7 @@ function RouteComponent() {
 								value={familyName}
 								onChange={setFamilyName}
 								onSearch={handleSearch}
-								fetchSuggestions={useCallback(async (q: string) => {
-									const r = await api.get(`families?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { id: string; name: string }[] }>();
-									return (r.data ?? []).map((f) => ({ id: f.id, label: f.name }));
-								}, [])}
+								fetchSuggestions={fetchFamilies}
 							/>
 							<AutoInput
 								label="Dirección / Manzana"
@@ -290,10 +299,7 @@ function RouteComponent() {
 								value={address}
 								onChange={setAddress}
 								onSearch={handleSearch}
-								fetchSuggestions={useCallback(async (q: string) => {
-									const r = await api.get(`houses?search=${encodeURIComponent(q)}&limit=8`).json<{ data: { id: string; address: string; sector: string; number: string }[] }>();
-									return (r.data ?? []).map((h) => ({ id: h.id, label: `Manzana ${h.sector} · Casa ${h.number}`, sublabel: h.address }));
-								}, [])}
+								fetchSuggestions={fetchAddresses}
 							/>
 							<div className="space-y-2 md:col-span-2">
 								<label className="text-lg font-medium" htmlFor="ci">O buscá por Cédula de Identidad</label>
