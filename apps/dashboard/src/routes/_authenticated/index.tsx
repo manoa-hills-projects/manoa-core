@@ -3,7 +3,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
 	DownloadIcon,
@@ -132,7 +132,7 @@ function RouteComponent() {
 
 	// Cargar sectores (manzanas)
 	useEffect(() => {
-		api.get("houses").json<{ data: { sector: string }[] }>()
+		api.get("houses?limit=999").json<{ data: { sector: string }[] }>()
 			.then((res) => {
 				const map = new Map<string, number>();
 				for (const h of res.data ?? []) map.set(h.sector, (map.get(h.sector) ?? 0) + 1);
