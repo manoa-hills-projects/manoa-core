@@ -4,9 +4,11 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, and, sql, count, desc } from "drizzle-orm";
 import type { HonoConfig } from "../../index";
 import * as schema from "../../shared/database/schemas";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { generateResidencyLetterPdf } from "../requests/requests.pdf";
 
 const kioskoRouter = new Hono<HonoConfig>();
+
+/* ─────────── SEARCH ─────────── */
 
 const searchSchema = z.object({
   family: z.string().optional(),
@@ -21,35 +23,18 @@ kioskoRouter.get("/search", zValidator("query", searchSchema), async (c) => {
   try {
     const db = c.get("db");
     const { family, address, dni, sector, page, limit } = c.req.valid("query");
-
     const conditions: ReturnType<typeof sql>[] = [];
 
-    // Construir filtros dinámicamente
-    if (family) {
-      conditions.push(
-        sql`LOWER(${schema.families.name}) LIKE ${`%${family.toLowerCase()}%`}`
-      );
-    }
-    if (address) {
-      conditions.push(
-        sql`LOWER(${schema.houses.address}) LIKE ${`%${address.toLowerCase()}%`}`
-      );
-    }
-    if (sector) {
-      conditions.push(
-        sql`LOWER(${schema.houses.sector}) = ${sector.toLowerCase()}`
-      );
-    }
+    if (family) conditions.push(sql`LOWER(${schema.families.name}) LIKE ${`%${family.toLowerCase()}%`}`);
+    if (address) conditions.push(sql`LOWER(${schema.houses.address}) LIKE ${`%${address.toLowerCase()}%`}`);
+    if (sector) conditions.push(sql`LOWER(${schema.houses.sector}) = ${sector.toLowerCase()}`);
     if (dni) {
       const cleanDni = dni.replace(/^[VEve]-?/, "").trim();
-      conditions.push(
-        sql`LOWER(${schema.citizens.dni}) LIKE ${`%${cleanDni}%`}`
-      );
+      conditions.push(sql`LOWER(${schema.citizens.dni}) LIKE ${`%${cleanDni}%`}`);
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Consulta paginada con joins
     const rows = await db
       .select({
         citizenId: schema.citizens.id,
@@ -74,7 +59,6 @@ kioskoRouter.get("/search", zValidator("query", searchSchema), async (c) => {
       .limit(limit)
       .offset((page - 1) * limit);
 
-    // Total de resultados para paginación
     const [totalResult] = await db
       .select({ total: count() })
       .from(schema.citizens)
@@ -82,106 +66,69 @@ kioskoRouter.get("/search", zValidator("query", searchSchema), async (c) => {
       .leftJoin(schema.houses, eq(schema.families.houseId, schema.houses.id))
       .where(where);
 
-    const total = totalResult?.total ?? 0;
-
-    return c.json({
-      data: rows,
-      metadata: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    return c.json({ data: rows, metadata: { total: totalResult?.total ?? 0, page, limit, totalPages: Math.ceil((totalResult?.total ?? 0) / limit) } });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json({ error: msg }, 500);
+    return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });
 
-// ─── POST /pdf — Generar PDF de carta de residencia directa ───
+/* ─────────── PDF ─────────── */
+
 kioskoRouter.post("/pdf", zValidator("json", z.object({ citizenId: z.string() })), async (c) => {
   try {
     const db = c.get("db");
-    const { citizenId } = c.req.valid("json");
 
+    // 1. Obtener datos del ciudadano con familia y vivienda
     const citizen = await db
       .select({
+        id: schema.citizens.id,
+        dni: schema.citizens.dni,
         firstName: schema.citizens.firstName,
         lastName: schema.citizens.lastName,
-        dni: schema.citizens.dni,
         phone: schema.citizens.phone,
         familyName: schema.families.name,
         houseAddress: schema.houses.address,
         houseSector: schema.houses.sector,
         houseNumber: schema.houses.number,
+        createdAt: schema.citizens.createdAt,
       })
       .from(schema.citizens)
       .leftJoin(schema.families, eq(schema.citizens.familyId, schema.families.id))
       .leftJoin(schema.houses, eq(schema.families.houseId, schema.houses.id))
-      .where(eq(schema.citizens.id, citizenId))
+      .where(eq(schema.citizens.id, c.req.valid("json").citizenId))
       .get();
 
     if (!citizen) return c.json({ error: "Ciudadano no encontrado" }, 404);
 
-    // Generar PDF simple
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 841.89]); // A4
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const { width, height } = page.getSize();
+    // 2. Obtener firmantes del consejo comunal
+    const signatories = await db
+      .select()
+      .from(schema.councilSignatories)
+      .all();
 
-    let y = height - 60;
-    const marginX = 60;
-    const lineHeight = 20;
+    // 3. Calcular años de residencia aproximados
+    const yearsSinceCreation = citizen.createdAt
+      ? Math.floor((Date.now() - new Date(citizen.createdAt).getTime()) / 31557600000)
+      : 1;
+    const yearsOfResidence = Math.max(1, yearsSinceCreation);
 
-    page.drawText("CARTA DE RESIDENCIA", { x: marginX, y, size: 22, font: boldFont });
-    y -= 40;
+    // 4. Construir payload para el generador de PDF
+    const payload = {
+      fullName: `${citizen.firstName} ${citizen.lastName}`,
+      idNumber: citizen.dni,
+      nationality: "Venezolano(a)",
+      yearsOfResidence,
+      streetName: citizen.houseAddress || `Manzana ${citizen.houseSector || ""}`,
+      houseNumber: citizen.houseNumber || "S/N",
+      issueDay: new Date().getDate(),
+      issueMonth: new Date().toLocaleString("es-VE", { month: "long" }),
+    };
 
-    page.drawText("El Consejo Comunal de Manoa hace constar que:", { x: marginX, y, size: 12, font: regularFont });
-    y -= 30;
+    // 5. Generar PDF con el generador existente (con membrete, firmas, QR)
+    const requestId = crypto.randomUUID();
+    const pdfBytes = await generateResidencyLetterPdf(payload, signatories, requestId);
 
-    const fullName = `${citizen.firstName} ${citizen.lastName}`;
-    page.drawText(fullName, { x: marginX, y, size: 16, font: boldFont });
-    y -= 22;
-
-    page.drawText(`Cédula de Identidad: ${citizen.dni}`, { x: marginX, y, size: 12, font: regularFont });
-    y -= 22;
-
-    if (citizen.phone) {
-      page.drawText(`Teléfono: ${citizen.phone}`, { x: marginX, y, size: 12, font: regularFont });
-      y -= 22;
-    }
-
-    if (citizen.familyName) {
-      page.drawText(`Familia: ${citizen.familyName}`, { x: marginX, y, size: 12, font: regularFont });
-      y -= 22;
-    }
-
-    const address = [
-      citizen.houseSector ? `Manzana ${citizen.houseSector}` : "",
-      citizen.houseNumber ? `Casa ${citizen.houseNumber}` : "",
-      citizen.houseAddress || "",
-    ].filter(Boolean).join(" · ");
-    if (address) {
-      page.drawText(`Dirección: ${address}`, { x: marginX, y, size: 12, font: regularFont });
-      y -= 30;
-    }
-
-    y -= 20;
-    page.drawText("Se expide la presente a solicitud del interesado.", { x: marginX, y, size: 11, font: regularFont });
-    y -= 22;
-
-    const today = new Date().toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" });
-    page.drawText(`Fecha: ${today}`, { x: marginX, y, size: 12, font: regularFont });
-    y -= 50;
-
-    page.drawText("________________________", { x: marginX, y, size: 12, font: regularFont });
-    y -= 18;
-    page.drawText("Vocero del Consejo Comunal", { x: marginX, y, size: 11, font: regularFont });
-
-    const pdfBytes = await pdfDoc.save();
-
+    // 6. Devolver PDF como descarga directa
     return new Response(pdfBytes, {
       headers: {
         "Content-Type": "application/pdf",
@@ -189,8 +136,7 @@ kioskoRouter.post("/pdf", zValidator("json", z.object({ citizenId: z.string() })
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json({ error: msg }, 500);
+    return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });
 
