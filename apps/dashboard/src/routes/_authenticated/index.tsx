@@ -13,6 +13,7 @@ import {
 	SearchIcon,
 	UserIcon,
 	UsersIcon,
+	XIcon,
 } from "lucide-react";
 import { api } from "@/shared/api/api-client";
 import { Badge } from "@/shared/ui/badge";
@@ -44,7 +45,7 @@ interface MemberData {
 	disabilities?: string[];
 }
 
-// ─── AutocompleteInput ───
+// ─── Autocomplete Input ───
 function AutoInput({
 	label,
 	placeholder,
@@ -64,27 +65,33 @@ function AutoInput({
 }) {
 	const [suggestions, setSuggestions] = useState<{ id: string; label: string; sublabel?: string }[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [focused, setFocused] = useState(false);
+	const [open, setOpen] = useState(false);
+	const [statusText, setStatusText] = useState("");
 	const timer = useRef<ReturnType<typeof setTimeout>>();
 	const ref = useRef<HTMLDivElement>(null);
 
+	// Autocomplete fetch con debounce
 	useEffect(() => {
 		if (timer.current) clearTimeout(timer.current);
-		if (value.length < 2) { setSuggestions([]); return; }
+		if (value.length < 2) { setSuggestions([]); setOpen(false); setStatusText(""); return; }
 		setLoading(true);
+		setStatusText("Buscando...");
 		timer.current = setTimeout(async () => {
 			try {
 				const items = await fetchSuggestions(value);
 				setSuggestions(items);
-			} catch { setSuggestions([]); }
+				setOpen(items.length > 0);
+				setStatusText(items.length > 0 ? `${items.length} encontrado${items.length !== 1 ? "s" : ""}` : `Sin resultados para "${value}"`);
+			} catch { setSuggestions([]); setStatusText("Error al buscar"); }
 			finally { setLoading(false); }
 		}, 300);
 		return () => { if (timer.current) clearTimeout(timer.current); };
 	}, [value, fetchSuggestions]);
 
+	// Cerrar al hacer clic fuera
 	useEffect(() => {
 		const handleClick = (e: MouseEvent) => {
-			if (ref.current && !ref.current.contains(e.target as Node)) setFocused(false);
+			if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
 		};
 		document.addEventListener("mousedown", handleClick);
 		return () => document.removeEventListener("mousedown", handleClick);
@@ -97,28 +104,52 @@ function AutoInput({
 				<Icon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					value={value ?? ""}
-					onChange={(e) => onChange(e.target.value)}
-					onFocus={() => setFocused(true)}
+					onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+					onFocus={() => value.length >= 2 && setOpen(suggestions.length > 0)}
 					placeholder={placeholder}
-					className="h-14 pl-12 text-lg"
+					className="h-14 pl-12 pr-12 text-lg"
 				/>
+				{value && (
+					<button
+						type="button"
+						onClick={() => { onChange(""); setSuggestions([]); setOpen(false); setStatusText(""); }}
+						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+						tabIndex={-1}
+					>
+						<XIcon className="size-5" />
+					</button>
+				)}
 				{loading && (
-					<Loader2Icon className="absolute right-4 top-1/2 size-5 -translate-y-1/2 animate-spin text-muted-foreground" />
+					<Loader2Icon className="absolute right-3 top-1/2 size-5 -translate-y-1/2 animate-spin text-muted-foreground/50" />
 				)}
 			</div>
-			{focused && suggestions.length > 0 && (
+
+			{/* Dropdown */}
+			{open && (
 				<div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border bg-background shadow-lg">
-					{suggestions.map((s) => (
-						<button
-							key={s.id}
-							type="button"
-							className="flex w-full flex-col px-4 py-3 text-left text-base transition-colors hover:bg-muted"
-							onClick={() => { onSearch(s.id); setFocused(false); setSuggestions([]); }}
-						>
-							<span className="font-medium">{s.label}</span>
-							{s.sublabel && <span className="text-sm text-muted-foreground">{s.sublabel}</span>}
-						</button>
-					))}
+					{/* Status */}
+					{statusText && (
+						<div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
+							{loading && <Loader2Icon className="size-3.5 animate-spin" />}
+							{statusText}
+						</div>
+					)}
+					{/* Lista */}
+					{suggestions.length > 0 && (
+						<div className="max-h-60 overflow-y-auto px-1 pb-1">
+							{suggestions.map((s) => (
+								<button
+									key={s.id}
+									type="button"
+									className="flex w-full flex-col rounded-lg px-3 py-2.5 text-left text-base transition-colors hover:bg-muted cursor-pointer"
+									onClick={() => { onSearch(s.id); setOpen(false); }}
+								>
+									<span className="font-medium">{s.label}</span>
+									{s.sublabel && <span className="text-sm text-muted-foreground">{s.sublabel}</span>}
+								</button>
+							))}
+						</div>
+					)}
 				</div>
 			)}
 		</div>
