@@ -10,7 +10,7 @@ import { SidebarGroupSection } from "./sidebar-content";
 import { SidebarUser } from "./sidebar-user";
 
 export const AppSidebar = () => {
-	const { user, navGroups, secondaryGroups, isLoading } = useSidebarNav();
+	const { user, navGroups, isLoading } = useSidebarNav();
 
 	return (
 		<Sidebar collapsible="offcanvas">
@@ -40,21 +40,6 @@ export const AppSidebar = () => {
 					/>
 				))}
 			</SidebarContent>
-
-			<SidebarFooter>
-				{secondaryGroups.length > 0 && (
-					<>
-						{secondaryGroups.map((group) => (
-							<SidebarGroupSection
-								key={group.groupLabel}
-								groupLabel={group.groupLabel}
-								items={group.items}
-							/>
-						))}
-						<Separator />
-					</>
-				)}
-			</SidebarFooter>
 		</Sidebar>
 	);
 };

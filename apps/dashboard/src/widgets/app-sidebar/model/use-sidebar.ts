@@ -131,10 +131,23 @@ export const useSidebarNav = () => {
 		return groupItems(items);
 	}, [moduleMap, canManage]);
 
+	// Fusionar grupos: combina primary + secondary, unificando grupos con mismo label
+	const mergedGroups = useMemo(() => {
+		const map = new Map<string, NavigationItems[]>();
+		for (const group of [...navGroups, ...secondaryGroups]) {
+			const existing = map.get(group.groupLabel) ?? [];
+			map.set(group.groupLabel, [...existing, ...group.items]);
+		}
+		return Array.from(map.entries()).map(([groupLabel, items]) => ({
+			groupLabel,
+			items,
+		}));
+	}, [navGroups, secondaryGroups]);
+
 	return {
 		user,
-		navGroups,
-		secondaryGroups,
+		navGroups: mergedGroups,
+		secondaryGroups: [],
 		isLoading,
 	};
 };
