@@ -13,7 +13,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-	ElderlyIcon,
 	HomeIcon,
 	Loader2Icon,
 	SearchIcon,
