@@ -96,8 +96,14 @@ function RouteComponent() {
 	const handleGenerate = useCallback(async (citizenId: string, name: string) => {
 		setGenerating(citizenId);
 		try {
-			const r = await api.post("certifications/generar", { json: { documentType: "carta_residencia", residentId: citizenId } }).json<{ success: boolean; data: { hash: string } }>();
-			if (r.success) { toast.success(`✅ Carta generada para ${name}`); window.open(`/verify/${r.data.hash}`, "_blank"); }
+			const res = await api.post("kiosko/pdf", { json: { citizenId } }).blob();
+			const url = URL.createObjectURL(res);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `carta-residencia-${citizenId.slice(0, 8)}.pdf`;
+			a.click();
+			URL.revokeObjectURL(url);
+			toast.success(`✅ Carta generada para ${name}`);
 		} catch { toast.error("Error al generar la carta"); }
 		finally { setGenerating(null); }
 	}, []);

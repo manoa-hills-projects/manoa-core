@@ -268,6 +268,7 @@ const app = new Hono<HonoConfig>()
     }
   })
   // Kiosko de búsqueda pública
+  .use('/kiosko/*', requireAuth)
   .route('/kiosko', kioskoRouter)
   .on(["GET", "POST", "OPTIONS"], '/auth/*', async (c) => {
     if (c.req.method === "OPTIONS") {

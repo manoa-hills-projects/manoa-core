@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, and, sql, count, desc } from "drizzle-orm";
 import type { HonoConfig } from "../../index";
 import * as schema from "../../shared/database/schemas";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const kioskoRouter = new Hono<HonoConfig>();
 
@@ -90,6 +91,101 @@ kioskoRouter.get("/search", zValidator("query", searchSchema), async (c) => {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: msg }, 500);
+  }
+});
+
+// ─── POST /pdf — Generar PDF de carta de residencia directa ───
+kioskoRouter.post("/pdf", zValidator("json", z.object({ citizenId: z.string() })), async (c) => {
+  try {
+    const db = c.get("db");
+    const { citizenId } = c.req.valid("json");
+
+    const citizen = await db
+      .select({
+        firstName: schema.citizens.firstName,
+        lastName: schema.citizens.lastName,
+        dni: schema.citizens.dni,
+        phone: schema.citizens.phone,
+        familyName: schema.families.name,
+        houseAddress: schema.houses.address,
+        houseSector: schema.houses.sector,
+        houseNumber: schema.houses.number,
+      })
+      .from(schema.citizens)
+      .leftJoin(schema.families, eq(schema.citizens.familyId, schema.families.id))
+      .leftJoin(schema.houses, eq(schema.families.houseId, schema.houses.id))
+      .where(eq(schema.citizens.id, citizenId))
+      .get();
+
+    if (!citizen) return c.json({ error: "Ciudadano no encontrado" }, 404);
+
+    // Generar PDF simple
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const { width, height } = page.getSize();
+
+    let y = height - 60;
+    const marginX = 60;
+    const lineHeight = 20;
+
+    page.drawText("CARTA DE RESIDENCIA", { x: marginX, y, size: 22, font: boldFont });
+    y -= 40;
+
+    page.drawText("El Consejo Comunal de Manoa hace constar que:", { x: marginX, y, size: 12, font: regularFont });
+    y -= 30;
+
+    const fullName = `${citizen.firstName} ${citizen.lastName}`;
+    page.drawText(fullName, { x: marginX, y, size: 16, font: boldFont });
+    y -= 22;
+
+    page.drawText(`Cédula de Identidad: ${citizen.dni}`, { x: marginX, y, size: 12, font: regularFont });
+    y -= 22;
+
+    if (citizen.phone) {
+      page.drawText(`Teléfono: ${citizen.phone}`, { x: marginX, y, size: 12, font: regularFont });
+      y -= 22;
+    }
+
+    if (citizen.familyName) {
+      page.drawText(`Familia: ${citizen.familyName}`, { x: marginX, y, size: 12, font: regularFont });
+      y -= 22;
+    }
+
+    const address = [
+      citizen.houseSector ? `Manzana ${citizen.houseSector}` : "",
+      citizen.houseNumber ? `Casa ${citizen.houseNumber}` : "",
+      citizen.houseAddress || "",
+    ].filter(Boolean).join(" · ");
+    if (address) {
+      page.drawText(`Dirección: ${address}`, { x: marginX, y, size: 12, font: regularFont });
+      y -= 30;
+    }
+
+    y -= 20;
+    page.drawText("Se expide la presente a solicitud del interesado.", { x: marginX, y, size: 11, font: regularFont });
+    y -= 22;
+
+    const today = new Date().toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" });
+    page.drawText(`Fecha: ${today}`, { x: marginX, y, size: 12, font: regularFont });
+    y -= 50;
+
+    page.drawText("________________________", { x: marginX, y, size: 12, font: regularFont });
+    y -= 18;
+    page.drawText("Vocero del Consejo Comunal", { x: marginX, y, size: 11, font: regularFont });
+
+    const pdfBytes = await pdfDoc.save();
+
+    return new Response(pdfBytes, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="carta-residencia-${citizen.dni.replace(/[^a-zA-Z0-9]/g, "")}.pdf"`,
       },
     });
   } catch (err) {
