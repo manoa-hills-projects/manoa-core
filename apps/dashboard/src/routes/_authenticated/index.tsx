@@ -20,6 +20,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
 export const Route = createFileRoute("/_authenticated/")({
 	component: RouteComponent,
@@ -109,6 +110,7 @@ function RouteComponent() {
 	const [familyName, setFamilyName] = useState("");
 	const [address, setAddress] = useState("");
 	const [cedula, setCedula] = useState("");
+	const [dniPrefix, setDniPrefix] = useState("V");
 	const [loading, setLoading] = useState(false);
 	const [family, setFamily] = useState<FamilyData | null>(null);
 	const [searched, setSearched] = useState(false);
@@ -139,7 +141,7 @@ function RouteComponent() {
 	}, []);
 
 	const resetSearch = useCallback(() => {
-		setFamilyName(""); setAddress(""); setCedula("");
+		setFamilyName(""); setAddress(""); setCedula(""); setDniPrefix("V");
 		setFamily(null); setSearched(false); setSelectedSector("");
 	}, []);
 
@@ -153,8 +155,8 @@ function RouteComponent() {
 				const r = await api.get(`families/${famId}`).json<{ data: FamilyData }>();
 				famData = r.data;
 			} else if (cedula) {
-				const q = cedula.trim().replace(/^[VEve]-?/, "").trim();
-				const r = await api.get(`citizens?search=${encodeURIComponent(q)}&limit=1`).json<{ data: { id: string; familyId: string | null }[] }>();
+				const fullDni = `${dniPrefix}-${cedula.trim()}`;
+				const r = await api.get(`citizens?search=${encodeURIComponent(fullDni)}&limit=1`).json<{ data: { id: string; familyId: string | null }[] }>();
 				const c = r.data?.[0];
 				if (c?.familyId) {
 					const r2 = await api.get(`families/${c.familyId}`).json<{ data: FamilyData }>();
@@ -250,16 +252,27 @@ function RouteComponent() {
 							/>
 							<div className="space-y-2 md:col-span-2">
 								<label className="text-lg font-medium" htmlFor="ci">O buscá por Cédula de Identidad</label>
-								<div className="relative">
-									<UserIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
-									<Input
-										id="ci"
-										value={cedula}
-										onChange={(e) => setCedula(e.target.value)}
-										onKeyDown={(e) => e.key === "Enter" && doSearch()}
-										placeholder="Ej: V-12345678 o E-87654321"
-										className="h-14 pl-12 pr-4 text-lg"
-									/>
+								<div className="flex gap-2">
+									<Select value={dniPrefix} onValueChange={setDniPrefix}>
+										<SelectTrigger className="h-14 w-20 shrink-0 text-lg">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="V">V</SelectItem>
+											<SelectItem value="E">E</SelectItem>
+										</SelectContent>
+									</Select>
+									<div className="relative flex-1">
+										<UserIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
+										<Input
+											id="ci"
+											value={cedula}
+											onChange={(e) => setCedula(e.target.value)}
+											onKeyDown={(e) => e.key === "Enter" && doSearch()}
+											placeholder="12345678"
+											className="h-14 pl-12 text-lg"
+										/>
+									</div>
 								</div>
 							</div>
 						</div>
