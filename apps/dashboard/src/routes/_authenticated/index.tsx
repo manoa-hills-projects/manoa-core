@@ -133,7 +133,10 @@ function RouteComponent() {
 
 	return (
 		<div className="mx-auto flex max-w-6xl flex-col gap-8 pb-12 pt-6">
-			<h1 className="text-center text-4xl font-bold tracking-tight sm:text-5xl">Descargar Carta de Residencia</h1>
+			<div className="text-center">
+				<p className="text-lg font-semibold text-muted-foreground uppercase tracking-widest">MANOA BICENTENARIO 10-20</p>
+				<h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Descargar Carta de Residencia</h1>
+			</div>
 
 			<div className="grid gap-8 xl:grid-cols-[1fr_280px]">
 				<div className="space-y-8">
