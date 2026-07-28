@@ -66,7 +66,7 @@ export const findAllFamilies = async (
   queryParams: FamilyQueryParams,
   userId?: string
 ) => {
-  const { limit, page, search, house_id } = queryParams;
+  const { limit, page, search, house_id, sector } = queryParams;
 
   const query = db
     .select({
@@ -95,6 +95,10 @@ export const findAllFamilies = async (
 
   if (house_id) {
     conditions.push(eq(schema.families.houseId, house_id));
+  }
+
+  if (sector) {
+    conditions.push(sql`LOWER(${schema.houses.sector}) = ${sector.toLowerCase()}`);
   }
 
   // Filter by ownership: user must have a citizen record belonging to the family
