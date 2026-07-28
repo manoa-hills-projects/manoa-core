@@ -228,7 +228,7 @@ function RouteComponent() {
 									<SuggestionDropdown
 										items={famSuggest.items}
 										loading={famSuggest.loading}
-										onSelect={(id) => { doSearch(id); close(); }}
+										onSelect={(id, label) => { setFamilyName(label); doSearch(id); close(); }}
 										emptyText="Sin resultados"
 									/>
 								)}
@@ -243,7 +243,7 @@ function RouteComponent() {
 									<SuggestionDropdown
 										items={addrSuggest.items}
 										loading={addrSuggest.loading}
-										onSelect={(id) => { doSearch(id); close(); }}
+										onSelect={(id, label) => { setAddress(label); doSearch(id); close(); }}
 										emptyText="Sin resultados"
 									/>
 								)}
@@ -331,8 +331,8 @@ function RouteComponent() {
 					)}
 				</div>
 
-				{/* Manzanas */}
-				<Card>
+				{/* Manzanas (sticky) */}
+				<Card className="sticky top-6 self-start">
 					<CardContent className="p-5">
 						<p className="mb-3 text-lg font-semibold">Manzanas</p>
 						<div className="space-y-1">
@@ -358,7 +358,7 @@ function RouteComponent() {
 function SuggestionDropdown({ items, loading, onSelect, emptyText }: {
 	items: { id: string; label: string; sublabel?: string }[];
 	loading: boolean;
-	onSelect: (id: string) => void;
+	onSelect: (id: string, label: string) => void;
 	emptyText: string;
 }) {
 	if (!items.length && !loading) return null;
@@ -369,7 +369,7 @@ function SuggestionDropdown({ items, loading, onSelect, emptyText }: {
 			{items.length > 0 && (
 				<div className="max-h-60 overflow-y-auto px-1 pb-1">
 					{items.map((s) => (
-						<button key={s.id} type="button" className="flex w-full flex-col rounded-lg px-3 py-2.5 text-left text-base transition-colors hover:bg-muted cursor-pointer" onClick={() => onSelect(s.id)}>
+						<button key={s.id} type="button" className="flex w-full flex-col rounded-lg px-3 py-2.5 text-left text-base transition-colors hover:bg-muted cursor-pointer" onClick={() => onSelect(s.id, s.label)}>
 							<span className="font-medium">{s.label}</span>
 							{s.sublabel && <span className="text-sm text-muted-foreground">{s.sublabel}</span>}
 						</button>
