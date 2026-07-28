@@ -1,18 +1,17 @@
 /**
- * Modo Kiosko — Página principal
+ * Kiosko — Página principal
  *
- * Busca ciudadanos por familia, dirección o cédula.
- * Muestra los miembros de la familia con sus datos y permite
- * descargar carta de residencia para cada uno.
+ * Interfaz ultra-simple para buscar familias/ciudadanos y
+ * descargar carta de residencia.
  *
- * Diseñado para adultos mayores: letras grandes, botones grandes,
- * interfaz minimalista.
+ * Letras grandes, botones enormes, mucho espacio, 0 distracciones.
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
+	DownloadIcon,
 	HomeIcon,
 	Loader2Icon,
 	SearchIcon,
@@ -30,18 +29,15 @@ export const Route = createFileRoute("/_authenticated/")({
 	component: RouteComponent,
 });
 
-// ─── Types ───
-
-interface FamilyResult {
+interface FamilyData {
 	id: string;
 	name: string;
-	houseId: string | null;
-	sector?: string;
 	address?: string;
-	members: MemberResult[];
+	sector?: string;
+	members: MemberData[];
 }
 
-interface MemberResult {
+interface MemberData {
 	id: string;
 	dni: string;
 	firstName: string;
@@ -53,50 +49,30 @@ interface MemberResult {
 	disabilities?: string[];
 }
 
-interface SectorGroup {
-	sector: string;
-	houses: { number: string; families: { id: string; name: string }[] }[];
-}
-
-// ─── Component ───
-
 function RouteComponent() {
 	const [familyName, setFamilyName] = useState("");
 	const [address, setAddress] = useState("");
-	const [dni, setDni] = useState("");
+	const [cedula, setCedula] = useState("");
 	const [loading, setLoading] = useState(false);
-	const [family, setFamily] = useState<FamilyResult | null>(null);
-	const [sectors, setSectors] = useState<SectorGroup[]>([]);
-	const [selectedSector, setSelectedSector] = useState<string>("");
-	const [selectedHouse, setSelectedHouse] = useState<string>("");
-	const [generating, setGenerating] = useState<string | null>(null);
+	const [family, setFamily] = useState<FamilyData | null>(null);
 	const [searched, setSearched] = useState(false);
+	const [generating, setGenerating] = useState<string | null>(null);
+	const [sectors, setSectors] = useState<string[]>([]);
+	const [selectedSector, setSelectedSector] = useState("");
 
-	// ── Cargar sectores al inicio ──
-	useMemo(() => {
+	// Cargar sectores disponibles
+	useEffect(() => {
 		api.get("houses")
-			.json<{ data: { id: string; sector: string; number: string }[] }>()
+			.json<{ data: { sector: string }[] }>()
 			.then((res) => {
-				const map = new Map<string, { number: string; id: string }[]>();
-				for (const h of res.data ?? []) {
-					if (!map.has(h.sector)) map.set(h.sector, []);
-					map.get(h.sector)!.push({ number: h.number, id: h.id });
-				}
-				const groups: SectorGroup[] = [];
-				for (const [sector, houses] of map) {
-					groups.push({
-						sector,
-						houses: houses.map((h) => ({ number: h.number, families: [] })),
-					});
-				}
-				setSectors(groups.sort((a, b) => a.sector.localeCompare(b.sector)));
+				const secs = [...new Set((res.data ?? []).map((h) => h.sector))];
+				setSectors(secs.sort());
 			})
 			.catch(() => null);
 	}, []);
 
-	// ── Buscar ──
 	const handleSearch = useCallback(async () => {
-		if (!familyName.trim() && !address.trim() && !dni.trim()) {
+		if (!familyName.trim() && !address.trim() && !cedula.trim()) {
 			toast.error("Completá al menos un campo");
 			return;
 		}
@@ -104,76 +80,79 @@ function RouteComponent() {
 		setSearched(true);
 		setFamily(null);
 		try {
-			const params = new URLSearchParams();
-			if (familyName.trim()) params.set("search", familyName.trim());
-			if (address.trim()) params.set("address", address.trim());
-			if (dni.trim()) params.set("dni", dni.trim());
+			let famData: FamilyData | null = null;
 
-			const res = await api
-				.get(`families?${params.toString()}&limit=5`)
-				.json<{ data: FamilyResult[] }>();
+			if (cedula.trim()) {
+				// Buscar por cédula
+				const res = await api
+					.get(`citizens?search=${encodeURIComponent(cedula.trim())}&limit=1`)
+					.json<{ data: { id: string; familyId: string | null }[] }>();
+				const citizen = res.data?.[0];
+				if (citizen?.familyId) {
+					const famRes = await api
+						.get(`families/${citizen.familyId}`)
+						.json<{ data: FamilyData }>();
+					famData = famRes.data;
+				}
+			}
 
-			if (res.data && res.data.length > 0) {
-				// Cargar miembros de la primera familia
-				const fam = res.data[0];
+			if (!famData && (familyName.trim() || address.trim())) {
+				const params = new URLSearchParams();
+				if (familyName.trim()) params.set("search", familyName.trim());
+				if (address.trim()) params.set("search", address.trim());
+				const res = await api
+					.get(`families?${params.toString()}&limit=1`)
+					.json<{ data: FamilyData[] }>();
+				famData = res.data?.[0] ?? null;
+			}
+
+			if (famData) {
 				const membersRes = await api
-					.get(`citizens?familyId=${fam.id}`)
-					.json<{ data: MemberResult[] }>();
-				setFamily({ ...fam, members: membersRes.data ?? [] });
+					.get(`citizens?familyId=${famData.id}`)
+					.json<{ data: MemberData[] }>();
+				setFamily({ ...famData, members: membersRes.data ?? [] });
+				setFamilyName(famData.name);
 			} else {
 				setFamily(null);
-			}
-		} catch {
-			toast.error("Error al buscar. Intentá de nuevo.");
-		} finally {
-			setLoading(false);
-		}
-	}, [familyName, address, dni]);
-
-	// ── Filtrar por sector/manzana ──
-	const handleSectorFilter = useCallback(async (sector: string, houseNumber?: string) => {
-		setSelectedSector(sector);
-		if (houseNumber) setSelectedHouse(houseNumber);
-		setLoading(true);
-		try {
-			const params = new URLSearchParams();
-			params.set("sector", sector);
-			if (houseNumber) params.set("number", houseNumber);
-
-			const res = await api
-				.get(`families?sector=${sector}${houseNumber ? `&number=${houseNumber}` : ""}&limit=20`)
-				.json<{ data: FamilyResult[] }>();
-
-			if (res.data && res.data.length > 0) {
-				const fam = res.data[0];
-				const membersRes = await api
-					.get(`citizens?familyId=${fam.id}`)
-					.json<{ data: MemberResult[] }>();
-				setFamily({ ...fam, members: membersRes.data ?? [] });
-				setFamilyName(fam.name);
-				setAddress(houseNumber ? `Manzana ${sector} Casa ${houseNumber}` : `Manzana ${sector}`);
-				setSearched(true);
 			}
 		} catch {
 			toast.error("Error al buscar");
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [familyName, address, cedula]);
 
-	// ── Generar carta ──
-	const handleGenerate = useCallback(async (member: MemberResult) => {
+	const handleSectorClick = useCallback(async (sector: string) => {
+		setSelectedSector(sector === selectedSector ? "" : sector);
+		setLoading(true);
+		try {
+			const res = await api
+				.get(`families?sector=${sector}&limit=1`)
+				.json<{ data: FamilyData[] }>();
+			if (res.data?.[0]) {
+				const f = res.data[0];
+				const membersRes = await api
+					.get(`citizens?familyId=${f.id}`)
+					.json<{ data: MemberData[] }>();
+				setFamily({ ...f, members: membersRes.data ?? [] });
+				setFamilyName(f.name);
+				setSearched(true);
+			}
+		} catch {
+			// silent
+		} finally {
+			setLoading(false);
+		}
+	}, [selectedSector]);
+
+	const handleGenerate = useCallback(async (member: MemberData) => {
 		setGenerating(member.id);
 		try {
 			const res = await api
 				.post("certifications/generar", {
-					json: {
-						documentType: "carta_residencia",
-						residentId: member.id,
-					},
+					json: { documentType: "carta_residencia", residentId: member.id },
 				})
 				.json<{ success: boolean; data: { hash: string } }>();
-
 			if (res.success) {
 				toast.success(`✅ Carta generada para ${member.firstName}`);
 				window.open(`/verify/${res.data.hash}`, "_blank");
@@ -185,208 +164,183 @@ function RouteComponent() {
 		}
 	}, []);
 
-	const isMinor = (birthDate: string) => {
-		const age = (Date.now() - new Date(birthDate).getTime()) / 31557600000;
-		return age < 18;
-	};
-
-	const isElderly = (birthDate: string) => {
-		const age = (Date.now() - new Date(birthDate).getTime()) / 31557600000;
-		return age >= 60;
-	};
+	const isMinor = (bd: string) => (Date.now() - new Date(bd).getTime()) / 31557600000 < 18;
+	const isElderly = (bd: string) => (Date.now() - new Date(bd).getTime()) / 31557600000 >= 60;
 
 	return (
-		<div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6 pb-24">
-			{/* ═══ Header ═══ */}
-			<header className="flex items-center justify-between border-b pb-4">
-				<div className="flex items-center gap-3">
-					<h1 className="text-2xl font-bold sm:text-3xl">Manoa</h1>
-					<span className="hidden text-lg text-muted-foreground sm:inline">
-						Consejo Comunal
-					</span>
-				</div>
-				<Link
-					to="/dashboard"
-					className="text-xs text-muted-foreground/50 hover:text-muted-foreground"
-				>
-					Admin
-				</Link>
-			</header>
+		<div className="mx-auto flex max-w-6xl flex-col gap-10 pb-12 pt-4">
+			{/* ─── TÍTULO ─── */}
+			<div className="text-center">
+				<h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+					Descargar Carta de Residencia
+				</h1>
+				<p className="mt-3 text-xl text-muted-foreground">
+					Ingresá los datos de tu familia para localizar el registro
+				</p>
+			</div>
 
-			<div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-				{/* ═══ Columna principal: búsqueda + resultados ═══ */}
-				<div className="space-y-6">
-					{/* ── Formulario de búsqueda ── */}
-					<section className="rounded-xl border-2 p-6 shadow-sm">
-						<h2 className="mb-1 text-xl font-bold">
-							Descargar Carta de Residencia
-						</h2>
-						<p className="mb-6 text-muted-foreground">
-							Ingresá los datos de tu familia para localizar el registro.
-						</p>
-
-						<div className="grid gap-5 sm:grid-cols-2">
+			<div className="grid gap-10 xl:grid-cols-[1fr_300px]">
+				{/* ═══ COLUMNA PRINCIPAL ═══ */}
+				<div className="space-y-10">
+					{/* ─── BUSCADOR ─── */}
+					<section className="space-y-6 rounded-2xl border-2 p-8 shadow-sm">
+						<div className="grid gap-6 md:grid-cols-2">
 							<div className="space-y-2">
-								<label className="text-sm font-medium" htmlFor="fam-name">
+								<label className="text-lg font-medium" htmlFor="fam">
 									Nombre de la Familia
 								</label>
 								<div className="relative">
-									<UsersIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+									<UsersIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
 									<Input
-										id="fam-name"
+										id="fam"
 										value={familyName}
 										onChange={(e) => setFamilyName(e.target.value)}
 										placeholder="Ej: Familia Pérez"
-										className="h-12 pl-10 text-base"
+										className="h-14 pl-12 text-lg"
 									/>
 								</div>
 							</div>
-
 							<div className="space-y-2">
-								<label className="text-sm font-medium" htmlFor="address-input">
-									Dirección / Manzana y Casa
+								<label className="text-lg font-medium" htmlFor="addr">
+									Dirección / Manzana
 								</label>
 								<div className="relative">
-									<HomeIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+									<HomeIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
 									<Input
-										id="address-input"
+										id="addr"
 										value={address}
 										onChange={(e) => setAddress(e.target.value)}
 										placeholder="Ej: Manzana 10 Casa 20"
-										className="h-12 pl-10 text-base"
+										className="h-14 pl-12 text-lg"
 									/>
 								</div>
 							</div>
-
-							<div className="space-y-2 sm:col-span-2">
-								<label className="text-sm font-medium" htmlFor="dni-input">
+							<div className="space-y-2 md:col-span-2">
+								<label className="text-lg font-medium" htmlFor="ci">
 									O buscá por Cédula de Identidad
 								</label>
 								<div className="relative">
-									<UserIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+									<UserIcon className="absolute left-4 top-1/2 size-6 -translate-y-1/2 text-muted-foreground" />
 									<Input
-										id="dni-input"
-										value={dni}
-										onChange={(e) => setDni(e.target.value)}
+										id="ci"
+										value={cedula}
+										onChange={(e) => setCedula(e.target.value)}
 										placeholder="V-12345678"
-										className="h-12 pl-10 text-base"
+										className="h-14 pl-12 text-lg"
 									/>
 								</div>
 							</div>
 						</div>
 
-						<div className="mt-5">
-							<Button
-								size="lg"
-								className="h-12 gap-2 px-8 text-base"
-								onClick={handleSearch}
-								disabled={loading}
-							>
-								{loading ? (
-									<Loader2Icon className="size-5 animate-spin" />
-								) : (
-									<SearchIcon className="size-5" />
-								)}
-								Buscar Familia
-							</Button>
-						</div>
+						<Button
+							size="lg"
+							className="h-14 gap-3 px-10 text-lg"
+							onClick={handleSearch}
+							disabled={loading}
+						>
+							{loading ? (
+								<Loader2Icon className="size-6 animate-spin" />
+							) : (
+								<SearchIcon className="size-6" />
+							)}
+							{loading ? "Buscando..." : "Buscar Familia"}
+						</Button>
 					</section>
 
-					{/* ── Resultados ── */}
+					{/* ─── RESULTADOS ─── */}
 					{loading && (
-						<div className="flex items-center justify-center py-16">
-							<Loader2Icon className="size-10 animate-spin text-muted-foreground" />
+						<div className="flex items-center justify-center py-20">
+							<Loader2Icon className="size-12 animate-spin text-muted-foreground" />
 						</div>
 					)}
 
 					{!loading && searched && !family && (
-						<Card className="border-dashed">
-							<CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-								<UsersIcon className="size-12 text-muted-foreground/30" />
-								<p className="text-lg text-muted-foreground">
+						<Card className="border-dashed py-16">
+							<CardContent className="flex flex-col items-center gap-4 text-center">
+								<UsersIcon className="size-16 text-muted-foreground/30" />
+								<p className="text-2xl text-muted-foreground">
 									No se encontraron resultados
 								</p>
-								<p className="text-sm text-muted-foreground/70">
-									Probá con otro nombre de familia, dirección o verificá que esté registrada en el censo.
+								<p className="text-lg text-muted-foreground/70">
+									Probá con otro nombre, dirección o verificá en el consejo comunal.
 								</p>
 							</CardContent>
 						</Card>
 					)}
 
+					{/* ─── FAMILIA ENCONTRADA ─── */}
 					{!loading && family && (
-						<>
-							{/* ── Cabecera de resultados ── */}
-							<div className="space-y-4">
-								<h3 className="text-xl font-bold">
-									Resultados para: {family.name}
-								</h3>
-
-								<div className="flex flex-col gap-4 rounded-xl border-2 bg-muted/30 p-5 sm:flex-row sm:items-center sm:justify-between">
-									<div className="flex items-center gap-4">
-										<div className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-											<UsersIcon className="size-7" />
-										</div>
-										<div>
-											<h4 className="text-lg font-bold">{family.name}</h4>
-											<p className="text-sm text-muted-foreground">
-												{family.address || `Manzana ${family.sector || "—"}`}
-											</p>
-										</div>
+						<div className="space-y-6">
+							{/* Info de la familia */}
+							<div className="flex flex-col gap-4 rounded-2xl border-2 bg-muted/30 p-6 md:flex-row md:items-center md:justify-between">
+								<div className="flex items-center gap-4">
+									<div className="flex size-16 items-center justify-center rounded-full bg-primary text-3xl text-primary-foreground">
+										<UsersIcon className="size-8" />
 									</div>
-									<div className="flex items-center gap-6 text-sm">
-										<div className="text-center">
-											<p className="text-xs uppercase tracking-wider text-muted-foreground">
-												Miembros
-											</p>
-											<p className="text-2xl font-bold">
-												{family.members.length} Registrados
-											</p>
-										</div>
-										<div className="hidden h-10 w-px bg-border sm:block" />
-										<div className="hidden sm:block">
-											<p className="text-xs uppercase tracking-wider text-muted-foreground">
-												Jefe de familia
-											</p>
-											<p className="text-sm font-medium">
-												{family.members.find((m) => m.isHeadOfHousehold)?.firstName ||
-													"—"}
-											</p>
-										</div>
+									<div>
+										<p className="text-2xl font-bold">{family.name}</p>
+										<p className="text-base text-muted-foreground">
+											{family.address || `Manzana ${family.sector || "—"}`}
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-8">
+									<div className="text-center">
+										<p className="text-xs uppercase tracking-wider text-muted-foreground">
+											Miembros
+										</p>
+										<p className="text-3xl font-bold">{family.members.length}</p>
+									</div>
+									<div className="hidden h-12 w-px bg-border md:block" />
+									<div className="text-center md:text-left">
+										<p className="text-xs uppercase tracking-wider text-muted-foreground">
+											Jefe
+										</p>
+										<p className="text-lg font-medium">
+											{family.members.find((m) => m.isHeadOfHousehold)
+												?.firstName || "—"}
+										</p>
 									</div>
 								</div>
 							</div>
 
-							{/* ── Grid de miembros ── */}
-							<div className="grid gap-4 sm:grid-cols-2">
-								{family.members.map((member) => (
+							{/* Grid de miembros */}
+							<div className="grid gap-6 md:grid-cols-2">
+								{family.members.map((m) => (
 									<Card
-										key={member.id}
-										className={`flex flex-col justify-between ${
-											isMinor(member.birthDate) ? "opacity-70 border-dashed" : "shadow-sm"
+										key={m.id}
+										className={`flex flex-col justify-between p-6 ${
+											isMinor(m.birthDate)
+												? "border-dashed opacity-70"
+												: "shadow-sm"
 										}`}
 									>
-										<CardContent className="p-5">
+										<div>
 											{/* Badges */}
-											<div className="mb-3 flex flex-wrap gap-1.5">
-												{member.isHeadOfHousehold && (
-													<Badge variant="default" className="text-xs">
-														Jefe de familia
-													</Badge>
+											<div className="mb-4 flex flex-wrap gap-2">
+												{m.isHeadOfHousehold && (
+													<Badge className="px-3 py-1 text-sm">Jefe</Badge>
 												)}
-												{isElderly(member.birthDate) && (
-													<Badge variant="secondary" className="gap-1 text-xs">
+												{isElderly(m.birthDate) && (
+													<Badge
+														variant="secondary"
+														className="px-3 py-1 text-sm"
+													>
 														Adulto Mayor
 													</Badge>
 												)}
-												{isMinor(member.birthDate) && (
-													<Badge variant="outline" className="text-xs">
-														Niño / Adolescente
+												{isMinor(m.birthDate) && (
+													<Badge
+														variant="outline"
+														className="px-3 py-1 text-sm"
+													>
+														Menor de edad
 													</Badge>
 												)}
-												{member.disabilities && member.disabilities.length > 0 && (
+												{m.disabilities && m.disabilities.length > 0 && (
 													<Badge
 														variant="destructive"
-														className="gap-1 text-xs"
+														className="px-3 py-1 text-sm"
 													>
 														Discapacidad
 													</Badge>
@@ -394,113 +348,82 @@ function RouteComponent() {
 											</div>
 
 											{/* Nombre + CI */}
-											<div className="flex items-start justify-between">
-												<div>
-													<h4 className="text-lg font-bold">
-														{member.firstName} {member.lastName}
-													</h4>
-													<p className="text-sm text-muted-foreground">
-														{member.dni}
-													</p>
-												</div>
-												<UserIcon className="size-10 text-muted-foreground/30" />
-											</div>
-
-											{/* Teléfono */}
-											{member.phone && (
-												<p className="mt-2 text-sm text-muted-foreground">
-													📞 {member.phone}
+											<p className="text-2xl font-bold">
+												{m.firstName} {m.lastName}
+											</p>
+											<p className="mt-1 text-lg text-muted-foreground">
+												{m.dni}
+											</p>
+											{m.phone && (
+												<p className="mt-2 text-base text-muted-foreground">
+													📞 {m.phone}
 												</p>
 											)}
+										</div>
 
-											{/* Botón descargar carta */}
-											{!isMinor(member.birthDate) ? (
-												<Button
-													size="lg"
-													className="mt-5 h-12 w-full gap-2 text-base"
-													onClick={() => handleGenerate(member)}
-													disabled={generating === member.id}
-												>
-													{generating === member.id ? (
-														<Loader2Icon className="size-5 animate-spin" />
-													) : (
-														<SearchIcon className="size-5" />
-													)}
-													{generating === member.id
-														? "Generando..."
-														: "Descargar Carta"}
-												</Button>
-											) : (
-												<div className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed text-sm text-muted-foreground">
-													No disponible para menores de edad
-												</div>
-											)}
-										</CardContent>
+										{!isMinor(m.birthDate) ? (
+											<Button
+												size="lg"
+												className="mt-6 h-14 w-full gap-3 text-lg"
+												onClick={() => handleGenerate(m)}
+												disabled={generating === m.id}
+											>
+												{generating === m.id ? (
+													<Loader2Icon className="size-6 animate-spin" />
+												) : (
+													<DownloadIcon className="size-6" />
+												)}
+												{generating === m.id
+													? "Generando..."
+													: "Descargar Carta"}
+											</Button>
+										) : (
+											<div className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed text-base text-muted-foreground">
+												No disponible para menores
+											</div>
+										)}
 									</Card>
 								))}
 							</div>
-						</>
+						</div>
 					)}
 				</div>
 
-				{/* ═══ Sidebar: Manzanas ═══ */}
+				{/* ═══ SIDEBAR: MANZANAS ═══ */}
 				<aside className="space-y-4">
-					<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-						Manzanas
-					</h3>
+					<p className="text-lg font-semibold">Manzanas</p>
 					<div className="space-y-1">
 						{sectors.map((s) => (
-							<div key={s.sector}>
+							<div key={s}>
 								<button
 									type="button"
-									onClick={() => handleSectorFilter(s.sector)}
-									className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
-										selectedSector === s.sector ? "bg-muted font-medium" : ""
+									onClick={() => handleSectorClick(s)}
+									className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base transition-colors hover:bg-muted ${
+										selectedSector === s ? "bg-muted font-bold" : ""
 									}`}
 								>
-									<HomeIcon className="size-4 shrink-0 text-muted-foreground" />
-									Manzana {s.sector}
+									<HomeIcon className="size-5 shrink-0" />
+									Manzana {s}
 								</button>
-								{selectedSector === s.sector && (
-									<div className="ml-6 mt-0.5 space-y-0.5">
-										{s.houses.map((h) => (
-											<button
-												key={h.number}
-												type="button"
-												onClick={() => handleSectorFilter(s.sector, h.number)}
-												className={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
-													selectedHouse === h.number
-														? "bg-muted font-medium"
-														: "text-muted-foreground"
-												}`}
-											>
-												Casa {h.number}
-											</button>
-										))}
-									</div>
-								)}
 							</div>
 						))}
+						{sectors.length === 0 && (
+							<p className="px-4 py-3 text-sm text-muted-foreground">
+								Cargando...
+							</p>
+						)}
 					</div>
 				</aside>
 			</div>
 
-			{/* ═══ Footer ═══ */}
+			{/* ─── LINK ADMIN (discreto) ─── */}
 			<Separator />
-			<footer className="flex flex-col items-center justify-between gap-4 pb-8 text-sm text-muted-foreground sm:flex-row">
-				<p>Manoa — Cuidando nuestra comunidad con transparencia.</p>
-				<div className="flex gap-4">
-					<Link
-						to="/dashboard"
-						className="underline-offset-4 hover:underline"
-					>
-						Dashboard
-					</Link>
-					<Link to="/auth" className="underline-offset-4 hover:underline">
-						Iniciar sesión
-					</Link>
-				</div>
-			</footer>
+			<div className="flex items-center justify-between text-sm text-muted-foreground/60">
+				<p>Manoa - Consejo Comunal</p>
+				<Link to="/dashboard" className="underline-offset-2 hover:underline">
+					Dashboard
+				</Link>
+			</div>
 		</div>
 	);
 }
